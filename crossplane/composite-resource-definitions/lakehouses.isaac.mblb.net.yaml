@@ -1,0 +1,30 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: lakehouses.isaac.mblb.net
+spec:
+  group: isaac.mblb.net
+  names:
+    kind: LakeHouse
+    plural: lakehouses
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                resourceGroupName:
+                  type: string
+                providerConfigName:
+                  type: string
+              required:
+                - resourceGroupName
+                - providerConfigName
+      served: true
+      referenceable: true
+  claimNames:
+    kind: LakeHouseClaim
+    plural: lakehouseclaims

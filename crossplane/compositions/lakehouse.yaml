@@ -1,0 +1,73 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: lakehouse
+spec:
+  resources:
+    - name: dbw
+      base:
+        apiVersion: databricks.azure.upbound.io/v1beta1
+        kind: Workspace
+        spec:
+          forProvider:
+            location: West Europe
+            resourceGroupName: X
+            sku: premium
+          providerConfigRef:
+            name: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+    # - name: adf
+    #   base:
+    #     apiVersion: datafactory.azure.upbound.io/v1beta1
+    #     kind: Factory
+    #     spec:
+    #       forProvider:
+    #         location: West Europe
+    #         resourceGroupName: X
+    #       providerConfigRef:
+    #         name: X
+    #   patches:
+    #     - type: FromCompositeFieldPath
+    #       fromFieldPath: spec.resourceGroupName
+    #       toFieldPath: spec.forProvider.resourceGroupName
+    #     - type: FromCompositeFieldPath
+    #       fromFieldPath: spec.providerConfigName
+    #       toFieldPath: spec.providerConfigRef.name
+    - name: sa
+      base:
+        apiVersion: storage.azure.upbound.io/v1beta1
+        kind: Account
+        spec:
+          forProvider:
+            accountKind: StorageV2
+            accountReplicationType: LRS
+            accountTier: Standard
+            isHnsEnabled: true
+            location: West Europe
+            resourceGroupName: X
+          providerConfigRef:
+            name: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "sacrossplane%s"
+          toFieldPath: metadata.name
+  compositeTypeRef:
+    apiVersion: isaac.mblb.net/v1alpha1
+    kind: LakeHouse
