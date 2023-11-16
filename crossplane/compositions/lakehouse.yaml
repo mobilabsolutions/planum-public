@@ -55,21 +55,11 @@ spec:
                 name: alpine
             restartPolicy: Always
       patches:
-        - type: CombineFromComposite
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: "pod1"
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
           toFieldPath: metadata.name
-        - type: CombineFromComposite
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: "default"
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
           toFieldPath: metadata.namespace
     - name: sa
       base:
