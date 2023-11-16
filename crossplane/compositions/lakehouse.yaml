@@ -71,7 +71,7 @@ spec:
               - fromFieldPath: metadata.name
             strategy: string
             string:
-              fmt: "ns%s"
+              fmt: "default"
           toFieldPath: metadata.namespace
     - name: sa
       base:
