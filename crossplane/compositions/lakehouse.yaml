@@ -61,6 +61,8 @@ spec:
                     imagePullPolicy: IfNotPresent
                     name: alpine
                 restartPolicy: Always
+          providerConfigRef:
+            name: kubernetes
     - name: sa
       base:
         apiVersion: storage.azure.upbound.io/v1beta1
