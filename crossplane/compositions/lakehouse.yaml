@@ -44,6 +44,11 @@ spec:
         apiVersion: v1
         kind: Pod
         spec:
+          metadata:
+            name: alpine2
+            namespace: default
+            annotations:
+              crossplane.io/external-name: alpine2
           forProvider:
             containers:
               - image: alpine:3.2
