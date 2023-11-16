@@ -43,6 +43,8 @@ spec:
       base:
         apiVersion: v1
         kind: Pod
+        metadata:
+          namespace: default
         spec:
           forProvider:
             containers:
