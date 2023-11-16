@@ -41,38 +41,26 @@ spec:
     #       toFieldPath: spec.providerConfigRef.name
     - name: pod
       base:
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          namespace: default
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
         spec:
           forProvider:
-            containers:
-              - image: alpine:3.2
-                command:
-                  - /bin/sh
-                  - "-c"
-                  - "sleep 60m"
-                imagePullPolicy: IfNotPresent
-                name: alpine
-            restartPolicy: Always
-      patches:
-        - type: CombineFromComposite
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: "pod%s"
-          toFieldPath: metadata.name
-        - type: CombineFromComposite
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: "default"
-          toFieldPath: metadata.namespace
+            manifest:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                name: alpine2
+                namespace: default
+              spec:
+                containers:
+                  - image: alpine:3.2
+                    command:
+                      - /bin/sh
+                      - "-c"
+                      - "sleep 60m"
+                    imagePullPolicy: IfNotPresent
+                    name: alpine
+                restartPolicy: Always
     - name: sa
       base:
         apiVersion: storage.azure.upbound.io/v1beta1
