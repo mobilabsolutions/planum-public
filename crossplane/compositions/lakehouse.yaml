@@ -39,6 +39,21 @@ spec:
     #     - type: FromCompositeFieldPath
     #       fromFieldPath: spec.providerConfigName
     #       toFieldPath: spec.providerConfigRef.name
+    - name: pod
+      base:
+        apiVersion: v1
+        kind: Pod
+        spec:
+          forProvider:
+            containers:
+              - image: alpine:3.2
+                command:
+                  - /bin/sh
+                  - "-c"
+                  - "sleep 60m"
+                imagePullPolicy: IfNotPresent
+                name: alpine
+            restartPolicy: Always
     - name: sa
       base:
         apiVersion: storage.azure.upbound.io/v1beta1
