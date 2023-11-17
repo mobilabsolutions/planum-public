@@ -7,7 +7,7 @@ spec:
     environmentConfigs:
       - type: Reference
         ref:
-          name: HubEnvironment
+          name: hub
   resources:
     - name: resource-group
       base:
