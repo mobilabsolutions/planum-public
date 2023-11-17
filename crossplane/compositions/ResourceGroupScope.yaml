@@ -172,8 +172,7 @@ spec:
         spec:
           forProvider:
             remoteVirtualNetworkId: X
-            resourceGroupNameSelector:
-              matchControllerRef: true
+            resourceGroupName: X
             virtualNetworkNameSelector:
               matchControllerRef: true
           providerConfigRef:
@@ -190,6 +189,9 @@ spec:
         - type: FromEnvironmentFieldPath
           fromFieldPath: hubVirtualNetworkId
           toFieldPath: spec.forProvider.remoteVirtualNetworkId
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['scopeResourceGroupName']
+          toFieldPath: spec.forProvider.resourceGroupName
         - type: FromCompositeFieldPath
           fromFieldPath: spec.providerConfigRef
           toFieldPath: spec.providerConfigRef.name
