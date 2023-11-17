@@ -1,0 +1,41 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: XResourceGroupScope
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XResourceGroupScope
+    plural: xresourcegroupscopes
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                providerConfigRef:
+                  type: string
+                location:
+                  type: string
+                addressSpace:
+                  type: array
+                  items:
+                    type: string
+                members:
+                  type: array
+                  items:
+                    type: string
+                tags:
+                  type: object
+              required:
+                - providerConfigRef
+                - location
+                - addressSpace
+      served: true
+      referenceable: true
+  claimNames:
+    kind: ResourceGroupScope
+    plural: resourcegroupscopes
