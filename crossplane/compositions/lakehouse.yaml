@@ -57,7 +57,7 @@ spec:
                     command:
                       - /bin/sh
                       - "-c"
-                      - "sleep 60m"
+                      - "sleep 1m"
                     imagePullPolicy: IfNotPresent
                     name: alpine
                 restartPolicy: Always
