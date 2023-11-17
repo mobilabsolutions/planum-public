@@ -46,8 +46,6 @@ spec:
             location: X
             resourceGroupNameSelector:
               matchControllerRef: true
-              matchLabels:
-                role: platform
           providerConfigRef:
             name: X
       patches:
@@ -143,8 +141,6 @@ spec:
             location: "West Europe"
             resourceGroupNameSelector:
               matchControllerRef: true
-              matchLabels:
-                role: platform
           providerConfigRef:
             name: X
       patches:
@@ -171,8 +167,6 @@ spec:
             remoteVirtualNetworkId: X
             resourceGroupNameSelector:
               matchControllerRef: true
-              matchLabels:
-                role: platform
             virtualNetworkNameSelector:
               matchControllerRef: true
           providerConfigRef:
