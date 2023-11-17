@@ -144,8 +144,7 @@ spec:
             addressSpace:
               - 10.0.0.0/16
             location: "West Europe"
-            resourceGroupNameSelector:
-              matchControllerRef: true
+            resourceGroupName: X
           providerConfigRef:
             name: X
       patches:
@@ -160,6 +159,9 @@ spec:
             string:
               fmt: "vnet-%s-platform"
           toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['scopeResourceGroupName']
+          toFieldPath: spec.forProvider.resourceGroupName
         - type: FromCompositeFieldPath
           fromFieldPath: spec.providerConfigRef
           toFieldPath: spec.providerConfigRef.name
