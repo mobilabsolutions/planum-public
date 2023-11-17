@@ -300,7 +300,7 @@ spec:
                   repoURL: X
                   targetRevision: HEAD
           providerConfigRef:
-            name: kubernetes-provider
+            name: kubernetes
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
