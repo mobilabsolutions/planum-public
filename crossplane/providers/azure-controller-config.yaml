@@ -1,0 +1,8 @@
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: azure-config
+spec:
+  args:
+    - --enable-management-policies
+    - --debug

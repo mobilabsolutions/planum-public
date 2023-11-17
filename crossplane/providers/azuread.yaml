@@ -1,0 +1,8 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-azuread
+spec:
+  package: mobilab.azurecr.io/provider-azuread:v0.1.7
+  controllerConfigRef:
+    name: azure-config    
