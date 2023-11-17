@@ -275,55 +275,55 @@ spec:
 #            string:
 #              fmt: "github-repo-%s"
 #          toFieldPath: metadata.name
-#    - name: argocd-application
-#      base:
-#        apiVersion: kubernetes.crossplane.io/v1alpha1
-#        kind: Object
-#        spec:
-#          forProvider:
-#            manifest:
-#              apiVersion: argoproj.io/v1alpha1
-#              kind: Application
-#              metadata:
-#                name: X
-#                namespace: argocd
-#              spec:
-#                destination:
-#                  namespace: X
-#                  server: https://kubernetes.default.svc
-#                project: default
-#                source:
-#                  directory:
-#                    jsonnet: {}
-#                    recurse: true
-#                  path: .
-#                  repoURL: X
-#                  targetRevision: HEAD
-#          providerConfigRef:
-#            name: kubernetes-provider
-#      patches:
-#        - type: FromCompositeFieldPath
-#          fromFieldPath: metadata.name
-#          toFieldPath: spec.forProvider.manifest.metadata.name
-#        - type: FromCompositeFieldPath
-#          fromFieldPath: metadata.name
-#          toFieldPath: spec.forProvider.manifest.spec.destination.namespace
-#        - type: CombineFromComposite
-#          combine:
-#            variables:
-#              - fromFieldPath: metadata.name
-#            strategy: string
-#            string:
-#              fmt: "https://github.com/mobilabsolutions/crossplane-demo1-%s.git"
-#          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
-#        - type: CombineFromComposite
-#          combine:
-#            variables:
-#              - fromFieldPath: metadata.name
-#            strategy: string
-#            string:
-#              fmt: "argocd-app-%s"
-#          toFieldPath: metadata.name
+    - name: argocd-application
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: X
+                namespace: argocd
+              spec:
+                destination:
+                  namespace: X
+                  server: https://kubernetes.default.svc
+                project: default
+                source:
+                  directory:
+                    jsonnet: {}
+                    recurse: true
+                  path: .
+                  repoURL: X
+                  targetRevision: HEAD
+          providerConfigRef:
+            name: kubernetes-provider
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.manifest.metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.manifest.spec.destination.namespace
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "https://github.com/mobilabsolutions/crossplane-demo1-project2.git"
+          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "argocd-app-%s"
+          toFieldPath: metadata.name
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XResourceGroupScope

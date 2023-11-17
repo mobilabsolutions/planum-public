@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: crossplane-provider-github
 spec:
-  package: mobilab.azurecr.io/provider-github:v0.1.9
+  package: mobilab.azurecr.io/provider-github:v0.1.10
