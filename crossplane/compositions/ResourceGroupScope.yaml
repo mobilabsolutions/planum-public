@@ -225,28 +225,28 @@ spec:
         - type: FromEnvironmentFieldPath
           fromFieldPath: hubProviderConfigRef
           toFieldPath: spec.providerConfigRef.name
-#    - name: provider-config
-#      base:
-#        apiVersion: azure.upbound.io/v1beta1
-#        kind: ProviderConfig
-#        spec:
-#          credentials:
-#            source: UserAssignedManagedIdentity
-#          subscriptionID: bf34a2a9-7f5f-4d14-b6e9-ebb98711dd78
-#          tenantID: f2658745-f87e-4fb9-8ff6-6b616a8cec41
-#          clientID: XXX
-#      patches:
-#        - type: FromCompositeFieldPath
-#          fromFieldPath: metadata.labels['clientId']
-#          toFieldPath: spec.clientID
-#        - type: CombineFromComposite
-#          combine:
-#            variables:
-#              - fromFieldPath: metadata.name
-#            strategy: string
-#            string:
-#              fmt: "provider-config-%s"
-#          toFieldPath: metadata.name
+    - name: provider-config
+      base:
+        apiVersion: azure.upbound.io/v1beta1
+        kind: ProviderConfig
+        spec:
+          credentials:
+            source: UserAssignedManagedIdentity
+          subscriptionID: bf34a2a9-7f5f-4d14-b6e9-ebb98711dd78
+          tenantID: f2658745-f87e-4fb9-8ff6-6b616a8cec41
+          clientID: XXX
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels['clientId']
+          toFieldPath: spec.clientID
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "provider-config-%s"
+          toFieldPath: metadata.name
 #    - name: github-repo
 #      base:
 #        apiVersion: repository.github.crossplane.io/v1alpha1
