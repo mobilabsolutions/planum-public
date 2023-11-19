@@ -297,7 +297,7 @@ spec:
                     jsonnet: {}
                     recurse: true
                   path: .
-                  repoURL: X
+                  repoURL: "https://github.com/mobilabsolutions/crossplane-demo1-project2.git"
                   targetRevision: HEAD
           providerConfigRef:
             name: kubernetes
@@ -308,14 +308,14 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
           toFieldPath: spec.forProvider.manifest.spec.destination.namespace
-        - type: CombineFromComposite
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: "https://github.com/mobilabsolutions/crossplane-demo1-project2.git"
-          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
+#        - type: CombineFromComposite
+#          combine:
+#            variables:
+#              - fromFieldPath: metadata.name
+#            strategy: string
+#            string:
+#              fmt: "https://github.com/mobilabsolutions/crossplane-demo1-project2.git"
+#          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
         - type: CombineFromComposite
           combine:
             variables:
