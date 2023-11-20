@@ -1,0 +1,9 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: scopeidentity
+spec:
+  resources:
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XScopeIdentity
