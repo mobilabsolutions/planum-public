@@ -291,11 +291,18 @@ spec:
                 containers:
                   - image: mcr.microsoft.com/azure-cli
                     command: ["bash", "-c"]
+                    env:
+                      - name: VMSS_RG
+                        value: "mrg-planum1-aks-rg"
+                      - name: VMSS_NAME
+                        value: "aks-agentpool-16645957-vmss"
+                      - name: IDENTITY
+                        value: "/subscriptions/bf34a2a9-7f5f-4d14-b6e9-ebb98711dd78/resourceGroups/rg-scope-scope1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/scope1"
                     args:
                       - |
                         az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
-                        existing=$(az vmss identity show -g mrg-planum1-aks-rg -n aks-agentpool-16645957-vmss | grep '/subscriptions/bf34a2a9-7f5f-4d14-b6e9-ebb98711dd78/resourceGroups/rg-scope-scope1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/scope1')
-                        if [ -z existing ]; then echo "not exists, assign"; else echo "exists, do nothing"; fi
+                        existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep '$IDENTITY')
+                        if [ -z existing ]; then az vmss identity assign -g $VMSS_RG -n $VMSS_NAME --identities $IDENTITY; else echo "exists, do nothing"; fi
                     imagePullPolicy: IfNotPresent
                     name: azcli
                 restartPolicy: Always
