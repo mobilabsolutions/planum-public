@@ -324,6 +324,16 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.annotations['identityId']
           toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
+    - name: xscopeidentity
+      base:
+        apiVersion: isaac.mblb.net/v1alpha1
+        kind: XScopeIdentity
+        spec:
+          identity: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['identityId']
+          toFieldPath: spec.identity
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
