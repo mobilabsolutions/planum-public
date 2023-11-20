@@ -79,9 +79,6 @@ spec:
           toFieldPath: metadata.labels['principalId']
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.id
-          toFieldPath: status.identityId
-        - type: ToCompositeFieldPath
-          fromFieldPath: status.atProvider.id
           toFieldPath: metadata.annotations['identityId']
     - name: role-assignment-contributor
       base:
@@ -304,7 +301,7 @@ spec:
                       - name: VMSS_NAME
                         value: "aks-agentpool-16645957-vmss"
                       - name: IDENTITY
-                        value: "/subscriptions/bf34a2a9-7f5f-4d14-b6e9-ebb98711dd78/resourceGroups/rg-scope-scope1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/scope1"
+                        value: X
                     args:
                       - |
                         az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
@@ -315,6 +312,10 @@ spec:
                 restartPolicy: Always
           providerConfigRef:
             name: kubernetes
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: metadata.annotations['identityId']
+            toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
