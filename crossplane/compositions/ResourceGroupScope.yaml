@@ -314,13 +314,13 @@ spec:
                 restartPolicy: Always
           providerConfigRef:
             name: kubernetes
-        patches:
-          - type: FromCompositeFieldPath
-            fromFieldPath: metadata.annotations['identityId']
-            toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
-          - type: FromCompositeFieldPath
-            fromFieldPath: metadata.name
-            toFieldPath: spec.forProvider.manifest.metadata.labels.label1
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['identityId']
+          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.manifest.metadata.labels.label1
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
