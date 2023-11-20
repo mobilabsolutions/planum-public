@@ -8,6 +8,10 @@ spec:
       base:
         apiVersion: nop.crossplane.io/v1alpha1
         kind: NopResource
+        spec:
+          forProvider:
+            fields:
+              stringField: cool
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XScopeIdentity
