@@ -326,7 +326,7 @@ spec:
           toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
     - name: xscopeidentity
       base:
-        apiVersion: isaac.mblb.net/v1alpha1
+        apiVersion: planum.mblb.net/v1alpha1
         kind: XScopeIdentity
         spec:
           identity: X
