@@ -302,7 +302,7 @@ spec:
                       - |
                         az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
                         existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep '$IDENTITY')
-                        if [ -z existing ]; then az vmss identity assign -g $VMSS_RG -n $VMSS_NAME --identities $IDENTITY; else echo "exists, do nothing"; fi
+                        if [ -z $existing ]; then az vmss identity assign -g $VMSS_RG -n $VMSS_NAME --identities $IDENTITY; else echo "exists, do nothing"; fi
                     imagePullPolicy: IfNotPresent
                     name: azcli
                 restartPolicy: Always
