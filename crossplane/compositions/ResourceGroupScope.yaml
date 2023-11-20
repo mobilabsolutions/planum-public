@@ -319,7 +319,7 @@ spec:
             fromFieldPath: metadata.annotations['identityId']
             toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
           - type: FromCompositeFieldPath
-            fromFieldPath: metadata.annotations['identityId']
+            fromFieldPath: metadata.name
             toFieldPath: spec.forProvider.manifest.metadata.labels.label1
     - name: argocd-application
       base:
