@@ -77,6 +77,9 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.principalId
           toFieldPath: metadata.labels['principalId']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.identity.id
     - name: role-assignment-contributor
       base:
         apiVersion: authorization.azure.upbound.io/v1beta1
@@ -275,6 +278,7 @@ spec:
 #            string:
 #              fmt: "github-repo-%s"
 #          toFieldPath: metadata.name
+### TODO write an XRD and operator for assgin id to vmss using azcli and kubectl
     - name: assign id to vmss
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
