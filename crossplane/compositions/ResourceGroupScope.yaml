@@ -316,6 +316,8 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: metadata.annotations['identityId']
             toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
+            policy:
+              fromFieldPath: Required
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
