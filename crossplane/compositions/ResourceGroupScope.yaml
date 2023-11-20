@@ -80,6 +80,9 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.id
           toFieldPath: status.identity.id
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: metadata.labels['identityId']
     - name: role-assignment-contributor
       base:
         apiVersion: authorization.azure.upbound.io/v1beta1
