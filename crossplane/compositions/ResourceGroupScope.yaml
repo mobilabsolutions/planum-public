@@ -299,9 +299,9 @@ spec:
                     command: ["bash", "-c"]
                     env:
                       - name: VMSS_RG
-                        value: "mrg-planum1-aks-rg"
+                        value: X
                       - name: VMSS_NAME
-                        value: "aks-agentpool-16645957-vmss"
+                        value: X
                       - name: IDENTITY
                         value: X
                     args:
@@ -315,12 +315,15 @@ spec:
           providerConfigRef:
             name: kubernetes
       patches:
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmssResourceGroupName
+          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[0].value
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmssName
+          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[1].value
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.annotations['identityId']
           toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
-        - type: FromCompositeFieldPath
-          fromFieldPath: metadata.name
-          toFieldPath: spec.forProvider.manifest.metadata.labels.label1
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
