@@ -275,6 +275,32 @@ spec:
 #            string:
 #              fmt: "github-repo-%s"
 #          toFieldPath: metadata.name
+    - name: assign id to vmss
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                name: azcli
+                namespace: argocd
+              spec:
+                containers:
+                  - image: mcr.microsoft.com/azure-cli
+                    command: [/bin/sh", "-c"]
+                    args:
+                      - |
+                        az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
+                        existing=$(az vmss identity show -g mrg-planum1-aks-rg -n aks-agentpool-16645957-vmss | grep '/subscriptions/bf34a2a9-7f5f-4d14-b6e9-ebb98711dd78/resourceGroups/rg-scope-scope1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/scope1')
+                        if [ -z existing ]; then echo "not exists, assign"; else echo "exists, do nothing"; fi
+                    imagePullPolicy: IfNotPresent
+                    name: azcli
+                restartPolicy: Always
+          providerConfigRef:
+            name: kubernetes
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
