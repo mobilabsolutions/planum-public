@@ -290,7 +290,7 @@ spec:
               spec:
                 containers:
                   - image: mcr.microsoft.com/azure-cli
-                    command: [/bin/sh", "-c"]
+                    command: ["bash", "-c"]
                     args:
                       - |
                         az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
