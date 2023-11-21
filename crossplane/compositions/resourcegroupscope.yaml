@@ -324,10 +324,10 @@ spec:
 #        - type: FromCompositeFieldPath
 #          fromFieldPath: metadata.annotations['identityId']
 #          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
-    - name: xscopeidentity
+    - name: vmssid
       base:
         apiVersion: planum.mblb.net/v1alpha1
-        kind: XScopeIdentity
+        kind: VmssId
         spec:
           identity: X
       patches:
