@@ -278,7 +278,7 @@ spec:
 #            string:
 #              fmt: "github-repo-%s"
 #          toFieldPath: metadata.name
-### TODO write an XRD and operator for assgin id to vmss using azcli and kubectl
+### TODO write an XRD and operator for assgin id to vmss using azcli and kubectl or create a CRD for VmssId and controller using az cli and kubectl
 #    - name: assign id to vmss
 #      base:
 #        apiVersion: kubernetes.crossplane.io/v1alpha1
