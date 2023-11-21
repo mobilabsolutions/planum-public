@@ -329,7 +329,8 @@ spec:
         apiVersion: planum.mblb.net/v1alpha1
         kind: VmssId
         spec:
-          identity: X
+          forProvider:
+            identity: X
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.annotations['identityId']
