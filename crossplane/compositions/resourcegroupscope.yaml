@@ -279,51 +279,51 @@ spec:
 #              fmt: "github-repo-%s"
 #          toFieldPath: metadata.name
 ### TODO write an XRD and operator for assgin id to vmss using azcli and kubectl
-    - name: assign id to vmss
-      base:
-        apiVersion: kubernetes.crossplane.io/v1alpha1
-        kind: Object
-        spec:
-          forProvider:
-            manifest:
-              apiVersion: v1
-              kind: Pod
-              metadata:
-                name: azcli
-                namespace: argocd
-                labels:
-                  label1: X
-              spec:
-                containers:
-                  - image: mcr.microsoft.com/azure-cli
-                    command: ["bash", "-c"]
-                    env:
-                      - name: VMSS_RG
-                        value: X
-                      - name: VMSS_NAME
-                        value: X
-                      - name: IDENTITY
-                        value: X
-                    args:
-                      - |
-                        az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
-                        existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep '$IDENTITY')
-                        if [ -z $existing ]; then az vmss identity assign -g $VMSS_RG -n $VMSS_NAME --identities $IDENTITY; else echo "exists, do nothing"; fi
-                    imagePullPolicy: IfNotPresent
-                    name: azcli
-                restartPolicy: Always
-          providerConfigRef:
-            name: kubernetes
-      patches:
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: vmssResourceGroupName
-          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[0].value
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: vmssName
-          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[1].value
-        - type: FromCompositeFieldPath
-          fromFieldPath: metadata.annotations['identityId']
-          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
+#    - name: assign id to vmss
+#      base:
+#        apiVersion: kubernetes.crossplane.io/v1alpha1
+#        kind: Object
+#        spec:
+#          forProvider:
+#            manifest:
+#              apiVersion: v1
+#              kind: Pod
+#              metadata:
+#                name: azcli
+#                namespace: argocd
+#                labels:
+#                  label1: X
+#              spec:
+#                containers:
+#                  - image: mcr.microsoft.com/azure-cli
+#                    command: ["bash", "-c"]
+#                    env:
+#                      - name: VMSS_RG
+#                        value: X
+#                      - name: VMSS_NAME
+#                        value: X
+#                      - name: IDENTITY
+#                        value: X
+#                    args:
+#                      - |
+#                        az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
+#                        existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep '$IDENTITY')
+#                        if [ -z $existing ]; then az vmss identity assign -g $VMSS_RG -n $VMSS_NAME --identities $IDENTITY; else echo "exists, do nothing"; fi
+#                    imagePullPolicy: IfNotPresent
+#                    name: azcli
+#                restartPolicy: Always
+#          providerConfigRef:
+#            name: kubernetes
+#      patches:
+#        - type: FromEnvironmentFieldPath
+#          fromFieldPath: vmssResourceGroupName
+#          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[0].value
+#        - type: FromEnvironmentFieldPath
+#          fromFieldPath: vmssName
+#          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[1].value
+#        - type: FromCompositeFieldPath
+#          fromFieldPath: metadata.annotations['identityId']
+#          toFieldPath: spec.forProvider.manifest.spec.containers[0].env[2].value
     - name: xscopeidentity
       base:
         apiVersion: planum.mblb.net/v1alpha1
