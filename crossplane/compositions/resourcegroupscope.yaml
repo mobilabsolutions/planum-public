@@ -334,7 +334,15 @@ spec:
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.annotations['identityId']
-          toFieldPath: spec.identity
+          toFieldPath: spec.forProvider.identity
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "vmss-id-%s"
+          toFieldPath: metadata.name
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
