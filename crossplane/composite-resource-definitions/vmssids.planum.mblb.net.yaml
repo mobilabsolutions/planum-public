@@ -22,4 +22,4 @@ spec:
   names:
     kind: VmssId
     plural: vmssids
-  scope: Namespaced
+  scope: Cluster
