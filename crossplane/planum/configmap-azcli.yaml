@@ -20,10 +20,10 @@ data:
       ]      
     }
   "vmssids-create.sh": |
-    echo "vmssid create"
+    echo "vmssid create $1"
   "vmssids-delete.sh": |
-    echo "vmssid delete"
+    echo "vmssid delete $1"
   "foos-create.sh": |
-    echo "foo create"
+    echo "foo create $1"
   "foos-delete.sh": |
-    echo "foo delete"
+    echo "foo delete $1"
