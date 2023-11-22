@@ -14,16 +14,18 @@ data:
       for crd in $crds; 
       do 
         crs=$(kubectl get $(echo $crd | jq -r '."api-resource"') -o json | jq -c '.items[]');
-        crs_delete=$(echo $crs|jq 'select( .metadata.deletionTimestamp != null)')
-        echo $crs_delete
         crs_create=$(echo $crs|jq 'select( .metadata.deletionTimestamp == null)')
-        echo $crs_create
+        echo "creating $crs_create"
         for cr in $crs_create; 
         do
           bash $(echo $crd | jq -r '."create-script"' | sed 's/^/\/etc\/config\//') $cr; 
         done; 
+        crs_delete=$(echo $crs|jq 'select( .metadata.deletionTimestamp != null)')
+        echo "deleting $crs_delete"
         for cr in $crs_delete; 
         do
+          echo "deleting $cr"
+          echo $crd | jq -r '."delete-script"' | sed 's/^/\/etc\/config\//'
           bash $(echo $crd | jq -r '."delete-script"' | sed 's/^/\/etc\/config\//') $cr; 
         done; 
       done
