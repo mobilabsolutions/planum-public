@@ -9,12 +9,21 @@ data:
       "crds": [
         {
           "api-resource": "vmssids.v1alpha1.planum.mblb.net",
-          "create-script": "vmssid-create.sh",
-          "delete-script": "vmssid-delete.sh"
+          "create-script": "vmssids-create.sh",
+          "delete-script": "vmssids-delete.sh"
+        },
+        {
+          "api-resource": "foos.v1alpha1.planum.mblb.net",
+          "create-script": "foos-create.sh",
+          "delete-script": "foos-delete.sh"
         }
       ]      
     }
-  "vmssid-create.sh": |
-    echo "create"
-  "vmssid-delete.sh": |
-    echo "delete"
+  "vmssids-create.sh": |
+    echo "vmssid create"
+  "vmssids-delete.sh": |
+    echo "vmssid delete"
+  "foos-create.sh": |
+    echo "foo create"
+  "foos-delete.sh": |
+    echo "foo delete"
