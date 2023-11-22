@@ -15,7 +15,9 @@ data:
       do 
         crs=$(kubectl get $(echo $crd | jq -r '."api-resource"') -o json | jq -c '.items[]');
         crs_delete=$(echo $crs|jq 'select( .metadata.deletionTimestamp != null)')
+        echo $crs_delete
         crs_create=$(echo $crs|jq 'select( .metadata.deletionTimestamp == null)')
+        echo $crs_create
         for cr in $crs_create; 
         do
           bash $(echo $crd | jq -r '."create-script"' | sed 's/^/\/etc\/config\//') $cr; 
