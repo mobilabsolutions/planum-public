@@ -10,6 +10,13 @@ spec:
         - "bash"
         - "-c"
         - "tail -f /dev/null"
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
       imagePullPolicy: IfNotPresent
       name: azcli
   restartPolicy: Always
+  volumes:
+    - name: config-volume
+      configMap:
+        name: azcli

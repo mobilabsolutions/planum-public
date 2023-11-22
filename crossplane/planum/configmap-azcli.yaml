@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: azcli
+  namespace: default
+data:
+  crds.json: |
+    {
+      "crds": [
+        {
+          "api-resource": "vmssids.v1alpha1.planum.mblb.net",
+          "create-script": "vmssid-create.sh",
+          "delete-script": "vmssid-delete.sh"
+        }
+      ]      
+    }
+  "vmssid-create.sh": |
+    echo "create"
+  "vmssid-delete.sh": |
+    echo "delete"
