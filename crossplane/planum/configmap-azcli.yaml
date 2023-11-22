@@ -59,7 +59,7 @@ data:
       echo "$id is already assigned to $VMSS_NAME" 
     else
       az vmss identity assign -g $VMSS_RG -n $VMSS_NAME --identities $id
-      echo $1 | jq  '.metadata += {finalizers: ["finalizer.planum.mblb.net"]}' | kubectl apply -f -
+      echo $1 | jq '.metadata += {finalizers: ["finalizer.planum.mblb.net"]}' | kubectl apply -f -
     fi
   "vmssids-delete.sh": |
     echo "vmssid delete $1"
@@ -67,7 +67,7 @@ data:
     VMSS_NAME=aks-agentpool-16645957-vmss
     id=$(echo $1 | jq -r '.spec.identity')
     az vmss identity remove -g $VMSS_RG -n $VMSS_NAME --identities $id
-    echo $1 | jq  'del(.metadata.finalizers)' | kubectl apply -f -
+    echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
   "foos-create.sh": |
     echo "foo create $1"
   "foos-delete.sh": |
