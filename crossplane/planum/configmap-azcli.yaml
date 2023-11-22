@@ -4,6 +4,24 @@ metadata:
   name: azcli
   namespace: default
 data:
+  run.sh: |
+    #wget "https://dl.k8s.io/release/$(wget -O - https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    #install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    #az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
+    while true
+    do
+      crds=$(cat /etc/config/crds.json | jq -c '.crds[]')
+      for crd in $crds; 
+      do 
+        crs=$(kubectl get $(echo $crd | jq -r '."api-resource"') -o json | jq -c '.items[]'); 
+        for cr in $crs; 
+        do 
+          bash $(echo $crd | jq -r '."create-script"' | sed 's/^/\/etc\/config\//') $cr; 
+        done; 
+      done
+      echo "sleep 30s..."
+      sleep 30
+    done
   crds.json: |
     {
       "crds": [
@@ -22,7 +40,17 @@ data:
   "vmssids-create.sh": |
     echo "vmssid create $1"
     echo $1 | jq -r '.spec.identity'
-    az vmss identity assign -g mrg-planum1-aks-rg -n aks-agentpool-16645957-vmss --identities $(echo $1 | jq -r '.spec.identity')
+    VMSS_RG=mrg-planum1-aks-rg
+    VMSS_NAME=aks-agentpool-16645957-vmss
+    existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
+    id=$(echo $1 | jq -r '.spec.identity')
+    if [[ "$existing" == *"$id"*  ]]
+    then
+      echo "$id is already assigned to $VMSS_NAME" 
+    else
+      az vmss identity assign -g $VMSS_RG -n $VMSS_NAME --identities $id
+      echo $1 | jq  '.metadata += {finalizers: ["finalizer.planum.mblb.net"]}' | kubectl apply -f -
+    fi
   "vmssids-delete.sh": |
     echo "vmssid delete $1"
   "foos-create.sh": |
