@@ -336,8 +336,7 @@ spec:
               metadata:
                 name: X
               spec:
-                forProvider:
-                  identity: X
+                identity: X
           providerConfigRef:
             name: kubernetes
       patches:
