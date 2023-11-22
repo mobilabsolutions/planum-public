@@ -29,8 +29,8 @@ data:
           bash $(echo $crd | jq -r '."delete-script"' | sed 's/^/\/etc\/config\//') $cr; 
         done; 
       done
-      echo "sleep 30s..."
-      sleep 30
+      echo "sleep 120s..."
+      sleep 120
     done
   crds.json: |
     {
@@ -65,8 +65,14 @@ data:
     echo "vmssid delete $1"
     VMSS_RG=mrg-planum1-aks-rg
     VMSS_NAME=aks-agentpool-16645957-vmss
+    existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
     id=$(echo $1 | jq -r '.spec.identity')
-    az vmss identity remove -g $VMSS_RG -n $VMSS_NAME --identities $id
+    if [[ "$existing" == *"$id"*  ]]
+    then
+      az vmss identity remove -g $VMSS_RG -n $VMSS_NAME --identities $id
+    else
+      echo "$id is not assigned to $VMSS_NAME" 
+    fi
     echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
   "foos-create.sh": |
     echo "foo create $1"
