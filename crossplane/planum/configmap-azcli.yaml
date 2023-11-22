@@ -13,10 +13,16 @@ data:
       crds=$(cat /etc/config/crds.json | jq -c '.crds[]')
       for crd in $crds; 
       do 
-        crs=$(kubectl get $(echo $crd | jq -r '."api-resource"') -o json | jq -c '.items[]'); 
-        for cr in $crs; 
-        do 
+        crs=$(kubectl get $(echo $crd | jq -r '."api-resource"') -o json | jq -c '.items[]');
+        crs_delete=$(echo $crs|jq 'select( .metadata.deletionTimestamp != null)')
+        crs_create=$(echo $crs|jq 'select( .metadata.deletionTimestamp == null)')
+        for cr in $crs_create; 
+        do
           bash $(echo $crd | jq -r '."create-script"' | sed 's/^/\/etc\/config\//') $cr; 
+        done; 
+        for cr in $crs_delete; 
+        do
+          bash $(echo $crd | jq -r '."delete-script"' | sed 's/^/\/etc\/config\//') $cr; 
         done; 
       done
       echo "sleep 30s..."
