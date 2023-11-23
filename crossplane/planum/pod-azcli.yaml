@@ -8,8 +8,7 @@ spec:
     - image: mcr.microsoft.com/azure-cli
       command:
         - "bash"
-        - "-c"
-        - "tail -f /dev/null"
+        - "/etc/config/run.sh"
       volumeMounts:
         - name: config-volume
           mountPath: /etc/config

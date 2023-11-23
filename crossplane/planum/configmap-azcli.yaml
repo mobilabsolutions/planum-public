@@ -5,9 +5,10 @@ metadata:
   namespace: default
 data:
   run.sh: |
-    #wget "https://dl.k8s.io/release/$(wget -O - https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    #install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-    #az login --identity --username a19cdc04-d996-4fe8-950e-a7f152bae457
+    wget "https://dl.k8s.io/release/$(wget -O - https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    principalId=$(kubectl get EnvironmentConfig hub -ojson | jq -r '.data.vmssPrincipalId')
+    az login --identity --username $principalId
     while true
     do
       crds=$(cat /etc/config/crds.json | jq -c '.crds[]')
