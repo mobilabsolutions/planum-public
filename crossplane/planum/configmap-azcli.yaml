@@ -26,8 +26,8 @@ data:
           bash $(echo $crd | jq -r '."delete-script"' | sed 's/^/\/etc\/config\//') $cr; 
         done; 
       done
-      echo "sleep 120s..."
-      sleep 120
+      echo "sleep 60s..."
+      sleep 60
     done
   crds.json: |
     {
@@ -46,10 +46,10 @@ data:
     }
   "vmssids-create.sh": |
     echo "vmssid create $1"
-    VMSS_RG=mrg-planum1-aks-rg
-    VMSS_NAME=aks-agentpool-16645957-vmss
-    existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
     id=$(echo $1 | jq -r '.spec.identity')
+    VMSS_RG=$(echo $1 | jq -r '.spec.vmssResourceGroup')
+    VMSS_NAME=$(echo $1 | jq -r '.spec.vmssName')
+    existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
     if [[ "$existing" == *"$id"*  ]]
     then
       echo "$id is already assigned to $VMSS_NAME" 
@@ -59,10 +59,10 @@ data:
     fi
   "vmssids-delete.sh": |
     echo "vmssid delete $1"
-    VMSS_RG=mrg-planum1-aks-rg
-    VMSS_NAME=aks-agentpool-16645957-vmss
-    existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
     id=$(echo $1 | jq -r '.spec.identity')
+    VMSS_RG=$(echo $1 | jq -r '.spec.vmssResourceGroup')
+    VMSS_NAME=$(echo $1 | jq -r '.spec.vmssName')
+    existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
     if [[ "$existing" == *"$id"*  ]]
     then
       az vmss identity remove -g $VMSS_RG -n $VMSS_NAME --identities $id
