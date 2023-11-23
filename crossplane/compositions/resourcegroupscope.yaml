@@ -337,12 +337,20 @@ spec:
                 name: X
               spec:
                 identity: X
+                vmssResourceGroup: X
+                vmssName: X
           providerConfigRef:
             name: kubernetes
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.annotations['identityId']
           toFieldPath: spec.forProvider.manifest.spec.identity
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmssResourceGroup
+          toFieldPath: spec.forProvider.manifest.spec.vmssResourceGroup
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmssName
+          toFieldPath: spec.forProvider.manifest.spec.vmssName
         - type: CombineFromComposite
           combine:
             variables:
