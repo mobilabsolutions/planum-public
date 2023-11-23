@@ -46,7 +46,6 @@ data:
     }
   "vmssids-create.sh": |
     echo "vmssid create $1"
-    echo $1 | jq -r '.spec.identity'
     VMSS_RG=mrg-planum1-aks-rg
     VMSS_NAME=aks-agentpool-16645957-vmss
     existing=$(az vmss identity show -g $VMSS_RG -n $VMSS_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')

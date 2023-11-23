@@ -17,8 +17,14 @@ spec:
               properties:
                 identity:
                   type: string
+                vmssResourceGroup:
+                  type: string
+                vmssName:
+                  type: string
               required:
                 - identity
+                - vmssResourceGroup
+                - vmssName
   names:
     kind: VmssId
     plural: vmssids
