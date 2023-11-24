@@ -7,7 +7,7 @@ data:
   run.sh: |
     wget "https://dl.k8s.io/release/$(wget -O - https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-    principalId=$(kubectl get EnvironmentConfig hub -ojson | jq -r '.data.vmssPrincipalId')
+    principalId=$(kubectl get EnvironmentConfig vmss -ojson | jq -r '.data.vmssPrincipalId')
     az login --identity --username $principalId
     while true
     do

@@ -7,7 +7,7 @@ spec:
     environmentConfigs:
       - type: Reference
         ref:
-          name: hub
+          name: vmss
   resources:
     - name: resource-group
       base:
@@ -189,8 +189,8 @@ spec:
             string:
               fmt: "peering-from-%s-to-hub"
           toFieldPath: metadata.name
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: hubVirtualNetworkId
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.hubVirtualNetworkId
           toFieldPath: spec.forProvider.remoteVirtualNetworkId
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.annotations['scopeResourceGroupName']
@@ -219,14 +219,14 @@ spec:
             string:
               fmt: "peering-from-hub-to-%s"
           toFieldPath: metadata.name
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: hubResourceGroupName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.hubResourceGroupName
           toFieldPath: spec.forProvider.resourceGroupName
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: hubVirtualNetworkName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.hubVirtualNetworkName
           toFieldPath: spec.forProvider.virtualNetworkName
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: hubProviderConfigRef
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.hubProviderConfigRef
           toFieldPath: spec.providerConfigRef.name
     - name: provider-config
       base:
