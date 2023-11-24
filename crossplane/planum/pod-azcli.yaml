@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: azcli
-  namespace: default
+  namespace: planum
 spec:
   containers:
     - image: mcr.microsoft.com/azure-cli

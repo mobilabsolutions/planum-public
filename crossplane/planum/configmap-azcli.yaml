@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: azcli
-  namespace: default
+  namespace: planum
 data:
   run.sh: |
     wget "https://dl.k8s.io/release/$(wget -O - https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
