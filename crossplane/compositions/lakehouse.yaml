@@ -39,30 +39,30 @@ spec:
     #     - type: FromCompositeFieldPath
     #       fromFieldPath: spec.providerConfigName
     #       toFieldPath: spec.providerConfigRef.name
-    - name: pod
-      base:
-        apiVersion: kubernetes.crossplane.io/v1alpha1
-        kind: Object
-        spec:
-          forProvider:
-            manifest:
-              apiVersion: v1
-              kind: Pod
-              metadata:
-                name: alpine2
-                namespace: default
-              spec:
-                containers:
-                  - image: alpine:3.2
-                    command:
-                      - /bin/sh
-                      - "-c"
-                      - "sleep 1m"
-                    imagePullPolicy: IfNotPresent
-                    name: alpine
-                restartPolicy: Always
-          providerConfigRef:
-            name: kubernetes
+#    - name: pod
+#      base:
+#        apiVersion: kubernetes.crossplane.io/v1alpha1
+#        kind: Object
+#        spec:
+#          forProvider:
+#            manifest:
+#              apiVersion: v1
+#              kind: Pod
+#              metadata:
+#                name: alpine2
+#                namespace: default
+#              spec:
+#                containers:
+#                  - image: alpine:3.2
+#                    command:
+#                      - /bin/sh
+#                      - "-c"
+#                      - "sleep 1m"
+#                    imagePullPolicy: IfNotPresent
+#                    name: alpine
+#                restartPolicy: Always
+#          providerConfigRef:
+#            name: kubernetes
     - name: sa
       base:
         apiVersion: storage.azure.upbound.io/v1beta1
@@ -90,7 +90,7 @@ spec:
               - fromFieldPath: metadata.name
             strategy: string
             string:
-              fmt: "sacrossplane%s"
+              fmt: "saxp%s"
           toFieldPath: metadata.name
   compositeTypeRef:
     apiVersion: isaac.mblb.net/v1alpha1
