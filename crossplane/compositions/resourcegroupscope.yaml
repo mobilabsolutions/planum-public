@@ -383,6 +383,8 @@ spec:
                   path: .
                   repoURL: "https://github.com/mobilabsolutions/crossplane-demo1-project2.git"
                   targetRevision: HEAD
+                syncPolicy:
+                  automated: {}
           providerConfigRef:
             name: kubernetes
       patches:
