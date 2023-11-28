@@ -1,0 +1,58 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: hub
+spec:
+  resources:
+    - name: rg
+      base:
+        apiVersion: azure.upbound.io/v1beta1
+        kind: ResourceGroup
+        spec:
+          forProvider:
+            location: West Europe
+          providerConfigRef:
+            name: X
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "rg-hub-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+    - name: vnet
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: VirtualNetwork
+        spec:
+          forProvider:
+            addressSpace:
+              - 10.255.0.0/16
+            location: "West Europe"
+            resourceGroupNameSelector:
+              matchControllerRef: true
+          providerConfigRef:
+            name: X
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "vnet-hub-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.addressSpace
+          toFieldPath: spec.forProvider.addressSpace
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.providerConfigName
+          toFieldPath: spec.providerConfigRef.name
+  compositeTypeRef:
+    apiVersion: isaac.mblb.net/v1alpha1
+    kind: Hub

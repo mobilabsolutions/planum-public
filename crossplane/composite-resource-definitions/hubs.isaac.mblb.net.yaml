@@ -1,12 +1,12 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xscopeidentities.planum.mblb.net
+  name: hubs.isaac.mblb.net
 spec:
-  group: planum.mblb.net
+  group: isaac.mblb.net
   names:
-    kind: XScopeIdentity
-    plural: xscopeidentities
+    kind: Hub
+    plural: hubs
   versions:
     - name: v1alpha1
       schema:
@@ -16,12 +16,17 @@ spec:
             spec:
               type: object
               properties:
-                identity:
+                providerConfigName:
                   type: string
+                addressSpace:
+                  type: array
+                  items:
+                    type: string
               required:
-                - identity
+                - providerConfigName
+                - addressSpace
       served: true
       referenceable: true
   claimNames:
-    kind: ScopeIdentity
-    plural: scopeidentities
+    kind: HubClaim
+    plural: hubclaims
