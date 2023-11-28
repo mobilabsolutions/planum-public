@@ -278,6 +278,12 @@ spec:
             string:
               fmt: "github-repo-%s"
           toFieldPath: metadata.name
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.name
+          toFieldPath: metadata.annotations['repoName']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.organization
+          toFieldPath: metadata.annotations['repoOrganization']
     - name: vmssid
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -348,14 +354,15 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
           toFieldPath: spec.forProvider.manifest.spec.destination.namespace
-#        - type: CombineFromComposite
-#          combine:
-#            variables:
-#              - fromFieldPath: metadata.name
-#            strategy: string
-#            string:
-#              fmt: "https://github.com/mobilabsolutions/crossplane-demo1-project2.git"
-#          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.annotations['repoOrganization']
+              - fromFieldPath: metadata.annotations['repoName']
+            strategy: string
+            string:
+              fmt: "https://github.com/%s/%s.git"
+          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
         - type: CombineFromComposite
           combine:
             variables:
