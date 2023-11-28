@@ -361,7 +361,7 @@ spec:
               - fromFieldPath: metadata.annotations['repoName']
             strategy: string
             string:
-              fmt: "https://github.com/%s/%s.git"
+              fmt: "https://github.com/%s/%s"
           toFieldPath: spec.forProvider.manifest.spec.source.repoURL
         - type: CombineFromComposite
           combine:
