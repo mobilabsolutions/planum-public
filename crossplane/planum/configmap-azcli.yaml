@@ -18,7 +18,7 @@ data:
     done
     if test -z $id
     then
-      az login --identity $(kubectl get configmap vm -ojson | jq -r '.data.id')
+      az login --identity --username $(kubectl get configmap vm -ojson | jq -r '.data.id')
     fi
     while true
     do
