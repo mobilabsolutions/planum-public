@@ -9,7 +9,17 @@ data:
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
     #principalId=$(kubectl get EnvironmentConfig vmss -ojson | jq -r '.data.vmssPrincipalId')
     #az login --identity --username $principalId
-    az login --identity
+    while test -z $(kubectl get configmap -oname | grep "configmap/vm")
+    do
+      echo "login for first time"
+      id=$(az login --identity|jq -r '.[0].id')
+      kubectl create configmap vm --from-literal=id=$id
+      sleep 15
+    done
+    if test -z $id
+    then
+      az login --identity $(kubectl get configmap vm -ojson | jq -r '.data.id')
+    fi
     while true
     do
       crds=$(cat /etc/config/crds.json | jq -c '.crds[]')
