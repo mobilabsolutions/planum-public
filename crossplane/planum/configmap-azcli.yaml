@@ -12,7 +12,8 @@ data:
     while test -z $(kubectl get configmap -oname | grep "configmap/vm")
     do
       echo "login for first time"
-      id=$(az login --identity|jq -r '.[0].id')
+      az login --identity
+      id=$(az account get-access-token | jq -r -R 'split(".") | .[1] | @base64d | fromjson | .oid')
       kubectl create configmap vm --from-literal=id=$id
       sleep 15
     done
