@@ -22,6 +22,8 @@ spec:
                   type: array
                   items:
                     type: string
+                tags:
+                  type: object
               required:
                 - providerConfigName
                 - addressSpace
