@@ -7,20 +7,8 @@ data:
   run.sh: |
     wget "https://dl.k8s.io/release/$(wget -O - https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-    #principalId=$(kubectl get EnvironmentConfig vmss -ojson | jq -r '.data.vmssPrincipalId')
-    #az login --identity --username $principalId
-    while test -z $(kubectl get configmap -oname | grep "configmap/vm")
-    do
-      echo "login for first time"
-      az login --identity
-      id=$(az account get-access-token | jq -r '.accessToken' | jq -r -R 'split(".") | .[1] | @base64d | fromjson | .oid')
-      kubectl create configmap vm --from-literal=id=$id
-      sleep 15
-    done
-    if test -z $id
-    then
-      az login --identity --username $(kubectl get configmap vm -ojson | jq -r '.data.id')
-    fi
+    principalId=$(kubectl get configmap vm -n planum -ojson | jq -r '.data.vmIdentityPrincipalId')
+    az login --identity --username $principalId
     while true
     do
       crds=$(cat /etc/config/crds.json | jq -c '.crds[]')
@@ -46,6 +34,11 @@ data:
     {
       "crds": [
         {
+          "api-resource": "vmids.v1alpha1.planum.mblb.net",
+          "create-script": "vmids-create.sh",
+          "delete-script": "vmids-delete.sh"
+        },
+        {
           "api-resource": "vmssids.v1alpha1.planum.mblb.net",
           "create-script": "vmssids-create.sh",
           "delete-script": "vmssids-delete.sh"
@@ -57,6 +50,32 @@ data:
         }
       ]      
     }
+  "vmids-create.sh": |
+    echo "vmid create $1"
+    id=$(echo $1 | jq -r '.spec.identity')
+    VM_RG=$(echo $1 | jq -r '.spec.vmResourceGroup')
+    VM_NAME=$(echo $1 | jq -r '.spec.vmName')
+    existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
+    if [[ "$existing" == *"userAssignedIdentities/$id" ]]
+    then
+      echo "$id is already assigned to $VM_NAME" 
+    else
+      az vm identity assign -g $VM_RG -n $VM_NAME --identities $id
+      echo $1 | jq '.metadata += {finalizers: ["finalizer.planum.mblb.net"]}' | kubectl apply -f -
+    fi
+  "vmids-delete.sh": |
+    echo "vmid delete $1"
+    id=$(echo $1 | jq -r '.spec.identity')
+    VM_RG=$(echo $1 | jq -r '.spec.vmResourceGroup')
+    VM_NAME=$(echo $1 | jq -r '.spec.vmName')
+    existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep subscriptions | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
+    if [[ "$existing" == *"userAssignedIdentities/$id" ]]
+    then
+      az vm identity remove -g $VM_RG -n $VM_NAME --identities $id
+    else
+      echo "$id is not assigned to $VM_NAME" 
+    fi
+    echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
   "vmssids-create.sh": |
     echo "vmssid create $1"
     id=$(echo $1 | jq -r '.spec.identity')
