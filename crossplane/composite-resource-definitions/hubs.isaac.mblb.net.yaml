@@ -24,6 +24,8 @@ spec:
                     type: string
                 tags:
                   type: object
+                  additionalProperties:
+                    type: string
               required:
                 - providerConfigName
                 - addressSpace
