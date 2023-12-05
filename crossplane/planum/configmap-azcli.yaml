@@ -58,10 +58,10 @@ data:
     existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep "$id\":")
     if test -z "$existing"
     then
-      echo "$id is already assigned to $VM_NAME" 
-    else
       az vm identity assign -g $VM_RG -n $VM_NAME --identities $id
       echo $1 | jq '.metadata += {finalizers: ["finalizer.planum.mblb.net"]}' | kubectl apply -f -
+    else
+      echo "$id is already assigned to $VM_NAME" 
     fi
   "vmids-delete.sh": |
     echo "vmid delete $1"
@@ -71,9 +71,9 @@ data:
     existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep "$id\":")
     if test -z "$existing"
     then
-      az vm identity remove -g $VM_RG -n $VM_NAME --identities $id
-    else
       echo "$id is not assigned to $VM_NAME" 
+    else
+      az vm identity remove -g $VM_RG -n $VM_NAME --identities $id
     fi
     echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
   "vmssids-create.sh": |
