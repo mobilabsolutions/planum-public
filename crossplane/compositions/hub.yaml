@@ -25,9 +25,6 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: spec.providerConfigName
           toFieldPath: spec.providerConfigRef.name
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.tags
-          toFieldPath: spec.forProvider.tags
     - name: vnet
       base:
         apiVersion: network.azure.upbound.io/v1beta1
