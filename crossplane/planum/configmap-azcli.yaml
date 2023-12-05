@@ -55,7 +55,7 @@ data:
     id=$(echo $1 | jq -r '.spec.identity')
     VM_RG=$(echo $1 | jq -r '.spec.vmResourceGroup')
     VM_NAME=$(echo $1 | jq -r '.spec.vmName')
-    existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep | grep "$id\":"
+    existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep "$id\":")
     if test -z "$existing"
     then
       echo "$id is already assigned to $VM_NAME" 
@@ -68,7 +68,7 @@ data:
     id=$(echo $1 | jq -r '.spec.identity')
     VM_RG=$(echo $1 | jq -r '.spec.vmResourceGroup')
     VM_NAME=$(echo $1 | jq -r '.spec.vmName')
-    existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep | grep "$id\":"
+    existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep "$id\":")
     if test -z "$existing"
     then
       az vm identity remove -g $VM_RG -n $VM_NAME --identities $id
