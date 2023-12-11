@@ -207,7 +207,6 @@ vmName=$(echo $instanceMetadata | jq -r '.compute.name')
 resourceGroupName=$(echo $instanceMetadata | jq -r '.compute.resourceGroupName')
 az login --identity
 vmIdentityPrincipalId=$(az account get-access-token | jq -r '.accessToken' | jq -r -R 'split(".") | .[1] | @base64d | fromjson | .oid')
-kubectl create namespace planum
 kubectl create configmap vm --namespace=planum --from-literal=vmName=$vmName --from-literal=resourceGroupName=$resourceGroupName --from-literal=vmIdentityPrincipalId=$vmIdentityPrincipalId
 
 echo "creating default"
@@ -235,5 +234,7 @@ spec:
   tenantID: $tenantId
   clientID: $appId
 EOF
+
+argocd app sync planum
 
 echo "done"
