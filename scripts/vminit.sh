@@ -178,6 +178,16 @@ sudo chmod g+x /etc/authbind/byport/80
 authbind certbot certonly --quiet --non-interactive --agree-tos --keep-until-expiring --config-dir=./cert/ --work-dir=./cert/ --logs-dir=./cert/  -m "ramin@mblb.net" -d $(cat /tmp/fqdn.txt|xargs) --standalone
 kubectl create -n argocd secret tls argocd-server-tls --cert=./cert/live/$(cat /tmp/fqdn.txt|xargs)/fullchain.pem  --key=./cert/live/$(cat /tmp/fqdn.txt|xargs)/privkey.pem
 
+#to make sure providerconfigs.azure.upbound.io will be avilable soon
+cat <<EOF | kubectl apply -f -
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-azure-web
+spec:
+  package: xpkg.upbound.io/upbound/provider-azure-web:v0.39.0
+EOF
+
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 instanceMetadata=$(curl -s -H Metadata:true --noproxy "*" "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
 vmName=$(echo $instanceMetadata | jq -r '.compute.name')
