@@ -59,6 +59,12 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s
+      limit: 3
 EOF
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -108,7 +114,14 @@ spec:
     repoURL: https://github.com/${gitHubOrganization}/${gitHubRepo}
     targetRevision: HEAD
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s
+      limit: 3
 EOF
 
 while test -z $(kubectl api-resources -oname | grep "providers.pkg.crossplane.io")
