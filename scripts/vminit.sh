@@ -36,6 +36,7 @@ sudo rm -f /tmp/gitHub*.txt
 #planum app
 while test -z $(kubectl get appprojects -n argocd | grep default)
 do
+  echo "wait for default appproject..."
   sleep 15
 done
 cat <<EOF | kubectl apply -f -
@@ -128,7 +129,6 @@ while test -z $(kubectl api-resources -oname | grep "providers.pkg.crossplane.io
 do
   sleep 15
 done
-
 cat <<EOF | kubectl apply -f -
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -210,13 +210,11 @@ vmIdentityPrincipalId=$(az account get-access-token | jq -r '.accessToken' | jq 
 kubectl create configmap vm --namespace=planum --from-literal=vmName=$vmName --from-literal=resourceGroupName=$resourceGroupName --from-literal=vmIdentityPrincipalId=$vmIdentityPrincipalId
 
 echo "creating default"
-
 while test -z $(kubectl api-resources -oname | grep "providerconfigs.azure.upbound.io")
 do
   echo "waiting for providerconfigs.azure.upbound.io to be available..."
   sleep 15
 done
-
 account=$(az account show)
 tenantId=$(echo $account | jq -r '.tenantId')
 subscriptionId=$(echo $account | jq -r '.id')
