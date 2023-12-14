@@ -16,5 +16,5 @@ sudo systemctl enable docker.service
 sudo useradd -d /home/planum planum
 sudo usermod -aG docker planum
 sudo su - planum
-docker run -d --net="host" -v /var/run/docker.sock:/var/run/docker.sock -v /home/planum:/home/planum --name planum mobilab.azurecr.io/planum:latest
+docker run -d --net="host" -v /var/run/docker.sock:/var/run/docker.sock -v /home/planum:/home/planum --name planum mobilab.azurecr.io/planum:latest "/etc/init.sh"
 echo "done"
