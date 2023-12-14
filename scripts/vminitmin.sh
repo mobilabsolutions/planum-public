@@ -1,5 +1,10 @@
-sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -i eth0 -j REDIRECT --to-port 30001
 sudo apt update
+
+sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -i eth0 -j REDIRECT --to-port 30001
+echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
+sudo NEEDRESTART_MODE=a apt -y install iptables-persistent
+
 sudo apt install -y apt-transport-https ca-certificates curl software-properties-common jq docker.io
 
 #curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
