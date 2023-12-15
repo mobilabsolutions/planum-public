@@ -11,6 +11,7 @@ data:
     az login --identity --username $principalId
     gitHubOrganization=$(kubectl get secret github -n planum -ojson | jq '.data.gitHubOrganization' | base64 -d)
     gitHubToken=$(kubectl get secret github -n planum -ojson | jq '.data.gitHubToken' | base64 -d)
+    apk add github-cli
     while true
     do
       crds=$(cat /etc/config/crds.json | jq -c '.crds[]')
