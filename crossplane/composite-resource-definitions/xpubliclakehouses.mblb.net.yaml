@@ -1,0 +1,110 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata: 
+  name: xpubliclakehouses.mblb.net
+spec:
+  group: mblb.net
+  names:
+    kind: XPublicLakeHouse
+    plural: xpubliclakehouses
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              location:
+                type: string 
+              environment:
+                type: string  
+              tenantId:
+                type: string 
+              subscriptionId:
+                type: string
+              parameters:
+                type: object
+                properties:
+                  resourceGroupName:
+                    type: string
+                  adls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        id:
+                          type: string
+                  networks:
+                    type: object
+                    properties:
+                      virtualNetworkName:
+                        type: string
+                      virtualNetworkId:
+                        type: string
+                      virtualNetworkAddressSpace:
+                        type: string
+                      virtualNetworkAddressPrefix:
+                        type: string
+                      subnets:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            addressSpace:
+                              type: array
+                              items:
+                                type: string
+                  keyvault:
+                    type: object
+                    properties:
+                      accessPolicies:
+                        type: object
+                        properties:
+                          objectId:
+                            type: string
+                          certificatePermissions:
+                            items:
+                              type: string
+                            type: array
+                          keyPermissions:
+                            items:
+                              type: string
+                            type: array
+                          secretPermissions:
+                            items:
+                              type: string
+                            type: array
+                  shirVm:
+                    type: object
+                    properties:
+                      adminUsername:
+                        type: string
+                      adminPasswordSecretRef:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          key:
+                            type: string
+                          namespace:
+                            type: string
+                      vmSize:
+                        type: string
+                      imageSku:
+                        type: string
+                      shirRegistrationSecretKey:
+                        type: string
+            required: 
+              - location
+              - environment
+              - tenantId
+              - subscriptionId
+              - parameters
+    served: true
+    referenceable: true

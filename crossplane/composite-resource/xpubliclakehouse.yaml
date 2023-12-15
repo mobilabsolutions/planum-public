@@ -1,0 +1,43 @@
+apiVersion: mblb.net/v1alpha1
+kind: XPublicLakeHouse
+metadata:
+  name: pub-lh
+spec:
+  location: ""
+  environment: ""
+  tenantId: ""
+  subscriptionId: ""
+  parameters:
+    resourceGroupName: ""
+    networks:
+      virtualNetworkName: ""
+      virtualNetworkId: ""
+      virtualNetworkAddressSpace: ""
+      virtualNetworkAddressPrefix: ""
+      subnets:
+      - name: ""
+        addressSpace:
+        - ""
+
+    adls:
+      - name: ""
+        id: ""
+
+    keyvault:
+      accessPolicies:
+        objectId: ""
+        secretPermissions:
+          - Set
+          - Delete
+          - Get
+          - List
+
+    shirVm:
+      adminUsername:
+      adminPasswordSecretRef:
+        key: ""
+        name: ""
+        namespace: ""
+      vmSize: ""
+      imageSku: ""
+      shirRegistrationSecretKey: ""

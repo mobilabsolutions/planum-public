@@ -1,0 +1,616 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: public-lakehouse
+spec:
+  resources:
+    - name: snet-public-lakehouse-adf-ir
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: Subnet
+        metadata:
+          labels: 
+            crossplane.mblb.net/component: subnet-integration-runtime
+        spec:
+          forProvider:
+            addressPrefixes:
+              - 10.0.0.0/24
+            resourceGroupName: "lakehouse-resource-group"
+            virtualNetworkName: "lakehouse-vnet-name"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "snet-lakehouse-%s-%s-%s-adf-ir"
+          toFieldPath: metadata.name 
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.networks.subnets[1].addressSpace
+          toFieldPath: spec.forProvider.addressPrefixes
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.networks.virtualNetworkName
+          toFieldPath: spec.forProvider.virtualNetworkName
+          
+    - name: public-lakehouse-keyvault
+      base:
+        apiVersion: keyvault.azure.upbound.io/v1beta1
+        kind: Vault
+        metadata:
+          labels:
+            crossplane.mblb.net/component: lakehouse-keyvault
+        spec:
+          forProvider:
+            location: westeurope
+            resourceGroupName: "lakehouse-resource-group"
+            skuName: premium
+            publicNetworkAccessEnabled: true
+            tenantId: "xxxxxx-xxxxxxx-xxxxxxx"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "kv-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.location
+          toFieldPath: spec.forProvider.location
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.tenantId
+          toFieldPath: spec.forProvider.tenantId
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: metadata.annotations['keyvaultID']
+
+    - name: public-lakehouse-keyvault-policies
+      base:
+        apiVersion: keyvault.azure.upbound.io/v1beta1
+        kind: AccessPolicy
+        metadata:
+          labels:
+            crossplane.mblb.net/component: lakehouse-keyvault-policies
+        spec:
+          forProvider:
+            secretPermissions:
+              - List
+            keyVaultIdSelector:
+              matchLabels:
+                crossplane.mblb.net/component: lakehouse-keyvault
+            objectId: "xxxxxx-xxxxxxx-xxxxxxx"
+            tenantId: "xxxxxx-xxxxxxx-xxxxxxx"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+          - type: CombineFromComposite
+            combine:
+              variables:
+                - fromFieldPath: metadata.name
+                - fromFieldPath: spec.environment
+                - fromFieldPath: spec.location
+              strategy: string
+              string:
+                fmt: "kv-policy-%s-%s-%s"
+            toFieldPath: metadata.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.keyvault.accessPolicies.keyPermissions
+            toFieldPath: spec.forProvider.keyPermissions
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.keyvault.accessPolicies.certificatePermissions
+            toFieldPath: spec.forProvider.certificatePermissions
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.keyvault.accessPolicies.secretPermissions
+            toFieldPath: spec.forProvider.secretPermissions
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.keyvault.accessPolicies.objectId
+            toFieldPath: spec.forProvider.objectId
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.tenantId
+            toFieldPath: spec.forProvider.tenantId
+
+    - name: public-lakehouse-datafactory
+      base:
+        apiVersion: datafactory.azure.upbound.io/v1beta1
+        kind: Factory
+        metadata:
+          labels:
+            crossplane.mblb.net/component: datafactory-lakehouse
+        spec:
+          forProvider:
+            location: westeurope
+            resourceGroupName: "lakehouse-resource-group"
+            publicNetworkEnabled: true
+            managedVirtualNetworkEnabled: true
+            identity:
+            - type: "SystemAssigned"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "adf-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.location
+          toFieldPath: spec.forProvider.location
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: metadata.annotations['dataFactoryID']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.identity[0].principalId
+          toFieldPath: metadata.annotations['adfIdentityPrincipalId']
+
+    - name: adf-link-to-kv
+      base:
+        apiVersion: datafactory.azure.upbound.io/v1beta1
+        kind: LinkedServiceKeyVault
+        metadata:
+          labels:
+            crossplane.mblb.net/component: adf-link-to-kv
+          name: adf-link-kv
+        spec:
+          forProvider:
+            dataFactoryIdSelector:
+              matchLabels:
+                crossplane.mblb.net/component: datafactory-lakehouse
+            keyVaultIdSelector:
+              matchLabels:
+                crossplane.mblb.net/component: lakehouse-keyvault
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "adf-to-kv-%s-%s-%s"
+          toFieldPath: metadata.name
+
+    - name: adf-self-hosted-integration-runtime
+      base:
+        apiVersion: datafactory.azure.upbound.io/v1beta1
+        kind: IntegrationRuntimeSelfHosted
+        metadata:
+          labels:
+            crossplane.mblb.net/component: adf-self-hosted-integration-runtime
+          name: self-hosted-integration-runtime
+        spec:
+          forProvider:
+            dataFactoryIdSelector:
+              matchLabels:
+                crossplane.mblb.net/component: datafactory-lakehouse
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "shir-%s-%s-%s"
+          toFieldPath: metadata.name
+
+    - name: public-lakehouse-databricks-workspace
+      base:
+        apiVersion: databricks.azure.upbound.io/v1beta1
+        kind: Workspace
+        metadata:
+          labels:
+            crossplane.mblb.net/component: databricks-workspace-lakehouse
+        spec:
+          forProvider:
+            location: westeurope
+            resourceGroupName: "lakehouse-resource-group"
+            sku: premium
+            publicNetworkAccessEnabled: true
+            networkSecurityGroupRulesRequired: "AllRules"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "dbw-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.location
+          toFieldPath: spec.forProvider.location
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: metadata.annotations['dbwID']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.workspaceUrl
+          toFieldPath: metadata.annotations['workspaceUrl']
+
+    - name: role-assignment-adf-dbw
+      base:
+        apiVersion: authorization.azure.upbound.io/v1beta1
+        kind: RoleAssignment
+        metadata:
+          labels:
+            crossplane.mblb.net/component: role-assignment-adf-dbw
+          name: "role-adf-dbw-contributor"
+        spec:
+          forProvider:
+            principalId: "adf-id"
+            roleDefinitionName: "Contributor"
+            scope: "dbw-id"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "assignment-adf-dbw-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['adfIdentityPrincipalId']
+          toFieldPath: spec.forProvider.principalId
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['dbwID']
+          toFieldPath: spec.forProvider.scope
+
+    - name: role-assignment-adf-adls
+      base:
+        apiVersion: authorization.azure.upbound.io/v1beta1
+        kind: RoleAssignment
+        metadata:
+          labels:
+            crossplane.mblb.net/component: role-assignment-adf-adls
+          name: "role-adf-adls-contributor"
+        spec:
+          forProvider:
+            principalId: "adf-id"
+            roleDefinitionName: "Contributor"
+            scope: "adls-id"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "assignment-adf-adls-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['adfIdentityPrincipalId']
+          toFieldPath: spec.forProvider.principalId
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.adls[0].id
+          toFieldPath: spec.forProvider.scope
+
+    - name: adf-link-to-dbw
+      base:
+        apiVersion: datafactory.azure.upbound.io/v1beta1
+        kind: LinkedServiceAzureDatabricks
+        metadata:
+          labels:
+            crossplane.mblb.net/component: adf-link-to-dbw
+          name: adf-link-to-dbw
+        spec:
+          forProvider:
+            adbDomain: https://example.com
+            dataFactoryIdSelector:
+              matchLabels:
+                crossplane.mblb.net/component: datafactory-lakehouse
+            msiWorkSpaceResourceIdSelector:
+              matchLabels:
+                crossplane.mblb.net/component: databricks-workspace-lakehouse
+            newClusterConfig:
+              - clusterVersion: "10.4.x-scala2.12"
+                nodeType: "Standard_D4a_v4"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "adf-to-dbw-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['workspaceUrl']
+          toFieldPath: spec.forProvider.adbDomain
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "https://%s"
+
+    - name: adf-link-to-adls2
+      base:
+        apiVersion: datafactory.azure.upbound.io/v1beta1
+        kind: LinkedServiceDataLakeStorageGen2
+        metadata:
+          labels:
+            crossplane.mblb.net/component: adf-link-to-adls2
+          name: adf-link-to-adls2
+        spec:
+          forProvider:
+            dataFactoryIdSelector:
+              matchLabels:
+                crossplane.mblb.net/component: datafactory-lakehouse
+            url: https://datalakestoragegen2
+            useManagedIdentity: true
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "adf-to-adls2-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.adls[0].name
+          toFieldPath: spec.forProvider.url
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "https://%s.dfs.core.windows.net/"
+
+    - name: adf-shir-nic
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: NetworkInterface
+        metadata:
+          labels:
+            crossplane.mblb.net/component: adf-shir-nic
+        spec:
+          forProvider:
+            ipConfiguration:
+              - name: internal
+                privateIpAddressAllocation: Dynamic
+                subnetIdSelector:
+                  matchLabels:
+                    crossplane.mblb.net/component: subnet-integration-runtime
+            location: westeurope
+            resourceGroupName: "lakehouse-resource-group"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "nic-adf-shir-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.location
+          toFieldPath: spec.forProvider.location
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+
+    - name: vm-adf-shir
+      base:
+        apiVersion: compute.azure.upbound.io/v1beta1
+        kind: WindowsVirtualMachine
+        metadata:
+          labels:
+            crossplane.mblb.net/component: vm-adf-shir
+        spec:
+          forProvider:
+            adminPasswordSecretRef:
+              key: password
+              name: example-secret
+              namespace: upbound-system
+            adminUsername: adminuser
+            location: westeurope
+            computerName: "sharedirvm"
+            networkInterfaceIdsSelector:
+              matchLabels:
+                crossplane.mblb.net/component: adf-shir-nic
+            osDisk:
+              - caching: ReadWrite
+                storageAccountType: Standard_LRS
+            resourceGroupName: "lakehouse-resource-group"
+            size: Standard_B2ms
+            identity:
+            - type: "SystemAssigned"
+            sourceImageReference:
+              - offer: WindowsServer
+                publisher: MicrosoftWindowsServer
+                sku: 2022-Datacenter
+                version: latest
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "vm-adf-shir-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.location
+          toFieldPath: spec.forProvider.location
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.resourceGroupName
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminUsername
+          toFieldPath: spec.forProvider.adminUsername
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.vmSize
+          toFieldPath: spec.forProvider.size
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.imageSku
+          toFieldPath: spec.forProvider.sourceImageReference[0].sku
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminPasswordSecretRef.key
+          toFieldPath: spec.forProvider.adminPasswordSecretRef.key
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminPasswordSecretRef.name
+          toFieldPath: spec.forProvider.adminPasswordSecretRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminPasswordSecretRef.namespace
+          toFieldPath: spec.forProvider.adminPasswordSecretRef.namespace
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: metadata.annotations['vmShirID']
+
+    - name: secret-vm-adf-shir
+      base:
+        apiVersion: keyvault.azure.upbound.io/v1beta1
+        kind: Secret
+        metadata:
+          labels:
+            crossplane.mblb.net/component: secret-vm-adf-shir
+        spec:
+          forProvider:
+            keyVaultId: "some-id"
+            valueSecretRef:
+              key: example-key
+              name: example-secret
+              namespace: upbound-system
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "secret-vm-adf-shir-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "secret-vm-adf-shir-%s-%s-%s"
+          toFieldPath: spec.forProvider.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['keyvaultID']
+          toFieldPath: spec.forProvider.keyVaultId
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.shirRegistrationSecretKey
+          toFieldPath: spec.forProvider.valueSecretRef.key
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminPasswordSecretRef.name
+          toFieldPath: spec.forProvider.valueSecretRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminPasswordSecretRef.namespace
+          toFieldPath: spec.forProvider.valueSecretRef.namespace
+
+    - name: extension-vm-adf-shir
+      base:
+        apiVersion: compute.azure.upbound.io/v1beta1
+        kind: VirtualMachineExtension
+        metadata:
+          labels:
+            crossplane.mblb.net/component: extension-vm-adf-shir
+          name: "ADF-SHIR-CSE"
+        spec:
+          forProvider:
+            publisher: "Microsoft.Compute"
+            protectedSettingsSecretRef:
+              key: "some-key"
+              name: "some-name"
+              namespace: "some-ns"
+            type: "CustomScriptExtension"
+            typeHandlerVersion: "1.9"
+            virtualMachineId: "some-id"
+            providerConfigRef:
+              name: lakehouse-azure-provider-config
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.environment
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "vm-extension-%s-%s-%s"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.shirRegistrationSecretKey
+          toFieldPath: spec.forProvider.protectedSettingsSecretRef.key
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminPasswordSecretRef.name
+          toFieldPath: spec.forProvider.protectedSettingsSecretRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.shirVm.adminPasswordSecretRef.namespace
+          toFieldPath: spec.forProvider.protectedSettingsSecretRef.namespace
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations['vmShirID']
+          toFieldPath: spec.forProvider.virtualMachineId
+
+  compositeTypeRef:
+    apiVersion: mblb.net/v1alpha1
+    kind: XPublicLakeHouse
