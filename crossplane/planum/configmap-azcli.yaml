@@ -67,10 +67,9 @@ data:
     if test -z "$id"
     then
       echo "creating $name repo..."
-      #gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "/orgs/$gitHubOrganization/repos" -f name="$gitHubRepo" -F private=true -F auto_init=true
+      gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "/orgs/$gitHubOrganization/repos" -f name="$gitHubRepo" -F private=true -F auto_init=true
     else
       echo "$name repo already exists"
-      echo $1 | jq '.status.atProvider.id="$id"'
     fi
   "githubrepos-delete.sh": |
     echo "githubrepo delete $1"
