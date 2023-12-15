@@ -7,7 +7,7 @@ spec:
     environmentConfigs:
       - type: Reference
         ref:
-          name: vmss
+          name: vm
   resources:
     - name: resource-group
       base:
@@ -284,7 +284,7 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.organization
           toFieldPath: metadata.annotations['repoOrganization']
-    - name: vmssid
+    - name: vmid
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
         kind: Object
@@ -292,13 +292,13 @@ spec:
           forProvider:
             manifest:
               apiVersion: planum.mblb.net/v1alpha1
-              kind: VmssId
+              kind: VmId
               metadata:
                 name: X
               spec:
                 identity: X
-                vmssResourceGroup: X
-                vmssName: X
+                vmResourceGroup: X
+                vmName: X
           providerConfigRef:
             name: kubernetes
       patches:
@@ -306,18 +306,18 @@ spec:
           fromFieldPath: metadata.annotations['identityId']
           toFieldPath: spec.forProvider.manifest.spec.identity
         - type: FromEnvironmentFieldPath
-          fromFieldPath: vmssResourceGroup
-          toFieldPath: spec.forProvider.manifest.spec.vmssResourceGroup
+          fromFieldPath: vmResourceGroup
+          toFieldPath: spec.forProvider.manifest.spec.vmResourceGroup
         - type: FromEnvironmentFieldPath
-          fromFieldPath: vmssName
-          toFieldPath: spec.forProvider.manifest.spec.vmssName
+          fromFieldPath: vmName
+          toFieldPath: spec.forProvider.manifest.spec.vmName
         - type: CombineFromComposite
           combine:
             variables:
               - fromFieldPath: metadata.name
             strategy: string
             string:
-              fmt: "vmss-id-%s"
+              fmt: "vm-id-%s"
           toFieldPath: spec.forProvider.manifest.metadata.name
     - name: argocd-application
       base:
