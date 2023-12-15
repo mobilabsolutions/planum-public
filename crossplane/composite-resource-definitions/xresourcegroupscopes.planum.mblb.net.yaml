@@ -20,18 +20,6 @@ spec:
                   type: string
                 location:
                   type: string
-                addressSpace:
-                  type: array
-                  items:
-                    type: string
-                hubVirtualNetworkId:
-                  type: string
-                hubResourceGroupName:
-                  type: string
-                hubVirtualNetworkName:
-                  type: string
-                hubProviderConfigRef:
-                  type: string
                 members:
                   type: array
                   items:
@@ -41,11 +29,6 @@ spec:
               required:
                 - providerConfigRef
                 - location
-                - addressSpace
-                - hubVirtualNetworkId
-                - hubResourceGroupName
-                - hubVirtualNetworkName
-                - hubProviderConfigRef
       served: true
       referenceable: true
   claimNames:
