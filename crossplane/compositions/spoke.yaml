@@ -57,8 +57,8 @@ spec:
                   addressSpace:
                     - 10.0.0.0/16
                   location: "West Europe"
-                resourceGroupNameSelector:
-                  matchControllerRef: true
+                  resourceGroupNameSelector:
+                    matchControllerRef: true
                 providerConfigRef:
                   name: X
             patches:
