@@ -57,7 +57,8 @@ spec:
                   addressSpace:
                     - 10.0.0.0/16
                   location: "West Europe"
-                  resourceGroupName: X
+                resourceGroupNameSelector:
+                  matchControllerRef: true
                 providerConfigRef:
                   name: X
             patches:
@@ -73,9 +74,6 @@ spec:
                     fmt: "vnet-spoke-%s"
                 toFieldPath: metadata.name
               - type: FromCompositeFieldPath
-                fromFieldPath: metadata.annotations['spokeResourceGroupName']
-                toFieldPath: spec.forProvider.resourceGroupName
-              - type: FromCompositeFieldPath
                 fromFieldPath: spec.providerConfigRef
                 toFieldPath: spec.providerConfigRef.name
           - name: peering-from-spoke-to-hub
@@ -85,7 +83,8 @@ spec:
               spec:
                 forProvider:
                   remoteVirtualNetworkId: X
-                  resourceGroupName: X
+                  resourceGroupNameSelector:
+                    matchControllerRef: true
                   virtualNetworkNameSelector:
                     matchControllerRef: true
                 providerConfigRef:
@@ -102,9 +101,6 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.hubVirtualNetworkId
                 toFieldPath: spec.forProvider.remoteVirtualNetworkId
-              - type: FromCompositeFieldPath
-                fromFieldPath: metadata.annotations['spokeResourceGroupName']
-                toFieldPath: spec.forProvider.resourceGroupName
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.providerConfigRef
                 toFieldPath: spec.providerConfigRef.name
