@@ -1,0 +1,170 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: spoke
+spec:
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XSpoke
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: resource-group
+            base:
+              apiVersion: azure.upbound.io/v1beta1
+              kind: ResourceGroup
+              spec:
+                forProvider:
+                  location: X
+                providerConfigRef:
+                  name: X
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.providerConfigRef
+                toFieldPath: spec.providerConfigRef.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.location
+                toFieldPath: spec.forProvider.location
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: metadata.name
+                  strategy: string
+                  string:
+                    fmt: "rg-spoke-%s"
+                toFieldPath: metadata.name
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.id
+                toFieldPath: metadata.annotations['spokeResourceGroupId']
+              - type: ToCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.annotations['spokeResourceGroupName']
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.tags
+                toFieldPath: spec.forProvider.tags
+          - name: vnet
+            base:
+              apiVersion: network.azure.upbound.io/v1beta1
+              kind: VirtualNetwork
+              spec:
+                forProvider:
+                  addressSpace:
+                    - 10.0.0.0/16
+                  location: "West Europe"
+                  resourceGroupName: X
+                providerConfigRef:
+                  name: X
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.addressSpace
+                toFieldPath: spec.forProvider.addressSpace
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: metadata.name
+                  strategy: string
+                  string:
+                    fmt: "vnet-spoke-%s"
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.annotations['spokeResourceGroupName']
+                toFieldPath: spec.forProvider.resourceGroupName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.providerConfigRef
+                toFieldPath: spec.providerConfigRef.name
+          - name: peering-from-spoke-to-hub
+            base:
+              apiVersion: network.azure.upbound.io/v1beta1
+              kind: VirtualNetworkPeering
+              spec:
+                forProvider:
+                  remoteVirtualNetworkId: X
+                  resourceGroupName: X
+                  virtualNetworkNameSelector:
+                    matchControllerRef: true
+                providerConfigRef:
+                  name: X
+            patches:
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: metadata.name
+                  strategy: string
+                  string:
+                    fmt: "peering-from-%s-to-hub"
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hubVirtualNetworkId
+                toFieldPath: spec.forProvider.remoteVirtualNetworkId
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.annotations['spokeResourceGroupName']
+                toFieldPath: spec.forProvider.resourceGroupName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.providerConfigRef
+                toFieldPath: spec.providerConfigRef.name
+          - name: peering-from-hub-to-spoke
+            base:
+              apiVersion: network.azure.upbound.io/v1beta1
+              kind: VirtualNetworkPeering
+              spec:
+                forProvider:
+                  remoteVirtualNetworkIdSelector:
+                    matchControllerRef: true
+                  resourceGroupName: X
+                  virtualNetworkName: X
+                providerConfigRef:
+                  name: X
+            patches:
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: metadata.name
+                  strategy: string
+                  string:
+                    fmt: "peering-from-hub-to-%s"
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hubResourceGroupName
+                toFieldPath: spec.forProvider.resourceGroupName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hubVirtualNetworkName
+                toFieldPath: spec.forProvider.virtualNetworkName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.hubProviderConfigRef
+                toFieldPath: spec.providerConfigRef.name
+    - step: render-templates
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- range $subnet := .observed.composite.resource.spec.subnets }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: Subnet
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $subnet.name }}
+                crossplane.io/external-name: {{ $subnet.name }}
+              name: {{ $subnet.name | replace "." "-"}}
+            spec:
+              forProvider:
+                addressPrefixes:
+                  - {{ $subnet.addressRange }}
+                resourceGroupNameSelector:
+                  matchControllerRef: true
+                virtualNetworkNameSelector:
+                  matchControllerRef: true
+            {{- end }}
+    - step: auto-ready
+      functionRef:
+        name: function-auto-ready
