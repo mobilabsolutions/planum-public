@@ -95,6 +95,9 @@ spec:
             base:
               apiVersion: network.azure.upbound.io/v1beta1
               kind: Subnet
+              metadata:
+                annotations:
+                  crossplane.io/external-name: GatewaySubnet
               spec:
                 forProvider:
                   addressPrefixes:
@@ -104,14 +107,6 @@ spec:
                   virtualNetworkNameSelector:
                     matchControllerRef: true
             patches:
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: metadata.name
-                  strategy: string
-                  string:
-                    fmt: "GatewaySubnet"
-                toFieldPath: metadata.name
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.gatewaySubnetAddressSpace
                 toFieldPath: spec.forProvider.addressPrefixes[0]
