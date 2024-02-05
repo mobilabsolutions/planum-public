@@ -86,6 +86,14 @@ spec:
                     - fromFieldPath: metadata.name
                   strategy: string
                   string:
+                    fmt: "GatewaySubnet"
+                toFieldPath: metadata.name
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: metadata.name
+                  strategy: string
+                  string:
                     fmt: "snet-hubfw-%s"
                 toFieldPath: metadata.name
               - type: FromCompositeFieldPath
