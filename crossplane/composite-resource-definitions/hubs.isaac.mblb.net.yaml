@@ -1,12 +1,12 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: hubs.isaac.mblb.net
+  name: xhubs.planum.mblb.net
 spec:
-  group: isaac.mblb.net
+  group: planum.mblb.net
   names:
-    kind: Hub
-    plural: hubs
+    kind: XHub
+    plural: xhubs
   versions:
     - name: v1alpha1
       schema:
@@ -22,6 +22,10 @@ spec:
                   type: array
                   items:
                     type: string
+                firewallSubnetAddressSpace:
+                  type: string
+                gatewaySubnetAddressSpace:
+                  type: string
                 tags:
                   type: object
                   additionalProperties:
@@ -29,8 +33,10 @@ spec:
               required:
                 - providerConfigName
                 - addressSpace
+                - firewallSubnetAddressSpace
+                - gatewaySubnetAddressSpace
       served: true
       referenceable: true
   claimNames:
-    kind: HubClaim
-    plural: hubclaims
+    kind: Hub
+    plural: hubs
