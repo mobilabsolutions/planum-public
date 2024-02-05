@@ -91,3 +91,21 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.firewallSubnetAddressSpace
                 toFieldPath: spec.forProvider.addressPrefixes[0]
+          - name: gatewaySubnet
+            base:
+              apiVersion: network.azure.upbound.io/v1beta1
+              kind: Subnet
+              spec:
+                annotations:
+                  crossplane.io/external-name: GatewaySubnet
+                forProvider:
+                  addressPrefixes:
+                    - 10.0.1.0/24
+                  resourceGroupNameSelector:
+                    matchControllerRef: true
+                  virtualNetworkNameSelector:
+                    matchControllerRef: true
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.gatewaySubnetAddressSpace
+                toFieldPath: spec.forProvider.addressPrefixes[0]
