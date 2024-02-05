@@ -96,6 +96,7 @@ spec:
               apiVersion: network.azure.upbound.io/v1beta1
               kind: Subnet
               metadata:
+                name: gatewaySubnet
                 annotations:
                   crossplane.io/external-name: GatewaySubnet
               spec:
