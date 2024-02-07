@@ -1,0 +1,83 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xspokes.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XSpoke
+    plural: xspokes
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              resourceConfig:
+                description: ResourceConfig defines general properties
+                type: object
+                properties:
+                  providerConfigName:
+                    type: string
+                  location:
+                    type: string
+                  environment:
+                    type: string
+                  spokeName:
+                    type: string
+                  tenantId:
+                    type: string 
+                  subscriptionId:
+                    type: string
+                required:
+                  - providerConfigName
+                  - location
+              parameters:
+                description: Spoke Input parameters
+                type: object
+                properties:
+                  vnetAddressSpace:
+                    type: array
+                    items:
+                      type: string
+                  subnets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        addressSpace:
+                          type: string
+                  dnsServers:
+                    type: array
+                    items:
+                      type: string
+                  peerings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: 
+                          type: string
+                        remoteVnetId:
+                          type: string
+                        remoteVnetName:
+                          type: string
+                        remoteResourceGroupName:
+                          type: string
+                        isHub:
+                          type: boolean
+          status:
+            type: object
+            properties:
+              outputs:
+                type: object
+                additionalProperties:
+                  type: string
