@@ -38,6 +38,9 @@ spec:
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PrivateDNSZoneVirtualNetworkLink
             metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}
+                crossplane.io/external-name: {{ $name }}
               name: tohub
             spec:
               forProvider:
