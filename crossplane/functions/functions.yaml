@@ -17,6 +17,6 @@ spec:
 apiVersion: pkg.crossplane.io/v1beta1
 kind: Function
 metadata:
-  name: function-patch-and-transform
+  name: upbound-function-patch-and-transform
 spec:
   package: xpkg.upbound.io/upbound/function-patch-and-transform:v0.2.1
