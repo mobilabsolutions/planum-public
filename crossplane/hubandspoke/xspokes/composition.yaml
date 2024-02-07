@@ -31,19 +31,6 @@ spec:
             toFieldPath: spec.resourceConfig.environment
 
         resources:
-        - name: hub
-          base:
-            apiVersion: planum.mblb.net/v1alpha1
-            kind: XHub
-            metadata:
-              name: hub-imported
-              annotations:
-                crossplane.io/external-name: hub1
-            spec:
-              managementPolicies: ["Observe"]
-              resourceConfig:
-                providerConfigName: "default"
-                location: "westeurope"
         - name: network-spoke1
           base:
             apiVersion: planum.mblb.net/v1alpha1
