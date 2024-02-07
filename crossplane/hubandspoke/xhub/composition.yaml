@@ -86,14 +86,7 @@ spec:
           environment:
         parameters:
           resourceGroupName: X
-          dnsZoneNames:
-            - "privatelink.azuredatabricks.net"
-            - "privatelink.blob.core.windows.net"
-            - "privatelink.datafactory.azure.net"
-            - "privatelink.dfs.core.windows.net"
-            - "privatelink.file.core.windows.net"
-            - "privatelink.vaultcore.azure.net"
-            - "privatelink.servicebus.windows.net"
+          dnsZoneNames: [""]
           hubVirtualNetworkId: X
     patches:
     - type: FromCompositeFieldPath
@@ -105,6 +98,9 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: spec.resourceConfig.environment
       toFieldPath: spec.resourceConfig.environment
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.dnsZoneNames
+      toFieldPath: spec.parameters.dnsZoneNames
     - type: FromCompositeFieldPath
       fromFieldPath: status.outputs['HubResourceGroupName']
       toFieldPath: spec.parameters.resourceGroupName
