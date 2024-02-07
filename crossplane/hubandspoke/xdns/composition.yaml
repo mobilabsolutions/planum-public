@@ -41,7 +41,7 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-link
                 crossplane.io/external-name: {{ $name }}-link
-              name: tohub
+              name: tohub-{{ $name }}
             spec:
               forProvider:
                 privateDnsZoneName: {{ $name }}
