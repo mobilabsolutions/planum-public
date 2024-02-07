@@ -35,6 +35,10 @@ spec:
             spec:
               forProvider:
                 location:
+                tags:
+                  OwnerEmail: ramin@mobilabsolutions.com
+                  CreationDate: 2024-01-23T13:26:29.4784684Z
+                  DeletionDate: 2024-03-28T13:26:29.4784793Z
           patches:
             - type: PatchSet
               patchSetName: common-parameters
