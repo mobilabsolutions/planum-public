@@ -41,8 +41,9 @@ spec:
                 crossplane.io/external-name: hub1
             spec:
               managementPolicies: ["Observe"]
-              providerConfigName: "default"
-              location: "westeurope"
+              resourceConfig:
+                providerConfigName: "default"
+                location: "westeurope"
         - name: network-spoke1
           base:
             apiVersion: planum.mblb.net/v1alpha1
