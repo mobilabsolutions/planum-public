@@ -42,8 +42,12 @@ spec:
                     items:
                       type: string
                     type: array
+                  hubVirtualNetworkId:
+                    type: string
                 required:
+                  - resourceGroupName
                   - dnsZoneNames
+                  - hubVirtualNetworkId
           status:
             type: object
             properties:

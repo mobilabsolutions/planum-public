@@ -87,6 +87,7 @@ spec:
         parameters:
           resourceGroupName:
           dnsZoneNames: [""]
+          hubVirtualNetworkId:
     patches:
     - type: FromCompositeFieldPath
       fromFieldPath: spec.resourceConfig.providerConfigName
@@ -103,6 +104,9 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: status.outputs['HubResourceGroupName']
       toFieldPath: spec.parameters.resourceGroupName
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.outputs['HubVirtualNetworkId']
+      toFieldPath: spec.parameters.hubVirtualNetworkId
 
   - name: public-ip
     base:
