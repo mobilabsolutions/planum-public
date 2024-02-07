@@ -39,8 +39,8 @@ spec:
             kind: PrivateDNSZoneVirtualNetworkLink
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}
-                crossplane.io/external-name: {{ $name }}
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-link
+                crossplane.io/external-name: {{ $name }}-link
               name: tohub
             spec:
               forProvider:
