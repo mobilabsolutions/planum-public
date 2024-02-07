@@ -3,6 +3,6 @@ kind: Provider
 metadata:
   name: provider-azure-compute
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-compute:v0.38.2
+  package: xpkg.upbound.io/upbound/provider-azure-compute:v0.42.0
   controllerConfigRef:
     name: azure-config  
