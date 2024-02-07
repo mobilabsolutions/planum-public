@@ -35,6 +35,16 @@ spec:
               providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateDNSZoneVirtualNetworkLink
+            metadata:
+              name: tohub
+            spec:
+              forProvider:
+                privateDnsZoneName: {{ $name }}
+                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                virtualNetworkId: "/subscriptions/af8f4f3a-6537-4f0f-8960-8a60d32ff35b/resourceGroups/rg-hub1-8glk9-tst-westeurope/providers/Microsoft.Network/virtualNetworks/vnet-hub1-8glk9-tst-westeurope"
+            ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XDns
             {{ if eq $.observed.resources nil }}
