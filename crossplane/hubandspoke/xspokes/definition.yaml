@@ -42,6 +42,8 @@ spec:
                 description: Spoke Input parameters
                 type: object
                 properties:
+                  hub:
+                    type: string
                   vnetAddressSpace:
                     type: array
                     items:

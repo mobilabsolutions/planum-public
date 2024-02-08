@@ -9,6 +9,15 @@ spec:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XSpoke #has to be singular
 
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: hub
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.parameters.hub
+
   mode: Pipeline
   pipeline:
     - step: patch-and-transform

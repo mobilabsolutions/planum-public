@@ -414,8 +414,8 @@ spec:
       apiVersion: apiextensions.crossplane.io/v1alpha1
       kind: EnvironmentConfig
       metadata:
-        annotations:
-          crossplane.io/external-name: hub-environment-config
+        labels:
+          hub: hub
       data:
         HubVirtualNetworkId:
     patches:
@@ -430,3 +430,6 @@ spec:
           string:
             fmt: "env-%s"
         toFieldPath: metadata.name
+      - type: FromCompositeFieldPath
+        fromFieldPath: metadata.name
+        toFieldPath: metadata.labels.hub
