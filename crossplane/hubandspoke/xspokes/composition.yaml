@@ -17,10 +17,6 @@ spec:
             - key: hub
               type: FromCompositeFieldPath
               valueFromFieldPath: spec.parameters.hub
-    patches:
-      - type: ToCompositeFieldPath
-        fromFieldPath: HubVirtualNetworkId
-        toFieldPath: status.outputs['HubVirtualNetworkId']
 
   mode: Pipeline
   pipeline:
@@ -80,6 +76,9 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: spec.parameters.dnsServers
             toFieldPath: spec.parameters.dnsServers
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: HubVirtualNetworkId
+            toFieldPath: status.outputs['HubVirtualNetworkId']
 
         - name: route-table
           base:
