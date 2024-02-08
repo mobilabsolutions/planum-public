@@ -17,6 +17,10 @@ spec:
             - key: hub
               type: FromCompositeFieldPath
               valueFromFieldPath: spec.parameters.hub
+    patches:
+      - type: ToCompositeFieldPath
+        fromFieldPath: HubVirtualNetworkId
+        toFieldPath: status.outputs['HubVirtualNetworkId']
 
   mode: Pipeline
   pipeline:
