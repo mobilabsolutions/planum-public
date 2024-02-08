@@ -408,3 +408,16 @@ spec:
       - type: FromCompositeFieldPath
         fromFieldPath: status.outputs['gatewaysubnet']
         toFieldPath: spec.forProvider.subnetId
+
+  - name: hub-environment-config
+    base:
+      apiVersion: apiextensions.crossplane.io/v1alpha1
+      kind: EnvironmentConfig
+      metadata:
+        name: hub-environment-config
+      data:
+        HubVirtualNetworkId:
+    patches:
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['HubVirtualNetworkId']
+        toFieldPath: data.HubVirtualNetworkId
