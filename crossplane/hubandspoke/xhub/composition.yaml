@@ -422,3 +422,11 @@ spec:
       - type: FromCompositeFieldPath
         fromFieldPath: status.outputs['HubVirtualNetworkId']
         toFieldPath: data.HubVirtualNetworkId
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: metadata.name
+          strategy: string
+          string:
+            fmt: "env-%s"
+        toFieldPath: metadata.name
