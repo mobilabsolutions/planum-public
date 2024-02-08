@@ -414,7 +414,8 @@ spec:
       apiVersion: apiextensions.crossplane.io/v1alpha1
       kind: EnvironmentConfig
       metadata:
-        name: hub-environment-config
+        annotations:
+          crossplane.io/external-name: hub-environment-config
       data:
         HubVirtualNetworkId:
     patches:
