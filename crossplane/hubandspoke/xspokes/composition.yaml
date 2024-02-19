@@ -9,113 +9,9 @@ spec:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XSpoke #has to be singular
 
-  environment:
-    environmentConfigs:
-      - type: Selector
-        selector:
-          matchLabels:
-            - key: hub
-              type: FromCompositeFieldPath
-              valueFromFieldPath: spec.parameters.hub
-
   mode: Pipeline
   pipeline:
-    - step: patch-and-transform
-      functionRef:
-        name: upbound-function-patch-and-transform
-      input:
-        apiVersion: pt.fn.crossplane.io/v1beta1
-        kind: Resources
-        patchSets:
-        - name: common-parameters
-          patches:
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.providerConfigName
-            toFieldPath: spec.resourceConfig.providerConfigName
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.location
-            toFieldPath: spec.resourceConfig.location
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.resourceConfig.environment
-            toFieldPath: spec.resourceConfig.environment
-
-        resources:
-        - name: network-spoke1
-          base:
-            apiVersion: planum.mblb.net/v1alpha1
-            kind: XNetwork
-            metadata:
-              name: network-spoke1
-            spec:
-              resourceConfig:
-                providerConfigName:
-                location:
-                environment:
-              parameters:
-                vnetAddressSpace:
-                dnsServers: []
-                subnets:
-          patches:
-          - type: PatchSet
-            patchSetName: common-parameters
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.parameters.vnetAddressSpace
-            toFieldPath: spec.parameters.vnetAddressSpace
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.parameters.subnets
-            toFieldPath: spec.parameters.subnets
-          - type: ToCompositeFieldPath
-            fromFieldPath: status.outputs['ResourceGroupName']
-            toFieldPath: status.outputs['SpokeResourceGroupName']
-          - type: ToCompositeFieldPath
-            fromFieldPath: status.outputs['ResourceGroupId']
-            toFieldPath: status.outputs['SpokeResourceGroupId']
-          - type: ToCompositeFieldPath
-            fromFieldPath: status.outputs['VirtualNetworkId']
-            toFieldPath: status.outputs['SpokeVirtualNetworkId']
-          - type: FromCompositeFieldPath
-            fromFieldPath: spec.parameters.dnsServers
-            toFieldPath: spec.parameters.dnsServers
-          - type: FromEnvironmentFieldPath
-            fromFieldPath: HubVirtualNetworkId
-            toFieldPath: status.outputs['HubVirtualNetworkId']
-
-        - name: route-table
-          base:
-            apiVersion: network.azure.upbound.io/v1beta1
-            kind: RouteTable
-            metadata:
-              name:
-            spec:
-              forProvider:
-                resourceGroupName:
-                route:
-                  - addressPrefix: "0.0.0.0/0"
-                    name: spoke-to-vpn
-                    nextHopType: VirtualAppliance
-                    nextHopInIpAddress: 
-          patches:
-            - type: FromCompositeFieldPath
-              fromFieldPath: spec.resourceConfig.location
-              toFieldPath: spec.forProvider.location
-            - type: FromCompositeFieldPath
-              fromFieldPath: status.outputs['SpokeResourceGroupName']
-              toFieldPath: spec.forProvider.resourceGroupName
-            - type: FromCompositeFieldPath
-              fromFieldPath: spec.parameters.dnsServers[0]
-              toFieldPath: spec.forProvider.route[0].nextHopInIpAddress
-            - type: CombineFromComposite
-              combine:
-                variables:
-                  - fromFieldPath: metadata.name
-                  - fromFieldPath: spec.resourceConfig.environment
-                  - fromFieldPath: spec.resourceConfig.location
-                strategy: string
-                string:
-                  fmt: "rt-%s-%s-%s"
-              toFieldPath: metadata.name
-
-    - step: render-peerings
+    - step: render-hub
       functionRef:
         name: function-go-templating
       input:
@@ -124,53 +20,195 @@ spec:
         source: Inline
         inline:
           template: |
-            {{ $spoke := .observed.composite.resource.metadata.name }}
-            {{- range $peerings := .observed.composite.resource.spec.parameters.peerings }}
-            {{ if or (eq $.observed.composite.resource.status.outputs.SpokeResourceGroupName nil) (eq $.observed.composite.resource.status.outputs.SpokeVirtualNetworkId nil) }}
-            {{ else }}
+            {{ $hubConfig := $.observed.composite.resource.spec.parameters.hubConfig }}
             ---
-            apiVersion: network.azure.upbound.io/v1beta1
-            kind: VirtualNetworkPeering
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XHub
             metadata:
+              name: hub
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: peering-{{ $spoke }}-{{ $peerings.name }}
+                gotemplating.fn.crossplane.io/composition-resource-name: hub
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: peering-{{ $spoke }}-{{ $peerings.name }}
-              name: peering-{{ $spoke }}-{{ $peerings.name }}
+                crossplane.io/external-name: hub
             spec:
-              forProvider:
-                resourceGroupName: {{ $.observed.composite.resource.status.outputs.SpokeResourceGroupName }}
-                virtualNetworkName: {{ last (splitList "/" $.observed.composite.resource.status.outputs.SpokeVirtualNetworkId) }}
-                remoteVirtualNetworkId: {{ $peerings.remoteVnetId }}
-                allowGatewayTransit: true
-                {{ if eq $peerings.isHub true }}
-                allowForwardedTraffic: true
-                useRemoteGateways: true
-                {{ end }}
-              providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            apiVersion: network.azure.upbound.io/v1beta1
-            kind: VirtualNetworkPeering
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: peering-{{ $peerings.name }}-{{ $spoke }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: peering-{{ $peerings.name }}-{{ $spoke }}
-              name: peering-{{ $peerings.name }}-{{ $spoke }}
-            spec:
-              forProvider:
-                resourceGroupName: {{ $peerings.remoteResourceGroupName }}
-                virtualNetworkName: {{ $peerings.remoteVnetName }}
-                remoteVirtualNetworkId: {{ $.observed.composite.resource.status.outputs.SpokeVirtualNetworkId }}
-                allowGatewayTransit: true
-              providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+              resourceConfig:
+                providerConfigName: {{ $hubConfig.providerConfigName }}
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                environment: {{ $.observed.composite.resource.spec.resourceConfig.environment }}
+                tenantId: {{ $.observed.composite.resource.spec.resourceConfig.tenantId }}
+              parameters:
+                vnetAddressSpace: 
+                - {{ printf "%s.0/24" $hubConfig.vnetAddressPrefix }}
+                subnets: 
+                - name: "GatewaySubnet"
+                  addressSpace: {{ printf "%s.0/26" $hubConfig.vnetAddressPrefix }}
+                - name: AzureFirewallManagementSubnet
+                  addressSpace: {{ printf "%s.128/26" $hubConfig.vnetAddressPrefix }}
+                - name: AzureFirewallSubnet
+                  addressSpace: {{ printf "%s.192/26" $hubConfig.vnetAddressPrefix }}
+                dnsZoneNames: 
+                - "privatelink.azuredatabricks.net"
+                - "privatelink.blob.core.windows.net"
+                - "privatelink.datafactory.azure.net"
+                - "privatelink.dfs.core.windows.net"
+                - "privatelink.file.core.windows.net"
+                - "privatelink.vaultcore.azure.net"
+                - "privatelink.servicebus.windows.net"
+                vnetGatewayConfig: {{- toYaml $hubConfig.vnetGatewayConfig | nindent 6 }}
+                lgwGatewayConfig: {{- toYaml $hubConfig.lgwGatewayConfig | nindent 6 }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XSpoke
+            {{ if eq $.observed.resources nil }}
             status:
               outputs: {}
+            {{ else }}
+            status:
+              outputs:
+              {{- toYaml (index $.observed.resources "hub").resource.status.outputs | nindent 6 }}
+            {{ end }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: RouteTable
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: rt-hub-spokes
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: rt-hub-spokes
+              name: rt-hub-spokes
+            spec:
+              providerConfigRef: 
+                name: {{ $.observed.composite.resource.spec.parameters.hubConfig.providerConfigName }}
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $.observed.composite.resource.status.outputs.HubResourceGroupName }}
+                route:
+                  {{- range $spoke := .observed.composite.resource.spec.parameters.spokeConfigs }}
+                  - addressPrefix: {{ (index $spoke.vnetAddressSpace 0) }}
+                    name: vpn-to-{{ $spoke.name }}
+                    nextHopType: VirtualAppliance
+                    nextHopInIpAddress: {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
+                  {{- end }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $.observed.composite.resource.status.outputs.gatewaysubnet }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name:
+            spec:
+              providerConfigRef: 
+                name: {{ $.observed.composite.resource.spec.parameters.hubConfig.providerConfigName }}
+              forProvider:
+                routeTableIdSelector: 
+                  matchControllerRef: true
+                subnetId: {{ $.observed.composite.resource.status.outputs.gatewaysubnet }}
+
+    - step: render-spokes-networking
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- range $spoke := $.observed.composite.resource.spec.parameters.spokeConfigs }}
+            ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XNetwork
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $spoke.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: {{ $spoke.name }}
+              name: {{ $spoke.name }}
+            spec:
+              resourceConfig:
+                providerConfigName: {{ $spoke.providerConfigName }}
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                environment: {{ $.observed.composite.resource.spec.resourceConfig.environment }}
+              parameters:
+                vnetAddressSpace: {{ $spoke.vnetAddressSpace }}
+                dnsServers: 
+                - {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
+                {{ if $spoke.subnets }}
+                subnets: {{ $spoke.subnets | toYaml | nindent 4 }}
+                {{ else }}
+                subnets: []
+                {{ end }}
+            ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XSpoke
+            {{ if eq $.observed.resources nil }}
+            status:
+              outputs: {}
+            {{ else }}
+            status:
+              outputs:
+                {{ $spoke.name }}ResourceGroupName: {{ (index $.observed.resources $spoke.name).resource.status.outputs.ResourceGroupName }}
+                {{ $spoke.name }}ResourceGroupId: {{ (index $.observed.resources $spoke.name).resource.status.outputs.ResourceGroupId }}
+                {{ $spoke.name }}VirtualNetworkId: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkId }}
+                {{ $spoke.name }}VirtualNetworkName: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkName }}
+            {{ end }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: RouteTable
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: rt-{{ $spoke.name }}-hub
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: rt-{{ $spoke.name }}-hub
+              name: rt-{{ $spoke.name }}-hub
+            spec:
+              providerConfigRef: 
+                name: {{ $spoke.providerConfigName }}
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName:  {{ printf "rg-%s-%s-%s" $spoke.name $.observed.composite.resource.spec.resourceConfig.environment $.observed.composite.resource.spec.resourceConfig.location }}
+                route:
+                  - addressPrefix: {{ (index $.observed.composite.resource.spec.parameters.hubConfig.vnetGatewayConfig.addressSpace 0) }}
+                    name: {{ $spoke.name }}-to-vpn
+                    nextHopType: VirtualAppliance
+                    nextHopInIpAddress: {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
+            ---
+            {{ if ne $.observed.resources nil }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: VirtualNetworkPeering
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: peering-{{ $spoke.name }}-hub
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: peering-{{ $spoke.name }}-hub
+              name: peering-{{ $spoke.name }}-hub
+            spec:
+              forProvider:
+                resourceGroupName: {{ (index $.observed.resources $spoke.name).resource.status.outputs.ResourceGroupName }}
+                virtualNetworkName: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkName }}
+                remoteVirtualNetworkId: {{ $.observed.composite.resource.status.outputs.HubVirtualNetworkId }}
+                allowGatewayTransit: true
+                allowForwardedTraffic: true
+                useRemoteGateways: true
+              providerConfigRef:
+                  name: {{ $spoke.providerConfigName }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: VirtualNetworkPeering
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: peering-hub-{{ $spoke.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: peering-hub-{{ $spoke.name }}
+              name: peering-hub-{{ $spoke.name }}
+            spec:
+              forProvider:
+                resourceGroupName: {{ $.observed.composite.resource.status.outputs.HubResourceGroupName }}
+                virtualNetworkName: {{ $.observed.composite.resource.status.outputs.HubVirtualNetworkName }}
+                remoteVirtualNetworkId: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkId }}
+                allowGatewayTransit: true
+              providerConfigRef:
+                  name: {{ $spoke.providerConfigName }}
             {{ end }}
             {{- end }}
 

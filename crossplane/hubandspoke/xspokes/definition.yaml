@@ -23,8 +23,6 @@ spec:
                 description: ResourceConfig defines general properties
                 type: object
                 properties:
-                  providerConfigName:
-                    type: string
                   location:
                     type: string
                   environment:
@@ -32,50 +30,103 @@ spec:
                   spokeName:
                     type: string
                   tenantId:
-                    type: string 
-                  subscriptionId:
                     type: string
                 required:
-                  - providerConfigName
                   - location
               parameters:
                 description: Spoke Input parameters
                 type: object
                 properties:
-                  hub:
-                    type: string
-                  vnetAddressSpace:
-                    type: array
-                    items:
-                      type: string
-                  subnets:
+                  hubConfig:
+                    description: hubConfig defines configuration of the Hub
+                    type: object
+                    properties:
+                      providerConfigName:
+                        type: string
+                      vnetAddressPrefix:
+                        type: string
+                      vnetGatewayConfig:
+                        type: object
+                        properties:
+                          sku:
+                            type: string
+                            default: VpnGw1
+                          addressSpace:
+                            items:
+                              type: string
+                            type: array
+                            default: 
+                            - "192.168.100.0/24"
+                          vpnClientProtocols:
+                            enum:
+                            - SSTP
+                            - IkeV2
+                            - OpenVPN
+                            type: string
+                            default: OpenVPN
+                          vpnAuthTypes:
+                            enum:
+                            - AAD
+                            - Radius
+                            - Certificate
+                            type: string
+                            default: AAD
+                      lgwGatewayConfig:
+                        type: object
+                        default: 
+                          gatewayAddress: "10.10.10.10"
+                          addressSpace:
+                          - "10.10.10.0/24"
+                          connectionName: "mobilab"
+                          sharedKeySecretKeyName: "lgwSharedKey" ## Should match the key in secrets.yaml
+                        properties:
+                          addressSpace:
+                            items:
+                              type: string
+                            type: array
+                          gatewayAddress:
+                            type: string
+                          connectionName:
+                            type: string
+                          sharedKeySecretKeyName:
+                            type: string
+                      dnsZoneNames:
+                        items:
+                          type: string
+                        type: array
+                        default:
+                        - "privatelink.azuredatabricks.net"
+                        - "privatelink.blob.core.windows.net"
+                        - "privatelink.datafactory.azure.net"
+                        - "privatelink.dfs.core.windows.net"
+                        - "privatelink.file.core.windows.net"
+                        - "privatelink.vaultcore.azure.net"
+                        - "privatelink.servicebus.windows.net"
+
+                  spokeConfigs:
+                    description: spokeConfigs defines configuration of the all the spokes
                     type: array
                     items:
                       type: object
                       properties:
                         name:
                           type: string
-                        addressSpace:
+                        providerConfigName:
                           type: string
-                  dnsServers:
-                    type: array
-                    items:
-                      type: string
-                  peerings:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name: 
-                          type: string
-                        remoteVnetId:
-                          type: string
-                        remoteVnetName:
-                          type: string
-                        remoteResourceGroupName:
-                          type: string
-                        isHub:
-                          type: boolean
+                        vnetAddressSpace:
+                          type: array
+                          items:
+                            type: string
+                        subnets:
+                          type: array
+                          default: []
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              addressSpace:
+                                type: string
           status:
             type: object
             properties:

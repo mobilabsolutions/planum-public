@@ -31,8 +31,6 @@ spec:
                     type: string  
                   tenantId:
                     type: string 
-                  subscriptionId:
-                    type: string
                 required:
                   - providerConfigName
                   - location

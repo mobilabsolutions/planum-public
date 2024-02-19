@@ -1,12 +1,12 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xhubs.planum.mblb.net
+  name: xdmlzs.planum.mblb.net
 spec:
   group: planum.mblb.net
   names:
-    kind: XHub
-    plural: xhubs
+    kind: XDmlz
+    plural: xdmlzs
 
   versions:
   - name: v1alpha1
@@ -28,20 +28,24 @@ spec:
                   location:
                     type: string
                   environment:
-                    type: string  
+                    type: string
+                  spokeName:
+                    type: string
                   tenantId:
                     type: string
                 required:
                   - providerConfigName
                   - location
               parameters:
-                description: Hub Input parameters
+                description: DMLZ Input parameters
                 type: object
                 properties:
-                  vnetAddressSpace:
-                    type: array
-                    items:
-                      type: string
+                  resourceGroupName:
+                    type: string
+                  vnetName:
+                    type: string
+                  routeTableId: 
+                    type: string
                   subnets:
                     type: array
                     items:
@@ -51,47 +55,15 @@ spec:
                           type: string
                         addressSpace:
                           type: string
-                  vnetGatewayConfig:
+                  databricksConfig:
                     type: object
                     properties:
-                      sku:
+                      virtualNetworkId:
                         type: string
-                        default: VpnGw1
-                      addressSpace:
-                        items:
-                          type: string
-                        type: array
-                      vpnClientProtocols:
-                        enum:
-                        - SSTP
-                        - IkeV2
-                        - OpenVPN
+                      virtualNetworkPrefix:
                         type: string
-                        default: OpenVPN
-                      vpnAuthTypes:
-                        enum:
-                        - AAD
-                        - Radius
-                        - Certificate
+                      privateDnsZoneId:
                         type: string
-                        default: AAD
-                  lgwGatewayConfig:
-                    type: object
-                    properties:
-                      addressSpace:
-                        items:
-                          type: string
-                        type: array
-                      gatewayAddress:
-                        type: string
-                      connectionName:
-                        type: string
-                      sharedKeySecretKeyName:
-                        type: string
-                  dnsZoneNames:
-                    items:
-                      type: string
-                    type: array
           status:
             type: object
             properties:

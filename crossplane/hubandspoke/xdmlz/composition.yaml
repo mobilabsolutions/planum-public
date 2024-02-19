@@ -1,0 +1,348 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xdmlzs.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XDmlz #has to be singular
+
+  mode: Pipeline
+  pipeline:
+    - step: render-dmlz-objects
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $locationMappings := dict 
+              "westeurope" "weu"
+              "northeurope" "neu"
+              "eastus" "eus"
+              "germanywestcentral" "gwc"
+              "switzerlandnorth" "sln"
+            }}
+            {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
+            {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
+            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: Subnet
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: {{ $subnets.name }}
+              labels:
+                name: {{ $subnets.name | lower }}
+              name: {{ $subnets.name | lower }}
+            spec:
+              forProvider:
+                addressPrefixes: 
+                - {{ $subnets.addressSpace }}
+                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                virtualNetworkName: {{ $.observed.composite.resource.spec.parameters.vnetName }}
+                {{ if contains "dbw" $subnets.name }}
+                delegation:
+                - name: "subnet-delegation"
+                  serviceDelegation:
+                  - name: "Microsoft.Databricks/workspaces"
+                    actions: 
+                    - "Microsoft.Network/virtualNetworks/subnets/join/action"
+                    - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
+                    - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
+                {{ end }}
+              providerConfigRef:
+                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SecurityGroup
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nsg-dbw-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: nsg-dbw-{{ $prefix }}
+              name: nsg-dbw-{{ $prefix }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                securityRule:
+                - access: "Allow"
+                  description: "Required for worker nodes communication within a cluster."
+                  destinationAddressPrefix: "VirtualNetwork"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "*"
+                  destinationPortRanges: []
+                  direction: "Inbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-inbound"
+                  priority: 100
+                  protocol: "*"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for workers communication with Databricks Webapp."
+                  destinationAddressPrefix: "AzureDatabricks"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "443"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp"
+                  priority: 100
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for workers communication with Azure SQL services."
+                  destinationAddressPrefix: "Sql"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "3306"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-sql"
+                  priority: 101
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for workers communication with Azure Storage services."
+                  destinationAddressPrefix: "Storage"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "443"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-storage"
+                  priority: 102
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for worker nodes communication within a cluster."
+                  destinationAddressPrefix: "VirtualNetwork"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "*"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-outbound"
+                  priority: 103
+                  protocol: "*"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for worker communication with Azure Eventhub services."
+                  destinationAddressPrefix: "EventHub"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "9093"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-eventhub"
+                  priority: 104
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+              {{ if ne $.observed.resources nil }}
+                {{ if contains "dbw-public" $subnets.name }}
+                apiVersion: network.azure.upbound.io/v1beta1
+                kind: SubnetNetworkSecurityGroupAssociation
+                metadata:
+                  annotations:
+                    gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                    gotemplating.fn.crossplane.io/ready: "True"
+                    crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                  name: nsg-association-public-{{ $subnets.name }}
+                spec:
+                  forProvider:
+                    networkSecurityGroupIdSelector:
+                      matchControllerRef: true
+                    subnetIdSelector:
+                      matchControllerRef: true
+                      matchLabels:
+                        name: {{ $subnets.name }}
+                  providerConfigRef:
+                    name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+                {{ end }}
+            ---
+                {{ if contains "dbw-private" $subnets.name }}
+                apiVersion: network.azure.upbound.io/v1beta1
+                kind: SubnetNetworkSecurityGroupAssociation
+                metadata:
+                  annotations:
+                    gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                    gotemplating.fn.crossplane.io/ready: "True"
+                    crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                  name: nsg-association-private-{{ $subnets.name }}
+                spec:
+                  forProvider:
+                    networkSecurityGroupIdSelector:
+                      matchControllerRef: true
+                    subnetIdSelector:
+                      matchControllerRef: true
+                      matchLabels:
+                        name: {{ $subnets.name }}
+                  providerConfigRef:
+                    name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+                {{ end }}
+              {{ end }}
+            ---
+            apiVersion: databricks.azure.upbound.io/v1beta1
+            kind: Workspace
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: dbw-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: dbw-{{ $prefix }}
+              name: dbw{{ $prefix | replace "-" "" }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                sku: premium
+                publicNetworkAccessEnabled: false
+                networkSecurityGroupRulesRequired: "NoAzureDatabricksRules"
+                customParameters:
+                  - noPublicIp: true
+                    publicSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPublicSubnetName }}
+                    publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.nsgId }}
+                    privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
+                    privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.nsgId }}
+                    virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkId }}
+                    vnetAddressPrefix: "{{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkPrefix }}"
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            {{ if contains "-pe" $subnets.name }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateEndpoint
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: pe-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: pe-{{ $prefix }}
+              name: pe-{{ $prefix }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                privateDnsZoneGroup:
+                  - name: pdzg-dbw
+                    privateDnsZoneIds:
+                    - {{ $.observed.composite.resource.spec.parameters.databricksConfig.privateDnsZoneId }}
+                privateServiceConnection:
+                  - isManualConnection: false
+                    name: psc-dbw
+                    privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.databricksId }}
+                    subresourceNames: ["databricks_ui_api"]
+                subnetIdSelector:
+                  matchLabels:
+                    name: {{ $subnets.name }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateEndpoint
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: pe-{{ $prefix }}-browser-auth
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: pe-{{ $prefix }}-browser-auth
+              name: pe-{{ $prefix }}-browser-auth
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                privateDnsZoneGroup:
+                  - name: pdzg-dbw-browser-auth
+                    privateDnsZoneIds:
+                    - {{ $.observed.composite.resource.spec.parameters.databricksConfig.privateDnsZoneId }}
+                privateServiceConnection:
+                  - isManualConnection: false
+                    name: psc-dbw-browser-auth
+                    privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.databricksId }}
+                    subresourceNames: ["browser_authentication"]
+                subnetIdSelector:
+                  matchLabels:
+                    name: {{ $subnets.name }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
+            ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XDmlz
+            status:
+            {{ if eq $.observed.resources nil }}
+              outputs: {}
+            {{ else }}
+            status:
+              outputs:
+                {{ $dbwId := printf "%s-%s" "dbw" $prefix }}
+                databricksId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.id }}
+                {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                nsgId: {{ (index $.observed.resources (printf "nsg-dbw-%s" $prefix)).resource.status.atProvider.id }}
+                {{ if contains "dbw-public" $subnets.name }}
+                nsgAssociationPublic: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                dbwPublicSubnetName: {{ $subnets.name }}
+                {{ end }}
+                {{ if contains "dbw-private" $subnets.name }}
+                nsgAssociationPrivate: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                dbwPrivateSubnetName: {{ $subnets.name }}
+                {{ end }}
+            {{ end }}
+            {{- end }}
+            ---
+            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
+              {{- if ne $.observed.resources nil }}
+            ---
+              apiVersion: network.azure.upbound.io/v1beta1
+              kind: SubnetRouteTableAssociation
+              metadata:
+                annotations:
+                  gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                  gotemplating.fn.crossplane.io/ready: "True"
+                name: rt-association-{{ $subnets.name }}
+              spec:
+                forProvider:
+                  routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
+                  subnetIdSelector:
+                    matchControllerRef: true
+                    matchLabels:
+                      name: {{ $subnets.name }}
+                providerConfigRef: 
+                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+              {{- end }}
+            {{- end }}
+        
+    - step: auto-ready
+      functionRef:
+        name: function-auto-ready

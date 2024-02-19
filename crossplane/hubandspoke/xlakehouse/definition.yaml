@@ -1,0 +1,118 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xlakehouses.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XLakehouse
+    plural: xlakehouses
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              resourceConfig:
+                description: ResourceConfig defines general properties
+                type: object
+                properties:
+                  providerConfigName:
+                    type: string
+                  location:
+                    type: string
+                  environment:
+                    type: string
+                  spokeName:
+                    type: string
+                  tenantId:
+                    type: string 
+                required:
+                  - providerConfigName
+                  - location
+              parameters:
+                description: DMLZ Input parameters
+                type: object
+                properties:
+                  resourceGroupName:
+                    type: string
+                  vnetName:
+                    type: string
+                  vnetId:
+                    type: string
+                  routeTableId: 
+                    type: string
+                  subnets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        addressSpace:
+                          type: string
+
+                  databricksConfig:
+                    type: object
+                    properties:
+                      virtualNetworkPrefix:
+                        type: string
+                      privateDnsZoneId:
+                        type: string
+
+                  dataFactoryConfig:
+                    type: object
+                    properties:
+                      privateDnsZoneId:
+                        type: string
+
+                  adls:
+                    type: object
+                    properties:
+                      privateEndpoints:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            privateDnsZoneId:
+                              type: string
+                            subresourceNames:
+                              type: string
+
+                  keyvault:
+                    type: object
+                    properties:
+                      privateDnsZoneId:
+                        type: string
+                      accessPolicies:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            objectId:
+                              type: string
+                            certificatePermissions:
+                              items:
+                                type: string
+                              type: array
+                            keyPermissions:
+                              items:
+                                type: string
+                              type: array
+                            secretPermissions:
+                              items:
+                                type: string
+                              type: array
+          status:
+            type: object
+            properties:
+              outputs:
+                type: object
+                additionalProperties:
+                  type: string
