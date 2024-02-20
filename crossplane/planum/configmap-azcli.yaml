@@ -126,8 +126,9 @@ data:
     fi
     echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
   "foos-create.sh": |
-    echo "foo create $1"
-    name=$((echo $1 | jq -r '.metadata.name'))
-    kubectl get foo $name -ojson | jq --arg milli $(date +%s) '. + {status:{outputs:{updated:$milli}}}' | kubectl apply -f -
+    name=$(echo $1 | jq -r '.metadata.name')
+    echo "foo create $name"
+    echo $1 | jq --arg milli $(date +%s) '. + {status:{outputs:{updated:$milli}}}' | kubectl apply -f -
   "foos-delete.sh": |
-    echo "foo delete $1"
+    name=$(echo $1 | jq -r '.metadata.name')
+    echo "foo delete $name"
