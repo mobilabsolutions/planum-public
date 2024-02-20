@@ -186,7 +186,7 @@ spec:
                   forProvider:
                     networkSecurityGroupIdSelector:
                       matchControllerRef: true
-                    subnetId: {{ printf "%s/subnets/%s" $.observed.composite.resource.spec.parameters.virtualNetworkId $subnets.name }}
+                    subnetId: "/subscriptions/33424ac3-8b4d-499b-a4eb-4835038029b2/resourceGroups/rg-dmlz3-tst-eastus/providers/Microsoft.Network/virtualNetworks/vnet-dmlz3-tst-eastus/subnets/snet-cp-dmlz-eus-dbw-public"
                   providerConfigRef:
                     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
                 {{ end }}
@@ -204,7 +204,7 @@ spec:
                   forProvider:
                     networkSecurityGroupIdSelector:
                       matchControllerRef: true
-                    subnetId: {{ printf "%s/subnets/%s" $.observed.composite.resource.spec.parameters.virtualNetworkId $subnets.name }}
+                    subnetId: "/subscriptions/33424ac3-8b4d-499b-a4eb-4835038029b2/resourceGroups/rg-dmlz3-tst-eastus/providers/Microsoft.Network/virtualNetworks/vnet-dmlz3-tst-eastus/subnets/snet-cp-dmlz-eus-dbw-private"
                   providerConfigRef:
                     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
                 {{ end }}
