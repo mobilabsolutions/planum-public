@@ -19,6 +19,13 @@ spec:
                   type: string
               required:
                 - bar
+            status:
+              type: object
+              properties:
+                outputs:
+                  type: object
+                  additionalProperties:
+                    type: string
   names:
     kind: Foo
     plural: foos
