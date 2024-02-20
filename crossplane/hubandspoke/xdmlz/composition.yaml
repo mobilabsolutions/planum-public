@@ -186,10 +186,7 @@ spec:
                   forProvider:
                     networkSecurityGroupIdSelector:
                       matchControllerRef: true
-                    subnetIdSelector:
-                      matchControllerRef: true
-                      matchLabels:
-                        name: {{ $subnets.name }}
+                    subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   providerConfigRef:
                     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
                 {{ end }}
@@ -207,15 +204,13 @@ spec:
                   forProvider:
                     networkSecurityGroupIdSelector:
                       matchControllerRef: true
-                    subnetIdSelector:
-                      matchControllerRef: true
-                      matchLabels:
-                        name: {{ $subnets.name }}
+                    subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   providerConfigRef:
                     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
                 {{ end }}
               {{ end }}
             ---
+            {{ if and (ne $.observed.composite.resource.status.outputs.nsgAssociationPrivate "") (ne $.observed.composite.resource.status.outputs.nsgAssociationPublic "") }}
             apiVersion: databricks.azure.upbound.io/v1beta1
             kind: Workspace
             metadata:
@@ -297,6 +292,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{ end }}
+            {{ end }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XDmlz
@@ -310,12 +306,12 @@ spec:
                 databricksId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.id }}
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                 nsgId: {{ (index $.observed.resources (printf "nsg-dbw-%s" $prefix)).resource.status.atProvider.id }}
-                {{ if contains "dbw-public" $subnets.name }}
-                nsgAssociationPublic: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                {{ if and (eq $.observed.resources nil) (contains "dbw-public" $subnets.name) }}
+                nsgAssociationPublic: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPublicSubnetName: {{ $subnets.name }}
                 {{ end }}
-                {{ if contains "dbw-private" $subnets.name }}
-                nsgAssociationPrivate: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                {{ if and (eq $.observed.resources nil) (contains "dbw-private" $subnets.name) }}
+                nsgAssociationPrivate: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPrivateSubnetName: {{ $subnets.name }}
                 {{ end }}
             {{ end }}
