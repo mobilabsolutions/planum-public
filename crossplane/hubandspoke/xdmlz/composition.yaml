@@ -229,9 +229,9 @@ spec:
                 customParameters:
                   - noPublicIp: true
                     publicSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPublicSubnetName }}
-                    publicSubnetNetworkSecurityGroupAssociationId: {{ eq $.observed.composite.resource.status.outputs.nsgId nil | ternary "-" $.observed.composite.resource.status.outputs.nsgId }}
+                    publicSubnetNetworkSecurityGroupAssociationId: {{ eq $.observed.composite.resource.status.outputs.nsgId nil | ternary "" $.observed.composite.resource.status.outputs.nsgId }}
                     privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
-                    privateSubnetNetworkSecurityGroupAssociationId: {{ eq $.observed.composite.resource.status.outputs.nsgId nil | ternary "-" $.observed.composite.resource.status.outputs.nsgId}}
+                    privateSubnetNetworkSecurityGroupAssociationId: {{ eq $.observed.composite.resource.status.outputs.nsgId nil | ternary "" $.observed.composite.resource.status.outputs.nsgId}}
                     virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkId }}
                     vnetAddressPrefix: "{{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkPrefix }}"
               providerConfigRef:
