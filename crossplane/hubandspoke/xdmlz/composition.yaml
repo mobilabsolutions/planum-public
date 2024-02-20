@@ -180,13 +180,12 @@ spec:
                   annotations:
                     gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-public-{{ $subnets.name }}
                     gotemplating.fn.crossplane.io/ready: "True"
-                    crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   name: nsg-association-public-{{ $subnets.name }}
                 spec:
                   forProvider:
                     networkSecurityGroupIdSelector:
                       matchControllerRef: true
-                    subnetId: "/subscriptions/33424ac3-8b4d-499b-a4eb-4835038029b2/resourceGroups/rg-dmlz3-tst-eastus/providers/Microsoft.Network/virtualNetworks/vnet-dmlz3-tst-eastus/subnets/snet-cp-dmlz-eus-dbw-public"
+                    subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   providerConfigRef:
                     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
                 {{ end }}
@@ -198,19 +197,17 @@ spec:
                   annotations:
                     gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-private-{{ $subnets.name }}
                     gotemplating.fn.crossplane.io/ready: "True"
-                    crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   name: nsg-association-private-{{ $subnets.name }}
                 spec:
                   forProvider:
                     networkSecurityGroupIdSelector:
                       matchControllerRef: true
-                    subnetId: "/subscriptions/33424ac3-8b4d-499b-a4eb-4835038029b2/resourceGroups/rg-dmlz3-tst-eastus/providers/Microsoft.Network/virtualNetworks/vnet-dmlz3-tst-eastus/subnets/snet-cp-dmlz-eus-dbw-private"
+                    subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   providerConfigRef:
                     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
                 {{ end }}
               {{ end }}
             ---
-            {{ if and (ne $.observed.composite.resource.status.outputs.nsgAssociationPrivate "") (ne $.observed.composite.resource.status.outputs.nsgAssociationPublic "") }}
             apiVersion: databricks.azure.upbound.io/v1beta1
             kind: Workspace
             metadata:
@@ -228,10 +225,10 @@ spec:
                 networkSecurityGroupRulesRequired: "NoAzureDatabricksRules"
                 customParameters:
                   - noPublicIp: true
-                    publicSubnetName: "snet-cp-dmlz-eus-dbw-public"
-                    publicSubnetNetworkSecurityGroupAssociationId: {{ eq $.observed.composite.resource.status.outputs.nsgId nil | ternary "" $.observed.composite.resource.status.outputs.nsgId }}
-                    privateSubnetName: "snet-cp-dmlz-eus-dbw-private"
-                    privateSubnetNetworkSecurityGroupAssociationId: {{ eq $.observed.composite.resource.status.outputs.nsgId nil | ternary "" $.observed.composite.resource.status.outputs.nsgId}}
+                    publicSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPublicSubnetName }}
+                    publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.publicNsgAssociationId }}
+                    privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
+                    privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.privateNsgAssociationId }}
                     virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkId }}
                     vnetAddressPrefix: "{{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkPrefix }}"
               providerConfigRef:
@@ -292,7 +289,6 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{ end }}
-            {{ end }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XDmlz
@@ -305,13 +301,12 @@ spec:
                 {{ $dbwId := printf "%s-%s" "dbw" $prefix }}
                 databricksId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.id }}
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                nsgId: {{ (index $.observed.resources (printf "nsg-dbw-%s" $prefix)).resource.status.atProvider.id }}
-                {{ if and (eq $.observed.resources nil) (contains "dbw-public" $subnets.name) }}
-                nsgAssociationPublic: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
+                {{ if contains "dbw-public" $subnets.name }}
+                publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPublicSubnetName: {{ $subnets.name }}
                 {{ end }}
-                {{ if and (eq $.observed.resources nil) (contains "dbw-private" $subnets.name) }}
-                nsgAssociationPrivate: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
+                {{ if contains "dbw-private" $subnets.name }}
+                privateNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPrivateSubnetName: {{ $subnets.name }}
                 {{ end }}
             {{ end }}
