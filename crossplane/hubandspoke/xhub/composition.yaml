@@ -28,6 +28,15 @@ spec:
         name: foohub
       spec:
         bar: hub
+    patches:
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: metadata.name
+          strategy: string
+          string:
+            fmt: "foo-%s"
+        toFieldPath: metadata.name
   - name: network
     base:
       apiVersion: planum.mblb.net/v1alpha1
