@@ -178,7 +178,7 @@ spec:
                 kind: SubnetNetworkSecurityGroupAssociation
                 metadata:
                   annotations:
-                    gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                    gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-public-{{ $subnets.name }}
                     gotemplating.fn.crossplane.io/ready: "True"
                     crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   name: nsg-association-public-{{ $subnets.name }}
@@ -199,7 +199,7 @@ spec:
                 kind: SubnetNetworkSecurityGroupAssociation
                 metadata:
                   annotations:
-                    gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                    gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-private-{{ $subnets.name }}
                     gotemplating.fn.crossplane.io/ready: "True"
                     crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                   name: nsg-association-private-{{ $subnets.name }}
@@ -328,7 +328,7 @@ spec:
               kind: SubnetRouteTableAssociation
               metadata:
                 annotations:
-                  gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                  gotemplating.fn.crossplane.io/composition-resource-name: rt-association-{{ $subnets.name }}
                   gotemplating.fn.crossplane.io/ready: "True"
                 name: rt-association-{{ $subnets.name }}
               spec:
