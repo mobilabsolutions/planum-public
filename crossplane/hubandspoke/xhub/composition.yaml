@@ -20,6 +20,14 @@ spec:
       toFieldPath: spec.forProvider.location
 
   resources:
+  - name: foo
+    base:
+      apiVersion: planum.mblb.net/v1alpha1
+      kind: Foo
+      metadata:
+        name: foohub
+      spec:
+        bar: hub
   - name: network
     base:
       apiVersion: planum.mblb.net/v1alpha1
