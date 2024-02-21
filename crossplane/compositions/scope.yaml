@@ -17,7 +17,7 @@ spec:
           forProvider:
             name: X
             location: "westeurope"
-            resourceGroupName: X
+            resourceGroupName: "ramin-rg-2"
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
@@ -30,9 +30,6 @@ spec:
             string:
               fmt: "identity-%s"
           toFieldPath: metadata.name
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: vmResourceGroup
-          toFieldPath: spec.forProvider.resourceGroupName
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.clientId
           toFieldPath: status.outputs['clientId']
