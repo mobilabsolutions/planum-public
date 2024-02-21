@@ -9,6 +9,7 @@ data:
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
     principalId=$(kubectl get configmap vm -n planum -ojson | jq -r '.data.vmIdentityPrincipalId')
     az login --identity --username $principalId
+    az extension add --upgrade -n dns-resolver
     apk add github-cli
     while true
     do
@@ -53,6 +54,11 @@ data:
           "api-resource": "foos.v1alpha1.planum.mblb.net",
           "create-script": "foos-create.sh",
           "delete-script": "foos-delete.sh"
+        },
+        {
+          "api-resource": "inboundendpoint.v1alpha1.planum.mblb.net",
+          "create-script": "resolverinboundendpoint-create.sh",
+          "delete-script": "resolverinboundendpoint-delete.sh"
         }
       ]      
     }
@@ -132,3 +138,37 @@ data:
   "foos-delete.sh": |
     name=$(echo $1 | jq -r '.metadata.name')
     echo "foo delete $name"
+
+  "resolverinboundendpoint-create.sh": |
+    echo "resolverinboundendpoint create $1"
+    LOCATION=$(echo $1 | jq -r '.spec.location')
+    RESOURCE_GROUP_NAME=$(echo $1 | jq -r '.spec.resourceGroupName')
+    DNS_RESOLVER_NAME=$(echo $1 | jq -r '.spec.privateDnsResolverName')
+    SUBNET_ID=$(echo $1 | jq -r '.spec.subnetId')
+
+    existing=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" 2>&1 | grep subscriptions | grep dnsResolvers | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
+    if [[ "$existing" == *"ResourceNotFound"* ]]
+    then
+      echo "Inbound Endpoint already exist in $DNS_RESOLVER_NAME"
+    else
+      az dns-resolver inbound-endpoint create --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations [{id:$SUBNET_ID}] --resource-group $RESOURCE_GROUP_NAME
+      INBOUND_IP=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" --query "[ipConfigurations[0].privateIpAddress]" -o tsv)
+      TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      echo $1 | jq --arg TIME "$TIME" --arg INBOUND_IP "$INBOUND_IP" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.atProvider.inboundEndpointIp = $INBOUND_IP | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
+    fi
+
+  "resolverinboundendpoint-delete.sh": |
+    echo "resolverinboundendpoint delete $1"
+    LOCATION=$(echo $1 | jq -r '.spec.location')
+    RESOURCE_GROUP_NAME=$(echo $1 | jq -r '.spec.resourceGroupName')
+    DNS_RESOLVER_NAME=$(echo $1 | jq -r '.spec.privateDnsResolverName')
+    SUBNET_ID=$(echo $1 | jq -r '.spec.subnetId')
+
+    existing=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" 2>&1 | grep subscriptions | grep dnsResolvers | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
+    if [[ "$existing" == *"ResourceNotFound"* ]]
+    then
+      az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME
+    else
+      echo "Inbound Endpoint does not exist"
+    fi
+    echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
