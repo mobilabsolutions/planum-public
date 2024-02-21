@@ -48,8 +48,6 @@ spec:
             principalId: X
             roleDefinitionName: Contributor
             scope: X
-          providerConfigRef:
-            name: X
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: status.outputs['principalId']
