@@ -230,7 +230,6 @@ spec:
                     privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
                     privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.privateNsgAssociationId }}
                     virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkId }}
-                    vnetAddressPrefix: "{{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkPrefix }}"
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
