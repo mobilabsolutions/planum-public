@@ -1,0 +1,78 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: scope
+spec:
+  environment:
+    environmentConfigs:
+      - type: Reference
+        ref:
+          name: vm
+  resources:
+    - name: UserAssignedIdentity
+      base:
+        apiVersion: managedidentity.azure.upbound.io/v1beta1
+        kind: UserAssignedIdentity
+        spec:
+          forProvider:
+            name: X
+            location: "westeurope"
+            resourceGroupName: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "identity-%s"
+          toFieldPath: metadata.name
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmResourceGroup
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.clientId
+          toFieldPath: status.outputs['clientId']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.principalId
+          toFieldPath: status.outputs['principalId']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.outputs['identityId']
+    - name: role-assignment-contributor
+      base:
+        apiVersion: authorization.azure.upbound.io/v1beta1
+        kind: RoleAssignment
+        spec:
+          forProvider:
+            principalId: X
+            roleDefinitionName: Contributor
+            scope: X
+          providerConfigRef:
+            name: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.outputs['principalId']
+          toFieldPath: spec.forProvider.principalId
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.subscriptionId
+            strategy: string
+            string:
+              fmt: "/subscription/%s"
+          toFieldPath: spec.forProvider.scope
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "role-contributor-%s"
+          toFieldPath: metadata.name
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XScope

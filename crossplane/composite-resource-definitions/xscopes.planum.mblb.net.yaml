@@ -1,0 +1,30 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xscopes.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XScope
+    plural: xscopes
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                subscriptionId:
+                  type: string
+                repo:
+                  type: string
+              required:
+                - subscriptionId
+                - repo
+      served: true
+      referenceable: true
+  claimNames:
+    kind: Scope
+    plural: scopes
