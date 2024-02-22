@@ -46,22 +46,33 @@ spec:
                     type: string
                   routeTableId: 
                     type: string
+                  virtualNetworkId:
+                    type: string
+                  virtualNetworkPrefix:
+                    type: string
                   subnets:
                     type: array
+                    default:
+                    - name: "snet-dmlz-eventhub"
+                      addressPostfix: "64/28"
+                    - name: "snet-dmlz-agent"
+                      addressPostfix: "80/29"
+                    - name: "snet-dmlz-pe"
+                      addressPostfix: "96/27"
+                    - name: "snet-dmlz-dbw-public"
+                      addressPostfix: "128/26"
+                    - name: "snet-dmlz-dbw-private"
+                      addressPostfix: "192/26"
                     items:
                       type: object
                       properties:
                         name:
                           type: string
-                        addressSpace:
+                        addressPostfix:
                           type: string
                   databricksConfig:
                     type: object
                     properties:
-                      virtualNetworkId:
-                        type: string
-                      virtualNetworkPrefix:
-                        type: string
                       privateDnsZoneId:
                         type: string
           status:

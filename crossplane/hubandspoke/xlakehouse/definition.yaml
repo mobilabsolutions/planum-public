@@ -61,8 +61,6 @@ spec:
                   databricksConfig:
                     type: object
                     properties:
-                      virtualNetworkPrefix:
-                        type: string
                       privateDnsZoneId:
                         type: string
 

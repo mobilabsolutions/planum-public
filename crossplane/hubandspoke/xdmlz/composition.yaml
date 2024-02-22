@@ -44,7 +44,7 @@ spec:
             spec:
               forProvider:
                 addressPrefixes: 
-                - {{ $subnets.addressSpace }}
+                - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
                 resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
                 virtualNetworkName: {{ $.observed.composite.resource.spec.parameters.vnetName }}
                 {{ if contains "dbw" $subnets.name }}
@@ -229,7 +229,7 @@ spec:
                     publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.publicNsgAssociationId }}
                     privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
                     privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.privateNsgAssociationId }}
-                    virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkId }}
+                    virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.virtualNetworkId }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---

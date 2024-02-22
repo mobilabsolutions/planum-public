@@ -172,6 +172,59 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            {{ if ne $.observed.resources nil }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: rt-association-{{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: rt-association-{{ $subnets.name }}
+            spec:
+              forProvider:
+                routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    name: {{ $subnets.name }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            {{ if contains "dbw-public" $subnets.name }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetNetworkSecurityGroupAssociation
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name:  nsg-association-public-{{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nsg-association-public-{{ $subnets.name }}
+            spec:
+              forProvider:
+                networkSecurityGroupIdSelector:
+                  matchControllerRef: true
+                subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
+            ---
+            {{ if contains "dbw-private" $subnets.name }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetNetworkSecurityGroupAssociation
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-private-{{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nsg-association-private-{{ $subnets.name }}
+            spec:
+              forProvider:
+                networkSecurityGroupIdSelector:
+                  matchControllerRef: true
+                subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
+            {{ end }}
+            ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XLakehouse
             status:
@@ -181,7 +234,6 @@ spec:
             status:
               outputs:
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                nsgId: {{ (index $.observed.resources (printf "nsg-dbw-%s" $prefix)).resource.status.atProvider.id }}
                 adlsId: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 databricksId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.id }}
                 dbwUrl: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
@@ -191,11 +243,11 @@ spec:
                 {{ $adfIdentities := (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.identity }}
                 adfIdentityPrincipalId: {{ index $adfIdentities 0 "principalId" }}
                 {{ if contains "dbw-public" $subnets.name }}
-                nsgAssociationPublic: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPublicSubnetName: {{ $subnets.name }}
                 {{ end }}
                 {{ if contains "dbw-private" $subnets.name }}
-                nsgAssociationPrivate: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                privateNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPrivateSubnetName: {{ $subnets.name }}
                 {{ end }}
             {{ end }}
@@ -263,11 +315,10 @@ spec:
                 customParameters:
                   - noPublicIp: true
                     publicSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPublicSubnetName }}
-                    publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.nsgId }}
+                    publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.publicNsgAssociationId }}
                     privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
-                    privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.nsgId }}
+                    privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.privateNsgAssociationId }}
                     virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.vnetId }}
-                    vnetAddressPrefix: "{{ $.observed.composite.resource.spec.parameters.databricksConfig.virtualNetworkPrefix }}"
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
@@ -538,73 +589,6 @@ spec:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
               {{- end }}
             {{ end }}
-            {{- end }}
-            ---
-            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
-              {{- if ne $.observed.resources nil }}
-            ---
-              apiVersion: network.azure.upbound.io/v1beta1
-              kind: SubnetRouteTableAssociation
-              metadata:
-                annotations:
-                  gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                  gotemplating.fn.crossplane.io/ready: "True"
-                name: rt-association-{{ $subnets.name }}
-              spec:
-                forProvider:
-                  routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
-                  subnetIdSelector:
-                    matchControllerRef: true
-                    matchLabels:
-                      name: {{ $subnets.name }}
-                providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              {{- end }}
-            {{- end }}
-            ---
-            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
-            ---
-              {{ if and (ne $.observed.resources nil) (contains "dbw-public" $subnets.name) }}
-                apiVersion: network.azure.upbound.io/v1beta1
-                kind: SubnetNetworkSecurityGroupAssociation
-                metadata:
-                  annotations:
-                    gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                    gotemplating.fn.crossplane.io/ready: "True"
-                    crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                  name: nsg-association-public-{{ $subnets.name }}
-                spec:
-                  forProvider:
-                    networkSecurityGroupIdSelector:
-                      matchControllerRef: true
-                    subnetIdSelector:
-                      matchControllerRef: true
-                      matchLabels:
-                        name: {{ $subnets.name }}
-                  providerConfigRef:
-                    name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              {{ end }}
-            ---
-              {{ if and (ne $.observed.resources nil) (contains "dbw-private" $subnets.name) }}
-                apiVersion: network.azure.upbound.io/v1beta1
-                kind: SubnetNetworkSecurityGroupAssociation
-                metadata:
-                  annotations:
-                    gotemplating.fn.crossplane.io/composition-resource-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                    gotemplating.fn.crossplane.io/ready: "True"
-                    crossplane.io/external-name: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                  name: nsg-association-private-{{ $subnets.name }}
-                spec:
-                  forProvider:
-                    networkSecurityGroupIdSelector:
-                      matchControllerRef: true
-                    subnetIdSelector:
-                      matchControllerRef: true
-                      matchLabels:
-                        name: {{ $subnets.name }}
-                  providerConfigRef:
-                    name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              {{ end }}
             {{- end }}
 
     - step: auto-ready
