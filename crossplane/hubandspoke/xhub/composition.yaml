@@ -67,14 +67,8 @@ spec:
       fromFieldPath: status.outputs['VirtualNetworkName']
       toFieldPath: status.outputs['HubVirtualNetworkName']
     - type: FromCompositeFieldPath
-      fromFieldPath: status.outputs['fwPrivateIpAddress']
+      fromFieldPath: status.outputs['inboundEndpointIp']
       toFieldPath: spec.parameters.dnsServers[0]
-    # - type: ToCompositeFieldPath
-    #   fromFieldPath: status.outputs['gatewaysubnet']
-    #   toFieldPath: status.outputs['gatewaysubnet']
-    # - type: ToCompositeFieldPath
-    #   fromFieldPath: status.outputs['snet-cp-westeurope-dns']
-    #   toFieldPath: status.outputs['snet-cp-westeurope-dns']
 
   - name: dns
     base:
@@ -109,6 +103,12 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: status.outputs['HubVirtualNetworkId']
       toFieldPath: spec.parameters.hubVirtualNetworkId
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.outputs['dnssubnet']
+      toFieldPath: spec.parameters.dnsSubnetId
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
+      toFieldPath: status.outputs['inboundEndpointIp']
 
   - name: public-ip
     base:

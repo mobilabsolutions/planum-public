@@ -45,6 +45,9 @@ spec:
                   hubVirtualNetworkId:
                     type: string
                     default: ""
+                  dnsSubnetId:
+                    type: string
+                    default: ""
                 required:
                   - dnsZoneNames
           status:

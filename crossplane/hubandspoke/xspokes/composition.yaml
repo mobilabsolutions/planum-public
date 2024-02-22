@@ -42,6 +42,8 @@ spec:
                 subnets: 
                 - name: "GatewaySubnet"
                   addressSpace: {{ printf "%s.0/26" $hubConfig.vnetAddressPrefix }}
+                - name: "DnsSubnet"
+                  addressSpace: {{ printf "%s.64/26" $hubConfig.vnetAddressPrefix }}
                 - name: AzureFirewallManagementSubnet
                   addressSpace: {{ printf "%s.128/26" $hubConfig.vnetAddressPrefix }}
                 - name: AzureFirewallSubnet
@@ -132,7 +134,7 @@ spec:
               parameters:
                 vnetAddressSpace: {{ $spoke.vnetAddressSpace }}
                 dnsServers: 
-                - {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
+                - {{ $.observed.composite.resource.status.outputs.inboundEndpointIp }}
                 {{ if $spoke.subnets }}
                 subnets: {{ $spoke.subnets | toYaml | nindent 4 }}
                 {{ else }}

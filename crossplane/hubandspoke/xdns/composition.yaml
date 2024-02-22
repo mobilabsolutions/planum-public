@@ -20,6 +20,34 @@ spec:
         source: Inline
         inline:
           template: |
+            {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $.observed.composite.resource.spec.resourceConfig.location  }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateDNSResolver
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: dnspr-{{ $prefix }}
+              name: dnspr-{{ $prefix }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.hubVirtualNetworkId }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: InboundEndpoint
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: in-{{ $prefix }}
+              name: in-{{ $prefix }}
+            spec:
+              resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+              location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+              privateDnsResolverName: {{ printf "dnspr-%s" $prefix }}
+              subnetId: {{ $.observed.composite.resource.spec.parameters.dnsSubnetId }}
+            ---
             {{- range $name := .observed.composite.resource.spec.parameters.dnsZoneNames }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
@@ -57,6 +85,7 @@ spec:
             status:
               outputs:
                 {{ $name | lower }}: {{ (index $.observed.resources $name).resource.status.atProvider.id }}
+                privateDnsResolverInboundEndpointIp: {{ (index $.observed.resources (printf "in-%s" $prefix)).resource.status.atProvider.inboundEndpointIp }}
             {{ end }}
             {{- end }}
 
