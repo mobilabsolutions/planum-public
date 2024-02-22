@@ -4,7 +4,6 @@ metadata:
   name: azcli
   namespace: planum
 spec:
-  serviceAccountName: az-cli-sa
   containers:
     - image: mcr.microsoft.com/azure-cli
       command:
