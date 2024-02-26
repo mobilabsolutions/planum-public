@@ -47,6 +47,9 @@ spec:
                         type: string
                       vnetGatewayConfig:
                         type: object
+                        default:
+                          addressSpace:
+                          - "192.168.100.0/24"
                         properties:
                           sku:
                             type: string
@@ -55,8 +58,6 @@ spec:
                             items:
                               type: string
                             type: array
-                            default: 
-                            - "192.168.100.0/24"
                           vpnClientProtocols:
                             enum:
                             - SSTP
