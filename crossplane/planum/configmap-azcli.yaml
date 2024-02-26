@@ -151,7 +151,7 @@ data:
     az account set --subscription $subscriptionId
 
     existing=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" 2>&1 | grep subscriptions | grep dnsResolvers | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
-    if [[ "$existing" == *"ResourceNotFound"* ]]
+    if ! [[ "$existing" == *"ResourceNotFound"* ]]
     then
       echo "Inbound Endpoint already exist in $DNS_RESOLVER_NAME"
     else
@@ -173,7 +173,7 @@ data:
     az account set --subscription $subscriptionId
 
     existing=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" 2>&1 | grep subscriptions | grep dnsResolvers | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
-    if [[ "$existing" == *"ResourceNotFound"* ]]
+    if ! [[ "$existing" == *"ResourceNotFound"* ]]
     then
       az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME
     else
