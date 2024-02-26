@@ -64,6 +64,7 @@ spec:
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: dnspr-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
               name: dnspr-{{ $prefix }}
             spec:
               forProvider:
@@ -78,6 +79,7 @@ spec:
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: in-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
               name: in-{{ $prefix }}
             spec:
               resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
@@ -93,6 +95,7 @@ spec:
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}
+                gotemplating.fn.crossplane.io/ready: "True"
                 crossplane.io/external-name: {{ $name }}
               name: {{ $name | replace "." "-"}}
             spec:
@@ -106,6 +109,7 @@ spec:
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $name }}-link
+                gotemplating.fn.crossplane.io/ready: "True"
                 crossplane.io/external-name: {{ $name }}-link
               name: to-hub-{{ $name | replace "." "-"}}
             spec:

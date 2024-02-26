@@ -123,6 +123,11 @@ spec:
       toFieldPath: metadata.name
 
   - name: public-ip
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: PublicIP
@@ -153,6 +158,11 @@ spec:
         toFieldPath: metadata.name  
 
   - name: vnet-gateway
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: VirtualNetworkGateway
@@ -221,6 +231,11 @@ spec:
         toFieldPath: status.outputs['VnetGwId']
 
   - name: local-network-gw
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: LocalNetworkGateway
@@ -259,6 +274,11 @@ spec:
         toFieldPath: status.outputs['LgwId']
 
   - name: vnetgw-connection
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: VirtualNetworkGatewayConnection
@@ -296,6 +316,11 @@ spec:
         toFieldPath: spec.forProvider.sharedKeySecretRef.key
 
   - name: public-ip-fw
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: PublicIP
@@ -326,6 +351,11 @@ spec:
         toFieldPath: metadata.name
 
   - name: azure-fw
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: Firewall
@@ -367,6 +397,11 @@ spec:
         toFieldPath: metadata.name
 
   - name: fw-rule
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: FirewallNetworkRuleCollection
