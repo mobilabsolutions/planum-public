@@ -84,7 +84,7 @@ data:
     id=$(echo $1 | jq -r '.spec.identity')
     VM_RG=$(echo $1 | jq -r '.spec.vmResourceGroup')
     VM_NAME=$(echo $1 | jq -r '.spec.vmName')
-    $subscriptionId=$(echo $1 | jq -r '.spec.$subscriptionId')
+    subscriptionId=$(echo $1 | jq -r '.spec.$subscriptionId')
     az account set --subscription $subscriptionId
 
     existing=$(az vm identity show -g $VM_RG -n $VM_NAME | grep "$id\":")
