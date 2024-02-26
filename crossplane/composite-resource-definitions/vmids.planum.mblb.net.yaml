@@ -21,10 +21,13 @@ spec:
                   type: string
                 vmName:
                   type: string
+                subscriptionId:
+                  type: string
               required:
                 - identity
                 - vmResourceGroup
                 - vmName
+                - subscriptionId
   names:
     kind: VmId
     plural: vmids

@@ -23,6 +23,13 @@ spec:
               required:
                 - subscriptionId
                 - repo
+            status:
+              type: object
+              properties:
+                outputs:
+                  type: object
+                  additionalProperties:
+                    type: string
       served: true
       referenceable: true
   claimNames:

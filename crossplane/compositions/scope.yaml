@@ -1,0 +1,239 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: scope
+spec:
+  environment:
+    environmentConfigs:
+      - type: Reference
+        ref:
+          name: vm
+  resources:
+    - name: UserAssignedIdentity
+      base:
+        apiVersion: managedidentity.azure.upbound.io/v1beta1
+        kind: UserAssignedIdentity
+        spec:
+          forProvider:
+            name: X
+            location: "westeurope"
+            resourceGroupName: "rg-planum"
+          providerConfigRef:
+            name: "612bb09a-4f0b-42b6-ab74-cf32aa217610"
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "identity-%s"
+          toFieldPath: metadata.name
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.clientId
+          toFieldPath: status.outputs['clientId']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.principalId
+          toFieldPath: status.outputs['principalId']
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.outputs['identityId']
+    - name: role-assignment-contributor
+      base:
+        apiVersion: authorization.azure.upbound.io/v1beta1
+        kind: RoleAssignment
+        spec:
+          forProvider:
+            principalId: X
+            roleDefinitionName: Contributor
+            scope: X
+          providerConfigRef:
+            name: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.outputs['principalId']
+          toFieldPath: spec.forProvider.principalId
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.subscriptionId
+          toFieldPath: spec.providerConfigRef.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.subscriptionId
+            strategy: string
+            string:
+              fmt: "/subscriptions/%s"
+          toFieldPath: spec.forProvider.scope
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "role-contributor-%s"
+          toFieldPath: metadata.name
+    - name: role-assignment-uaa
+      base:
+        apiVersion: authorization.azure.upbound.io/v1beta1
+        kind: RoleAssignment
+        spec:
+          forProvider:
+            principalId: X
+            roleDefinitionName: User Access Administrator
+            scope: X
+          providerConfigRef:
+            name: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.outputs['principalId']
+          toFieldPath: spec.forProvider.principalId
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.subscriptionId
+          toFieldPath: spec.providerConfigRef.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.subscriptionId
+            strategy: string
+            string:
+              fmt: "/subscriptions/%s"
+          toFieldPath: spec.forProvider.scope
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "role-uaa-%s"
+          toFieldPath: metadata.name
+    - name: provider-config
+      base:
+        apiVersion: azure.upbound.io/v1beta1
+        kind: ProviderConfig
+        spec:
+          credentials:
+            source: UserAssignedManagedIdentity
+          subscriptionID: X
+          tenantID: f2658745-f87e-4fb9-8ff6-6b616a8cec41
+          clientID: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.subscriptionId
+          toFieldPath: spec.subscriptionID
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.outputs['clientId']
+          toFieldPath: spec.clientID
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "provider-config-scope-%s"
+          toFieldPath: metadata.name
+    - name: github-repo
+      base:
+        apiVersion: planum.mblb.net/v1alpha1
+        kind: GitHubRepo
+        spec:
+          name: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.repo
+          toFieldPath: spec.name
+    - name: vmid
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: planum.mblb.net/v1alpha1
+              kind: VmId
+              metadata:
+                name: X
+              spec:
+                identity: X
+                vmResourceGroup: X
+                vmName: X
+                subscriptionId: X
+          providerConfigRef:
+            name: kubernetes
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.outputs['identityId']
+          toFieldPath: spec.forProvider.manifest.spec.identity
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmResourceGroup
+          toFieldPath: spec.forProvider.manifest.spec.vmResourceGroup
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmName
+          toFieldPath: spec.forProvider.manifest.spec.vmName
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: subscriptionId
+          toFieldPath: spec.forProvider.manifest.spec.subscriptionId
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "vm-id-%s"
+          toFieldPath: spec.forProvider.manifest.metadata.name
+    - name: argocd-application
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: X
+                namespace: argocd
+              spec:
+                destination:
+                  namespace: X
+                  server: https://kubernetes.default.svc
+                project: default
+                source:
+                  directory:
+                    jsonnet: {}
+                    recurse: true
+                  path: .
+                  repoURL: X
+                  targetRevision: HEAD
+                syncPolicy:
+                  automated: {}
+          providerConfigRef:
+            name: kubernetes
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.manifest.metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.manifest.spec.destination.namespace
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.repo
+            strategy: string
+            string:
+              fmt: "https://github.com/mobilabsolutions/%s"
+          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "argocd-app-%s"
+          toFieldPath: metadata.name
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XScope
