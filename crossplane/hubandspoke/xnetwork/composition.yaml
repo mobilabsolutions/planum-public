@@ -162,7 +162,7 @@ spec:
             status:
               outputs:
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                routeTableId: {{ $.desired.composite.resource.spec.parameters.routeTableId }}
+                routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
             {{ end }}
             {{- end }}
 
