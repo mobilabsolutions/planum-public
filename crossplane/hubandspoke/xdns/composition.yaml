@@ -113,6 +113,8 @@ spec:
                 privateDnsZoneName: {{ $name }}
                 resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
                 virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.hubVirtualNetworkId }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XDns
