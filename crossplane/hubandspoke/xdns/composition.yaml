@@ -84,6 +84,7 @@ spec:
               location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
               privateDnsResolverName: {{ printf "dnspr-%s" $prefix }}
               subnetId: {{ $.observed.composite.resource.spec.parameters.dnsSubnetId }}
+              providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             {{- range $name := .observed.composite.resource.spec.parameters.dnsZoneNames }}
             ---

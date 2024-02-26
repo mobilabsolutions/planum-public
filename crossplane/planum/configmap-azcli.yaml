@@ -145,6 +145,10 @@ data:
     RESOURCE_GROUP_NAME=$(echo $1 | jq -r '.spec.resourceGroupName')
     DNS_RESOLVER_NAME=$(echo $1 | jq -r '.spec.privateDnsResolverName')
     SUBNET_ID=$(echo $1 | jq -r '.spec.subnetId')
+    PCNAME=$(echo $1 | jq -r .spec.providerConfigName)
+
+    subscriptionId=$(kubectl get providerconfigs $PCNAME -o json  | jq .spec.subscriptionID)
+    az account set --subscription $subscriptionId
 
     existing=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" 2>&1 | grep subscriptions | grep dnsResolvers | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
     if [[ "$existing" == *"ResourceNotFound"* ]]
@@ -163,6 +167,10 @@ data:
     RESOURCE_GROUP_NAME=$(echo $1 | jq -r '.spec.resourceGroupName')
     DNS_RESOLVER_NAME=$(echo $1 | jq -r '.spec.privateDnsResolverName')
     SUBNET_ID=$(echo $1 | jq -r '.spec.subnetId')
+    PCNAME=$(echo $1 | jq -r .spec.providerConfigName)
+
+    subscriptionId=$(kubectl get providerconfigs $PCNAME -o json  | jq .spec.subscriptionID)
+    az account set --subscription $subscriptionId
 
     existing=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" 2>&1 | grep subscriptions | grep dnsResolvers | sed 's/\"//g; s/://g; s/{//g' | awk '{$1=$1};1')
     if [[ "$existing" == *"ResourceNotFound"* ]]

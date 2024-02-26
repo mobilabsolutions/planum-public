@@ -23,6 +23,8 @@ spec:
                   type: string
                 subnetId:
                   type: string
+                providerConfigName:
+                  type: string
 
               required:
                 - privateDnsResolverName
