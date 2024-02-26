@@ -21,6 +21,8 @@ spec:
 
   resources:
   - name: network
+    readinessChecks:
+    - type: None
     base:
       apiVersion: planum.mblb.net/v1alpha1
       kind: XNetwork
@@ -71,6 +73,8 @@ spec:
       toFieldPath: spec.parameters.dnsServers[0]
 
   - name: dns
+    readinessChecks:
+    - type: None
     base:
       apiVersion: planum.mblb.net/v1alpha1
       kind: XDns
