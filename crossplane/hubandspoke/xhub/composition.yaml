@@ -109,6 +109,14 @@ spec:
     - type: ToCompositeFieldPath
       fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
       toFieldPath: status.outputs['inboundEndpointIp']
+    - type: CombineFromComposite
+      combine:
+        variables:
+          - fromFieldPath: metadata.name
+        strategy: string
+        string:
+          fmt: "dns-%s"
+      toFieldPath: metadata.name
 
   - name: public-ip
     base:
@@ -352,4 +360,45 @@ spec:
           strategy: string
           string:
             fmt: "fw-%s-%s-%s"
+        toFieldPath: metadata.name
+
+  - name: fw-rule
+    base:
+      apiVersion: network.azure.upbound.io/v1beta1
+      kind: FirewallNetworkRuleCollection
+      metadata:
+        name:
+      spec:
+        forProvider:
+          action: Allow
+          azureFirewallNameSelector:
+            matchControllerRef: true
+          priority: 500
+          resourceGroupName:
+          rule:
+            - destinationAddresses:
+                - "*"
+              destinationPorts:
+                - "*"
+              name: allowall
+              protocols:
+                - Any
+              sourceAddresses:
+                - "*"
+    patches:
+      - type: FromCompositeFieldPath 
+        fromFieldPath: spec.resourceConfig.providerConfigName
+        toFieldPath: spec.providerConfigRef.name
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['HubResourceGroupName']
+        toFieldPath: spec.forProvider.resourceGroupName
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: metadata.name
+            - fromFieldPath: spec.resourceConfig.environment
+            - fromFieldPath: spec.resourceConfig.location
+          strategy: string
+          string:
+            fmt: "fw-rule-%s-%s-%s"
         toFieldPath: metadata.name

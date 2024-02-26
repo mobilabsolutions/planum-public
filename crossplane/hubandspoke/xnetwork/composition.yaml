@@ -92,6 +92,37 @@ spec:
               fromFieldPath: metadata.name
               toFieldPath: status.outputs['VirtualNetworkName']
 
+        - name: environment-config
+          base:
+            apiVersion: apiextensions.crossplane.io/v1alpha1
+            kind: EnvironmentConfig
+            metadata:
+              labels:
+                type: xnetwork
+                name: 
+              name: 
+            data:
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "ec-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: metadata.name
+              toFieldPath: metadata.labels.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs
+              toFieldPath: data.outputs
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.parameters.routeTableId
+              toFieldPath: data.outputs['routeTableId']
+
     - step: render-subnets
       functionRef:
         name: function-go-templating
@@ -131,6 +162,7 @@ spec:
             status:
               outputs:
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                routeTableId: {{ $.desired.composite.resource.spec.parameters.routeTableId }}
             {{ end }}
             {{- end }}
 

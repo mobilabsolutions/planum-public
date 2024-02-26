@@ -1,13 +1,13 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: xspokes.planum.mblb.net #has to be plural
+  name: xhubandspokes.planum.mblb.net #has to be plural
   labels:
     planum.mblb.net/managed-by: "true"
 spec:
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
-    kind: XSpoke #has to be singular
+    kind: XHubAndSpoke #has to be singular
 
   mode: Pipeline
   pipeline:
@@ -60,7 +60,7 @@ spec:
                 lgwGatewayConfig: {{- toYaml $hubConfig.lgwGatewayConfig | nindent 6 }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
-            kind: XSpoke
+            kind: XHubAndSpoke
             {{ if eq $.observed.resources nil }}
             status:
               outputs: {}
@@ -77,6 +77,8 @@ spec:
                 gotemplating.fn.crossplane.io/composition-resource-name: rt-hub-spokes
                 gotemplating.fn.crossplane.io/ready: "True"
                 crossplane.io/external-name: rt-hub-spokes
+              labels:
+                name: rt-hub-spokes 
               name: rt-hub-spokes
             spec:
               providerConfigRef: 
@@ -105,6 +107,8 @@ spec:
               forProvider:
                 routeTableIdSelector: 
                   matchControllerRef: true
+                  matchLabels:
+                    name: rt-hub-spokes
                 subnetId: {{ $.observed.composite.resource.status.outputs.gatewaysubnet }}
 
     - step: render-spokes-networking
@@ -135,6 +139,7 @@ spec:
                 vnetAddressSpace: {{ $spoke.vnetAddressSpace }}
                 dnsServers: 
                 - {{ $.observed.composite.resource.status.outputs.inboundEndpointIp }}
+                routeTableId: {{ (index $.observed.resources (printf "rt-%s-hub" $spoke.name)).resource.status.atProvider.id }}
                 {{ if $spoke.subnets }}
                 subnets: {{ $spoke.subnets | toYaml | nindent 4 }}
                 {{ else }}
@@ -142,7 +147,7 @@ spec:
                 {{ end }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
-            kind: XSpoke
+            kind: XHubAndSpoke
             {{ if eq $.observed.resources nil }}
             status:
               outputs: {}

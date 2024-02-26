@@ -40,13 +40,9 @@ spec:
                 description: DMLZ Input parameters
                 type: object
                 properties:
-                  resourceGroupName:
+                  xNetworkName:
                     type: string
-                  vnetName:
-                    type: string
-                  routeTableId: 
-                    type: string
-                  virtualNetworkId:
+                  xDnsName:
                     type: string
                   virtualNetworkPrefix:
                     type: string
@@ -70,11 +66,6 @@ spec:
                           type: string
                         addressPostfix:
                           type: string
-                  databricksConfig:
-                    type: object
-                    properties:
-                      privateDnsZoneId:
-                        type: string
           status:
             type: object
             properties:

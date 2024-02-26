@@ -5,12 +5,65 @@ metadata:
   labels:
     planum.mblb.net/managed-by: "true"
 spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xnetwork
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.parameters.xNetworkName
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xdns
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.parameters.xDnsName
+              
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XDmlz #has to be singular
 
   mode: Pipeline
   pipeline:
+    # - step: patch-and-transform
+    #   functionRef:
+    #     name: upbound-function-patch-and-transform
+    #   input:
+    #     apiVersion: pt.fn.crossplane.io/v1beta1
+    #     kind: Resources
+    #     metadata:
+    #       name:
+    #     resources:
+    #     - name: nop
+    #       base:
+    #         apiVersion: nop.crossplane.io/v1alpha1
+    #         kind: NopResource
+    #         spec:
+    #           forProvider:
+    #             fields:
+    #       patches:
+    #         - type: FromEnvironmentFieldPath
+    #           fromFieldPath: outputs
+    #           toFieldPath: spec.forProvider.fields
+    #         - type: ToCompositeFieldPath
+    #           fromFieldPath: spec.forProvider.fields
+    #           toFieldPath: status.outputs
+    #         - type: CombineFromComposite
+    #           combine:
+    #             variables:
+    #               - fromFieldPath: metadata.name
+    #             strategy: string
+    #             string:
+    #               fmt: "nop-%s"
+    #           toFieldPath: metadata.name
+
     - step: render-dmlz-objects
       functionRef:
         name: function-go-templating
@@ -27,6 +80,7 @@ spec:
               "germanywestcentral" "gwc"
               "switzerlandnorth" "sln"
             }}
+            {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
             {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
@@ -45,8 +99,8 @@ spec:
               forProvider:
                 addressPrefixes: 
                 - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
-                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
-                virtualNetworkName: {{ $.observed.composite.resource.spec.parameters.vnetName }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                virtualNetworkName: {{ $outputs.VirtualNetworkName }}
                 {{ if contains "dbw" $subnets.name }}
                 delegation:
                 - name: "subnet-delegation"
@@ -71,7 +125,7 @@ spec:
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 securityRule:
                 - access: "Allow"
                   description: "Required for worker nodes communication within a cluster."
@@ -219,7 +273,7 @@ spec:
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 sku: premium
                 publicNetworkAccessEnabled: false
                 networkSecurityGroupRulesRequired: "NoAzureDatabricksRules"
@@ -229,7 +283,7 @@ spec:
                     publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.publicNsgAssociationId }}
                     privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
                     privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.privateNsgAssociationId }}
-                    virtualNetworkId: {{ $.observed.composite.resource.spec.parameters.virtualNetworkId }}
+                    virtualNetworkId: {{ $outputs.VirtualNetworkId }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
@@ -245,11 +299,11 @@ spec:
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 privateDnsZoneGroup:
                   - name: pdzg-dbw
                     privateDnsZoneIds:
-                    - {{ $.observed.composite.resource.spec.parameters.databricksConfig.privateDnsZoneId }}
+                    - {{ index $outputs "privatelink.azuredatabricks.net" }}
                 privateServiceConnection:
                   - isManualConnection: false
                     name: psc-dbw
@@ -272,11 +326,11 @@ spec:
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $.observed.composite.resource.spec.parameters.resourceGroupName }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 privateDnsZoneGroup:
                   - name: pdzg-dbw-browser-auth
                     privateDnsZoneIds:
-                    - {{ $.observed.composite.resource.spec.parameters.databricksConfig.privateDnsZoneId }}
+                    - {{ index $outputs "privatelink.azuredatabricks.net" }}
                 privateServiceConnection:
                   - isManualConnection: false
                     name: psc-dbw-browser-auth
@@ -323,7 +377,7 @@ spec:
                 name: rt-association-{{ $subnets.name }}
               spec:
                 forProvider:
-                  routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
+                  routeTableId: {{ $outputs.routeTableId }}
                   subnetIdSelector:
                     matchControllerRef: true
                     matchLabels:

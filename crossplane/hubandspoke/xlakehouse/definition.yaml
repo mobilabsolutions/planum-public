@@ -29,8 +29,6 @@ spec:
                     type: string
                   environment:
                     type: string
-                  spokeName:
-                    type: string
                   tenantId:
                     type: string 
                 required:
@@ -40,54 +38,34 @@ spec:
                 description: DMLZ Input parameters
                 type: object
                 properties:
-                  resourceGroupName:
+                  xNetworkName:
                     type: string
-                  vnetName:
+                  xDnsName:
                     type: string
-                  vnetId:
-                    type: string
-                  routeTableId: 
+                  virtualNetworkPrefix:
                     type: string
                   subnets:
                     type: array
+                    default:
+                    - name: "snet-cp-spoke-eus-agent"
+                      addressPostfix: "64/29"
+                    - name: "snet-cp-spoke-eus-pe"
+                      addressPostfix: "0/26"
+                    - name: "snet-cp-spoke-eus-dbw-public"
+                      addressPostfix: "128/26"
+                    - name: "snet-cp-spoke-eus-dbw-private"
+                      addressPostfix: "192/26"
                     items:
                       type: object
                       properties:
                         name:
                           type: string
-                        addressSpace:
+                        addressPostfix:
                           type: string
-
-                  databricksConfig:
-                    type: object
-                    properties:
-                      privateDnsZoneId:
-                        type: string
-
-                  dataFactoryConfig:
-                    type: object
-                    properties:
-                      privateDnsZoneId:
-                        type: string
-
-                  adls:
-                    type: object
-                    properties:
-                      privateEndpoints:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            privateDnsZoneId:
-                              type: string
-                            subresourceNames:
-                              type: string
 
                   keyvault:
                     type: object
                     properties:
-                      privateDnsZoneId:
-                        type: string
                       accessPolicies:
                         type: array
                         items:

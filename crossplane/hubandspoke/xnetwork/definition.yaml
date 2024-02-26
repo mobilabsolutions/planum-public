@@ -42,6 +42,8 @@ spec:
                     type: array
                     items:
                       type: string
+                  routeTableId:
+                    type: string
                   dnsServers:
                     type: array
                     items:
