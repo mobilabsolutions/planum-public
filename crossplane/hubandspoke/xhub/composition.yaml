@@ -74,7 +74,8 @@ spec:
 
   - name: dns
     readinessChecks:
-    - type: None
+    - type: NonEmpty
+      fieldPath: status.outputs.privateDnsResolverInboundEndpointIp
     base:
       apiVersion: planum.mblb.net/v1alpha1
       kind: XDns
