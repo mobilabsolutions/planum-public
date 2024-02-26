@@ -139,7 +139,11 @@ spec:
                 vnetAddressSpace: {{ $spoke.vnetAddressSpace }}
                 dnsServers: 
                 - {{ $.observed.composite.resource.status.outputs.inboundEndpointIp }}
+                  {{ if eq $.observed.resources nil }}
+                routeTableId: ""
+                  {{ else }}
                 routeTableId: {{ (index $.observed.resources (printf "rt-%s-hub" $spoke.name)).resource.status.atProvider.id }}
+                  {{ end }}
                 {{ if $spoke.subnets }}
                 subnets: {{ $spoke.subnets | toYaml | nindent 4 }}
                 {{ else }}

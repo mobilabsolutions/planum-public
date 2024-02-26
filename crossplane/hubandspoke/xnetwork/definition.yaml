@@ -44,7 +44,6 @@ spec:
                       type: string
                   routeTableId:
                     type: string
-                    default: ""
                   dnsServers:
                     type: array
                     items:
