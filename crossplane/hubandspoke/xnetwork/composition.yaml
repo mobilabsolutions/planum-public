@@ -93,6 +93,8 @@ spec:
               toFieldPath: status.outputs['VirtualNetworkName']
 
         - name: environment-config
+          readinessChecks:
+          - type: None
           base:
             apiVersion: apiextensions.crossplane.io/v1alpha1
             kind: EnvironmentConfig
