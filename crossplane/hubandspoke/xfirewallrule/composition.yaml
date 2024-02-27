@@ -45,10 +45,10 @@ spec:
           spec:
             firewallName: {{ $outputs.firewallName }}
             resourceGroupName: {{ $outputs.ResourceGroupName }}
-            action: {{ $.observed.composite.resource.spec.resourceConfig.action }}
-            priority: {{ $.observed.composite.resource.spec.resourceConfig.priority }}
-            rules: {{ $.observed.composite.resource.spec.resourceConfig.rules }}
-            providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            action: {{ $.observed.composite.resource.spec.action }}
+            priority: {{ $.observed.composite.resource.spec.priority }}
+            rules: {{ $.observed.composite.resource.spec.rules }}
+            providerConfigName: {{ $.observed.composite.resource.spec.providerConfigName }}
 
   - step: auto-ready
     functionRef:
