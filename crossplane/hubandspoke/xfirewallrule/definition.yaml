@@ -21,6 +21,8 @@ spec:
             properties:
               xHub:
                 type: string
+              providerConfigName:
+                type: string
               action:
                 type: string
                 enum:
