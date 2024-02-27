@@ -109,6 +109,29 @@ spec:
             string:
               fmt: "role-uaa-%s"
           toFieldPath: metadata.name
+    - name: role-assignment-dns
+      base:
+        apiVersion: authorization.azure.upbound.io/v1beta1
+        kind: RoleAssignment
+        spec:
+          forProvider:
+            principalId: X
+            roleDefinitionName: Private DNS Zone Contributor
+            scope: "/subscriptions/e63d5ad3-c25d-468e-a386-55349257c0f8/resourceGroups/rg-hubandspokes-7ltkj-demo-eastus"
+          providerConfigRef:
+            name: "e63d5ad3-c25d-468e-a386-55349257c0f8"
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.outputs['principalId']
+          toFieldPath: spec.forProvider.principalId
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: "role-dns-%s"
+          toFieldPath: metadata.name
     - name: provider-config
       base:
         apiVersion: azure.upbound.io/v1beta1
