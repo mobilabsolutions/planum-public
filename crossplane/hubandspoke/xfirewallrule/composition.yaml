@@ -15,7 +15,7 @@ spec:
               value: xhub
             - key: name
               type: FromCompositeFieldPath
-              valueFromFieldPath: spec.parameters.xNetworkName
+              valueFromFieldPath: spec.xHub
               
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
