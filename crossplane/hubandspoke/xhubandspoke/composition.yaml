@@ -202,7 +202,7 @@ spec:
                 allowForwardedTraffic: true
                 useRemoteGateways: true
               providerConfigRef:
-                  name: {{ $spoke.providerConfigName }}
+                name: {{ $spoke.providerConfigName }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
             kind: VirtualNetworkPeering
@@ -219,7 +219,7 @@ spec:
                 remoteVirtualNetworkId: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkId }}
                 allowGatewayTransit: true
               providerConfigRef:
-                  name: {{ $spoke.providerConfigName }}
+                name: {{ $.observed.composite.resource.spec.parameters.hubConfig.providerConfigName }}
             {{ end }}
             {{- end }}
 
