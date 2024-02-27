@@ -1,0 +1,67 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: firewallrules.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: FirewallRule
+    plural: firewallrules
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              providerConfigName:
+                type: string
+              action:
+                type: string
+                enum:
+                - "Allow"
+                - "Deny"
+              firewallName:
+                type: string
+              resourceGroupName:
+                type: string
+              action:
+                type: string
+                enum:
+                - Allow
+                - Deny
+              priority:
+                type: integer
+                minimum: 100
+                maximum: 65000
+              rules:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    protocols:
+                      type: string
+                      enum:
+                      - "Any"
+                      - "ICMP"
+                      - "TCP"
+                      - "UDP"
+                    destinationAddress:
+                      type: array
+                      items:
+                        type: string
+                    destinationPorts:
+                      type: array
+                      items:
+                        type: string
+                    sourceAddress:
+                      type: array
+                      items:
+                        type: string

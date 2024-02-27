@@ -10,6 +10,7 @@ data:
     principalId=$(kubectl get configmap vm -n planum -ojson | jq -r '.data.vmIdentityPrincipalId')
     az login --identity --username $principalId
     az extension add --upgrade -n dns-resolver
+    az extension add --upgrade -n azure-firewall
     apk add github-cli
     while true
     do
@@ -59,6 +60,11 @@ data:
           "api-resource": "inboundendpoint.v1alpha1.planum.mblb.net",
           "create-script": "resolverinboundendpoint-create.sh",
           "delete-script": "resolverinboundendpoint-delete.sh"
+        },
+        {
+          "api-resource": "firewallrules.v1alpha1.planum.mblb.net",
+          "create-script": "firewallrules-create.sh",
+          "delete-script": "firewallrules-delete.sh"
         }
       ]      
     }
@@ -182,4 +188,67 @@ data:
     else
       echo "Inbound Endpoint does not exist"
     fi
+    echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
+
+  "firewallrules-create.sh": |
+    echo "firewallrules create $1"
+    COLLECTIONNAME=$(echo $1 | jq -r '.metadata.name')
+    FIREWALLNAME=$(echo $1 | jq -r '.spec.firewallName')
+    RESOURCEGROUPNAME=$(echo $1 | jq -r '.spec.resourceGroupName')
+    ACTION=$(echo $1 | jq -r '.spec.action')
+    RULES=$(echo $1 | jq -r '.spec.rules')
+    PRIORITY=$(echo $1 | jq -r '.spec.priority')
+    PCNAME=$(echo $1 | jq -r '.spec.providerConfigName')
+
+    subscriptionId=$(kubectl get providerconfigs $PCNAME -o json  | jq -r '.spec.subscriptionID')
+    az account set --subscription $subscriptionId
+
+    existing=$(az network firewall network-rule collection show --collection-name $COLLECTIONNAME --firewall-name $FIREWALLNAME --resource-group $RESOURCEGROUPNAME 2>&1)
+    if [[ "$existing" == *"does not exist"* ]]
+    then
+      echo $RULES > file.json
+      counter=0
+      jq -c '.[]' file.json | while read i; do
+      NAME=`echo $i | jq -r .name`
+      DESTINATIONADDRESS=`echo $i | jq -r .destinationAddress`
+      DESTINATIONPORTS=`echo $i | jq -r .destinationPorts`
+      PROTOCOLS=`echo $i | jq -r .protocols`
+      SOURCEADDRESS=`echo $i | jq -r .sourceAddress`
+      ((counter++))
+
+      if [ "$counter" -eq 1 ]; then
+        az network firewall network-rule create --action $ACTION --collection-name $COLLECTIONNAME --destination-ports $DESTINATIONPORTS --firewall-name $FIREWALLNAME --name $NAME --protocols $PROTOCOLS --resource-group $RESOURCEGROUPNAME --dest-addr $DESTINATIONADDRESS --priority $PRIORITY --source-addresses $SOURCEADDRESS
+      else
+        az network firewall network-rule create --collection-name $COLLECTIONNAME --destination-ports $DESTINATIONPORTS --firewall-name $FIREWALLNAME --name $NAME --protocols $PROTOCOLS --resource-group $RESOURCEGROUPNAME --dest-addr $DESTINATIONADDRESS --source-addresses $SOURCEADDRESS
+      fi
+      done
+      rm -f file.json
+    else
+      echo "Error creating firewall rules"
+    fi
+
+    TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    echo $1 | jq --arg TIME "$TIME" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
+
+  "firewallrules-delete.sh": |
+    echo "firewallrules create $1"
+    COLLECTIONNAME=$(echo $1 | jq -r '.metadata.name')
+    FIREWALLNAME=$(echo $1 | jq -r '.spec.firewallName')
+    RESOURCEGROUPNAME=$(echo $1 | jq -r '.spec.resourceGroupName')
+    ACTION=$(echo $1 | jq -r '.spec.action')
+    RULES=$(echo $1 | jq -r '.spec.rules')
+    PRIORITY=$(echo $1 | jq -r '.spec.priority')
+    PCNAME=$(echo $1 | jq -r '.spec.providerConfigName')
+
+    subscriptionId=$(kubectl get providerconfigs $PCNAME -o json  | jq -r '.spec.subscriptionID')
+    az account set --subscription $subscriptionId
+
+    existing=$(az network firewall network-rule collection show --collection-name $COLLECTIONNAME --firewall-name $FIREWALLNAME --resource-group $RESOURCEGROUPNAME 2>&1)
+    if ! [[ "$existing" == *"does not exist"* ]]
+    then
+      az network firewall network-rule collection delete --collection-name $COLLECTIONNAME --firewall-name $FIREWALLNAME --resource-group $RESOURCEGROUPNAME
+    else
+      echo "Firewall rule does not exist"
+    fi
+
     echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -

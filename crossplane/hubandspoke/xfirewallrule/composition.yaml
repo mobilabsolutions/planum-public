@@ -1,0 +1,55 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xfirewallrule.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xhub
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.parameters.xNetworkName
+              
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XFirewallRule #has to be singular
+
+  mode: Pipeline
+  pipeline:
+  - step: render-dmlz-objects
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
+          ---
+          apiVersion: planum.mblb.net/v1alpha1
+          kind: FirewallRule
+          metadata:
+            annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $.observed.composite.resource.metadata.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: {{ $.observed.composite.resource.metadata.name }}
+            name: {{ $.observed.composite.resource.metadata.name }}
+          spec:
+            firewallName: {{ $outputs.firewallName }}
+            resourceGroupName: {{ $outputs.ResourceGroupName }}
+            action: {{ $.observed.composite.resource.spec.resourceConfig.action }}
+            priority: {{ $.observed.composite.resource.spec.resourceConfig.priority }}
+            rules: {{ $.observed.composite.resource.spec.resourceConfig.rules }}
+            providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+
+  - step: auto-ready
+    functionRef:
+      name: function-auto-ready
