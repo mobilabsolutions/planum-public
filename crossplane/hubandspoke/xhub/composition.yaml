@@ -416,6 +416,9 @@ spec:
       - type: ToCompositeFieldPath
         fromFieldPath: status.atProvider.ipConfiguration[0].privateIpAddress
         toFieldPath: status.outputs['fwPrivateIpAddress']
+      - type: ToCompositeFieldPath
+        fromFieldPath: metadata.name
+        toFieldPath: status.outputs['firewallName']
       - type: CombineFromComposite
         combine:
           variables:
