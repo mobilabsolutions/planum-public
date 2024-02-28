@@ -44,7 +44,7 @@ spec:
             name: {{ $.observed.composite.resource.metadata.name }}
           spec:
             forProvider:
-              firewallName: {{ $outputs.firewallName }}
+              azureFirewallName: {{ $outputs.firewallName }}
               resourceGroupName: {{ $outputs.ResourceGroupName }}
               action: {{ $.observed.composite.resource.spec.action }}
               priority: {{ $.observed.composite.resource.spec.priority }}
