@@ -222,7 +222,7 @@ data:
       fi
       done <<< $RULES
     else
-      echo "Error creating firewall rules"
+      echo "Firewall Rules already exist in $FIREWALLNAME"
     fi
 
     TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
