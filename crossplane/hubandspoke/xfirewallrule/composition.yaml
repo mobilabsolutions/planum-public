@@ -34,8 +34,8 @@ spec:
         template: |
           {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
           ---
-          apiVersion: planum.mblb.net/v1alpha1
-          kind: FirewallRule
+          apiVersion: network.azure.upbound.io/v1beta1
+          kind: FirewallNetworkRuleCollection
           metadata:
             annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $.observed.composite.resource.metadata.name }}
@@ -43,12 +43,15 @@ spec:
                 crossplane.io/external-name: {{ $.observed.composite.resource.metadata.name }}
             name: {{ $.observed.composite.resource.metadata.name }}
           spec:
-            firewallName: {{ $outputs.firewallName }}
-            resourceGroupName: {{ $outputs.ResourceGroupName }}
-            action: {{ $.observed.composite.resource.spec.action }}
-            priority: {{ $.observed.composite.resource.spec.priority }}
-            rules: {{ $.observed.composite.resource.spec.rules | toYaml | nindent 6 }}
-            providerConfigName: {{ $.observed.composite.resource.spec.providerConfigName }}
+            forProvider:
+              firewallName: {{ $outputs.firewallName }}
+              resourceGroupName: {{ $outputs.ResourceGroupName }}
+              action: {{ $.observed.composite.resource.spec.action }}
+              priority: {{ $.observed.composite.resource.spec.priority }}
+              rules: {{ $.observed.composite.resource.spec.rules | toYaml | nindent 6 }}
+            providerConfigRef:
+              name: {{ $.observed.composite.resource.spec.providerConfigName }}
+            
 
   - step: auto-ready
     functionRef:
