@@ -43,7 +43,7 @@ spec:
                       type: array
                       items:
                         type: string
-                    destinationAddress:
+                    destinationAddresses:
                       type: array
                       items:
                         type: string
@@ -51,7 +51,7 @@ spec:
                       type: array
                       items:
                         type: string
-                    sourceAddress:
+                    sourceAddresses:
                       type: array
                       items:
                         type: string
