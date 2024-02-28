@@ -1,0 +1,58 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xfirewallrule.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xhub
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.xHub
+              
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XFirewallRule #has to be singular
+
+  mode: Pipeline
+  pipeline:
+  - step: render-dmlz-objects
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
+          ---
+          apiVersion: network.azure.upbound.io/v1beta1
+          kind: FirewallNetworkRuleCollection
+          metadata:
+            annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $.observed.composite.resource.metadata.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: {{ $.observed.composite.resource.metadata.name }}
+            name: {{ $.observed.composite.resource.metadata.name }}
+          spec:
+            forProvider:
+              azureFirewallName: {{ $outputs.firewallName }}
+              resourceGroupName: {{ $outputs.ResourceGroupName }}
+              action: {{ $.observed.composite.resource.spec.action }}
+              priority: {{ $.observed.composite.resource.spec.priority }}
+              rule: {{ $.observed.composite.resource.spec.rule | toYaml | nindent 4 }}
+            providerConfigRef:
+              name: {{ $.observed.composite.resource.spec.providerConfigName }}
+            
+
+  - step: auto-ready
+    functionRef:
+      name: function-auto-ready
