@@ -216,9 +216,9 @@ data:
       ((counter++))
 
       if [ "$counter" -eq 1 ]; then
-        az network firewall network-rule create --action $ACTION --collection-name \"$COLLECTIONNAME\" --destination-ports \"$DESTINATIONPORTS\" --firewall-name \"$FIREWALLNAME\" --name \"$NAME\" --protocols $PROTOCOLS --resource-group \"$RESOURCEGROUPNAME\" --dest-addr \"$DESTINATIONADDRESS\" --priority $PRIORITY --source-addresses \"$SOURCEADDRESS\"
+        az network firewall network-rule create --action $ACTION --collection-name \"$COLLECTIONNAME\" --destination-ports \"$DESTINATIONPORTS\" --firewall-name $FIREWALLNAME --name \"$NAME\" --protocols $PROTOCOLS --resource-group $RESOURCEGROUPNAME --dest-addr \"$DESTINATIONADDRESS\" --priority $PRIORITY --source-addresses \"$SOURCEADDRESS\"
       else
-        az network firewall network-rule create --collection-name \"$COLLECTIONNAME\" --destination-ports \"$DESTINATIONPORTS\" --firewall-name \"$FIREWALLNAME\" --name \"$NAME\" --protocols $PROTOCOLS --resource-group \"$RESOURCEGROUPNAME\" --dest-addr \"$DESTINATIONADDRESS\" --source-addresses \"$SOURCEADDRESS\"
+        az network firewall network-rule create --collection-name \"$COLLECTIONNAME\" --destination-ports \"$DESTINATIONPORTS\" --firewall-name $FIREWALLNAME --name \"$NAME\" --protocols $PROTOCOLS --resource-group $RESOURCEGROUPNAME --dest-addr \"$DESTINATIONADDRESS\" --source-addresses \"$SOURCEADDRESS\"
       fi
       done <<< $RULES
     else
