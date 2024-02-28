@@ -209,11 +209,11 @@ data:
       echo $RULES > file.json
       counter=0
       jq -c '.[]' file.json | while read i; do
-      NAME=`echo $i | jq -r .name`
-      DESTINATIONADDRESS=`echo $i | jq -r .destinationAddress`
-      DESTINATIONPORTS=`echo $i | jq -r .destinationPorts`
-      PROTOCOLS=`echo $i | jq -r .protocols`
-      SOURCEADDRESS=`echo $i | jq -r .sourceAddress`
+      NAME=$(echo $i | jq -r .name)
+      DESTINATIONADDRESS=$(echo $i | jq -r .destinationAddress)
+      DESTINATIONPORTS=$(echo $i | jq -r .destinationPorts)
+      PROTOCOLS=$(echo $i | jq -r .protocols)
+      SOURCEADDRESS=$(echo $i | jq -r .sourceAddress)
       ((counter++))
 
       if [ "$counter" -eq 1 ]; then

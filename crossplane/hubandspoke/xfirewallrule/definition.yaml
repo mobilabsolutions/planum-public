@@ -47,14 +47,8 @@ spec:
                       - "TCP"
                       - "UDP"
                     destinationAddress:
-                      type: array
-                      items:
-                        type: string
+                      type: string
                     destinationPorts:
-                      type: array
-                      items:
-                        type: string
+                      type: string
                     sourceAddress:
-                      type: array
-                      items:
-                        type: string
+                      type: string
