@@ -41,8 +41,6 @@ spec:
                     type: string
                   metastoreId:
                     type: string
-                  storageAccountName:
-                    type: string
 
           status:
             type: object
