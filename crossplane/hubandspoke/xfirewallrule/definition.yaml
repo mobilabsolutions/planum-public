@@ -32,7 +32,7 @@ spec:
                 type: integer
                 minimum: 100
                 maximum: 65000
-              rules:
+              rule:
                 type: array
                 items:
                   type: object
