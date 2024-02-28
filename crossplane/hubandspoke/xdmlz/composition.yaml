@@ -32,38 +32,6 @@ spec:
 
   mode: Pipeline
   pipeline:
-    # - step: patch-and-transform
-    #   functionRef:
-    #     name: upbound-function-patch-and-transform
-    #   input:
-    #     apiVersion: pt.fn.crossplane.io/v1beta1
-    #     kind: Resources
-    #     metadata:
-    #       name:
-    #     resources:
-    #     - name: nop
-    #       base:
-    #         apiVersion: nop.crossplane.io/v1alpha1
-    #         kind: NopResource
-    #         spec:
-    #           forProvider:
-    #             fields:
-    #       patches:
-    #         - type: FromEnvironmentFieldPath
-    #           fromFieldPath: outputs
-    #           toFieldPath: spec.forProvider.fields
-    #         - type: ToCompositeFieldPath
-    #           fromFieldPath: spec.forProvider.fields
-    #           toFieldPath: status.outputs
-    #         - type: CombineFromComposite
-    #           combine:
-    #             variables:
-    #               - fromFieldPath: metadata.name
-    #             strategy: string
-    #             string:
-    #               fmt: "nop-%s"
-    #           toFieldPath: metadata.name
-
     - step: render-dmlz-objects
       functionRef:
         name: function-go-templating

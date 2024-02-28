@@ -297,6 +297,8 @@ spec:
                 adfId: {{ (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.id }}
                 {{ $adfIdentities := (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.identity }}
                 adfIdentityPrincipalId: {{ index $adfIdentities 0 "principalId" }}
+                {{ $accessConnectorIdentities := (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.identity }}
+                accessConnectorIdentityPrincipalId: {{ index $accessConnectorIdentities 0 "principalId" }}
                 {{ if contains "dbw-public" $subnets.name }}
                 publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPublicSubnetName: {{ $subnets.name }}
@@ -497,6 +499,21 @@ spec:
               forProvider:
                 dataFactoryIdSelector:
                   matchControllerRef: true
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: authorization.azure.upbound.io/v1beta1
+            kind: RoleAssignment
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: assignment-dbac-to-adls-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: assignment-dbac-to-adls-{{ $prefix }}
+            spec:
+              forProvider:
+                principalId: {{ $.observed.composite.resource.status.outputs.accessConnectorIdentityPrincipalId }}
+                roleDefinitionName: "Contributor"
+                scope: {{ $.observed.composite.resource.status.outputs.adlsId }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---

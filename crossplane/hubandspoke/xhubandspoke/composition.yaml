@@ -9,6 +9,12 @@ spec:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XHubAndSpoke #has to be singular
 
+  environment:
+    environmentConfigs:
+    - type: Reference
+      ref:
+        name: vm
+
   mode: Pipeline
   pipeline:
     - step: render-hub
@@ -20,6 +26,7 @@ spec:
         source: Inline
         inline:
           template: |
+            {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $hubConfig := $.observed.composite.resource.spec.parameters.hubConfig }}
             ---
             apiVersion: planum.mblb.net/v1alpha1

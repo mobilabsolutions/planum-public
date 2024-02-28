@@ -1,0 +1,84 @@
+# apiVersion: apiextensions.crossplane.io/v1
+# kind: Composition
+# metadata:
+#   name: xunitycatalogs.planum.mblb.net #has to be plural
+#   labels:
+#     planum.mblb.net/managed-by: "true"
+# spec:         
+#   compositeTypeRef:
+#     apiVersion: planum.mblb.net/v1alpha1
+#     kind: XUnityCatalog #has to be singular
+
+#   mode: Pipeline
+#   pipeline:
+
+#     - step: render-unity-catalog
+#       functionRef:
+#         name: function-go-templating
+#       input:
+#         apiVersion: gotemplating.fn.crossplane.io/v1beta1
+#         kind: GoTemplate
+#         source: Inline
+#         inline:
+#           template: |
+#             {{- $locationMappings := dict 
+#               "westeurope" "weu"
+#               "northeurope" "neu"
+#               "eastus" "eus"
+#               "germanywestcentral" "gwc"
+#               "switzerlandnorth" "sln"
+#             }}
+#             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
+#             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
+#             ---
+#             apiVersion: network.azure.upbound.io/v1beta1
+#             kind: Subnet
+#             metadata:
+#               annotations:
+#                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $subnets.name }}
+#                 gotemplating.fn.crossplane.io/ready: "True"
+#                 crossplane.io/external-name: {{ $subnets.name }}
+#               labels:
+#                 name: {{ $subnets.name | lower }}
+#               name: {{ $subnets.name | lower }}
+#             spec:
+#               forProvider:
+#                 addressPrefixes: 
+#                 - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
+#                 resourceGroupName: {{ $outputs.ResourceGroupName }}
+#                 virtualNetworkName: {{ $outputs.VirtualNetworkName }}
+#                 {{ if contains "dbw" $subnets.name }}
+#                 delegation:
+#                 - name: "subnet-delegation"
+#                   serviceDelegation:
+#                   - name: "Microsoft.Databricks/workspaces"
+#                     actions: 
+#                     - "Microsoft.Network/virtualNetworks/subnets/join/action"
+#                     - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
+#                     - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
+#                 {{ end }}
+#               providerConfigRef:
+#                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+#             ---
+#             apiVersion: metastore.mobilabsolutions.com/v1alpha1
+#             kind: Metastore
+#             metadata:
+#               annotations:
+#                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $subnets.name }}
+#                 gotemplating.fn.crossplane.io/ready: "True"
+#                 crossplane.io/external-name: {{ $subnets.name }}
+#               name: 
+#             spec:
+#               forProvider:
+#                 name: crossplane-metastore
+#                 owner: "Metastore Owners"
+#                 region: "northeurope"
+#                 storageRoot: "abfss://faizan@samblbqadmlzdpmsneu.dfs.core.windows.net/"
+#                 forceDestroy: true
+#               providerConfigRef:
+#                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+                        
+        
+#     - step: auto-ready
+#       functionRef:
+#         name: function-auto-ready
