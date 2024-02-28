@@ -196,7 +196,7 @@ data:
     FIREWALLNAME=$(echo $1 | jq -r '.spec.firewallName')
     RESOURCEGROUPNAME=$(echo $1 | jq -r '.spec.resourceGroupName')
     ACTION=$(echo $1 | jq -r '.spec.action')
-    RULES=$(echo $1 | jq -r '.spec.rules')
+    RULES=$(echo $1 | jq -c '.spec.rules[]')
     PRIORITY=$(echo $1 | jq -r '.spec.priority')
     PCNAME=$(echo $1 | jq -r '.spec.providerConfigName')
 
