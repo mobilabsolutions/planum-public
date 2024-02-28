@@ -206,14 +206,13 @@ data:
     existing=$(az network firewall network-rule collection show --collection-name $COLLECTIONNAME --firewall-name $FIREWALLNAME --resource-group $RESOURCEGROUPNAME 2>&1)
     if [[ "$existing" == *"does not exist"* ]]
     then
-      echo $RULES > file.json
       counter=0
-      jq -c '.[]' file.json | while read i; do
-      NAME=$(echo $i | jq -r .name)
-      DESTINATIONADDRESS=$(echo $i | jq -r .destinationAddress)
-      DESTINATIONPORTS=$(echo $i | jq -r .destinationPorts)
-      PROTOCOLS=$(echo $i | jq -r .protocols)
-      SOURCEADDRESS=$(echo $i | jq -r .sourceAddress)
+      while IFS= read -r rule; do
+        NAME=$(echo "$rule" | jq -r '.name')
+        DESTINATIONADDRESS=$(echo "$rule" | jq -r '.destinationAddress')
+        DESTINATIONPORTS=$(echo "$rule" | jq -r '.destinationPorts')
+        SOURCEADDRESS=$(echo "$rule" | jq -r '.sourceAddress')
+        PROTOCOLS=$(echo "$rule" | jq -r '.protocols')
       ((counter++))
 
       if [ "$counter" -eq 1 ]; then
@@ -221,8 +220,7 @@ data:
       else
         az network firewall network-rule create --collection-name $COLLECTIONNAME --destination-ports $DESTINATIONPORTS --firewall-name $FIREWALLNAME --name $NAME --protocols $PROTOCOLS --resource-group $RESOURCEGROUPNAME --dest-addr $DESTINATIONADDRESS --source-addresses $SOURCEADDRESS
       fi
-      done
-      rm -f file.json
+      done <<< $RULES
     else
       echo "Error creating firewall rules"
     fi
