@@ -37,6 +37,8 @@ spec:
                 description: Unity Catalog Input parameters
                 type: object
                 properties:
+                  xLakehouseName:
+                    type: string
                   metastoreId:
                     type: string
                   storageAccountName:
