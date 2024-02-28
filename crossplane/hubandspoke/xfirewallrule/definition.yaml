@@ -43,11 +43,6 @@ spec:
                       type: array
                       items:
                         type: string
-                      enum:
-                      - "Any"
-                      - "ICMP"
-                      - "TCP"
-                      - "UDP"
                     destinationAddress:
                       type: array
                       items:
