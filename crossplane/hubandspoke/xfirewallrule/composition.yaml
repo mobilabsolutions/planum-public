@@ -47,7 +47,7 @@ spec:
               azureFirewallName: {{ $outputs.firewallName }}
               resourceGroupName: {{ $outputs.ResourceGroupName }}
               action: {{ $.observed.composite.resource.spec.action }}
-              priority: {{ $.observed.composite.resource.spec.priority }}
+              priority: {{ $.observed.composite.resource.spec.priority | toYaml | nindent 6  }}
               rule: {{ $.observed.composite.resource.spec.rule | toYaml | nindent 6 }}
             providerConfigRef:
               name: {{ $.observed.composite.resource.spec.providerConfigName }}
