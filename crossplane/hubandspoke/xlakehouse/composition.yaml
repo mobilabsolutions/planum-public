@@ -673,7 +673,7 @@ spec:
                   - fromFieldPath: spec.resourceConfig.location
                 strategy: string
                 string:
-                  fmt: "ec-spoke-%s-%s-%s"
+                  fmt: "envcfg-%s-%s-%s"
               toFieldPath: metadata.name
             - type: FromCompositeFieldPath
               fromFieldPath: metadata.name
