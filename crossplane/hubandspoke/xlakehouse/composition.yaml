@@ -65,6 +65,45 @@ spec:
     #               fmt: "nop-%s"
     #           toFieldPath: metadata.name
 
+    - step: patch-and-transform
+      functionRef:
+        name: upbound-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        metadata:
+          name:
+        resources:
+        - name: environment-config
+          readinessChecks:
+          - type: None
+          base:
+            apiVersion: apiextensions.crossplane.io/v1alpha1
+            kind: EnvironmentConfig
+            metadata:
+              labels:
+                type: xlakehouse
+                name: 
+              name: 
+            data:
+          patches:
+          - type: CombineFromComposite
+            combine:
+              variables:
+                - fromFieldPath: metadata.name
+                - fromFieldPath: spec.resourceConfig.environment
+                - fromFieldPath: spec.resourceConfig.location
+              strategy: string
+              string:
+                fmt: "ec-spoke-%s-%s-%s"
+            toFieldPath: metadata.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: metadata.name
+            toFieldPath: metadata.labels.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: status.outputs
+            toFieldPath: data.outputs
+
     - step: render-dmlz-objects
       functionRef:
         name: function-go-templating
@@ -291,6 +330,7 @@ spec:
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                 adlsId: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 databricksId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.id }}
+                databricksTokenId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceId }}
                 dbwUrl: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
                 dfsEndpoint: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.primaryDfsEndpoint }}
                 keyvaultId: {{ (index $.observed.resources (printf "kv%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
