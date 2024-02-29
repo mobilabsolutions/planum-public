@@ -237,7 +237,7 @@ spec:
                 gotemplating.fn.crossplane.io/composition-resource-name: dbw-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
                 crossplane.io/external-name: dbw-{{ $prefix }}
-              name: dbw-{{ $prefix }}
+              name: dbw{{ $prefix | replace "-" "" }}
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
@@ -320,7 +320,8 @@ spec:
             status:
               outputs:
                 {{ $dbwId := printf "%s-%s" "dbw" $prefix }}
-                workspaceId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.workspaceId }}
+                databricksId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.id }}
+                dbwUrl: {{ (index $.observed.resources $dbwId).resource.status.atProvider.workspaceUrl }}
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                 {{ if contains "dbw-public" $subnets.name }}
                 publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
