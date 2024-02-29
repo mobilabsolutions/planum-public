@@ -321,6 +321,7 @@ spec:
               outputs:
                 {{ $dbwId := printf "%s-%s" "dbw" $prefix }}
                 databricksId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.id }}
+                workspaceId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceId }}
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                 {{ if contains "dbw-public" $subnets.name }}
                 publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
