@@ -104,7 +104,7 @@ spec:
     #         fromFieldPath: status.outputs
     #         toFieldPath: data.outputs
 
-    - step: render-dmlz-objects
+    - step: render-dlz-objects
       functionRef:
         name: function-go-templating
       input:
