@@ -72,7 +72,7 @@ spec:
               fromFieldPath: status.outputs
               toFieldPath: data.outputs
 
-    - step: render-dmlz-objects
+    - step: render-lakehouse-objects
       functionRef:
         name: function-go-templating
       input:
