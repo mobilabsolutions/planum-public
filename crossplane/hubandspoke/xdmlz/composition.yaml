@@ -325,7 +325,6 @@ spec:
                 {{ if contains "dbw-public" $subnets.name }}
                 publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPublicSubnetName: {{ $subnets.name }}
-                databricksWorkspaceId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.workspaceId }}
                 {{ end }}
                 {{ if contains "dbw-private" $subnets.name }}
                 privateNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
