@@ -237,7 +237,7 @@ spec:
                 gotemplating.fn.crossplane.io/composition-resource-name: dbw-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
                 crossplane.io/external-name: dbw-{{ $prefix }}
-              name: dbw{{ $prefix | replace "-" "" }}
+              name: dbw-{{ $prefix }}
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
