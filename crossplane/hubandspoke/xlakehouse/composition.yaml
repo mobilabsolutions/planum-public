@@ -260,7 +260,7 @@ spec:
                 adlsId: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 databricksId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.id }}
                 dbwUrl: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
-                {{ $match := regexFind "adb-(\\d+)\\.\\d+\\.azuredatabricks\\.net" $.observed.composite.resource.status.outputs.dbwUrl}}
+                {{ $match := regexFind "adb-(\\d+)\\.\\d+\\.azuredatabricks\\.net" $.observed.composite.resource.status.outputs.dbwUrl }}
                 workspaceId: {{ index $match 1 }}
                 dfsEndpoint: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.primaryDfsEndpoint }}
                 keyvaultId: {{ (index $.observed.resources (printf "kv%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
