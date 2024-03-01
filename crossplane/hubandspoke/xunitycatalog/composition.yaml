@@ -55,7 +55,7 @@ spec:
             spec:
               forProvider:
                 metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
-                workspaceId: {{ $outputs.workspaceId }}
+                workspaceId: {{ $outputs.dbwId }}
               providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
                         
