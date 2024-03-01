@@ -83,7 +83,30 @@ spec:
                           type: array
                         whl:
                           type: string
-
+                  catalogs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        owner:
+                          type: string
+                        storageRoot:
+                          type: string
+                        properties:
+                          type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: object
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
 
           status:
             type: object

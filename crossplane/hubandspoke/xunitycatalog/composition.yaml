@@ -60,6 +60,7 @@ spec:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             {{- range $cluster := $.observed.composite.resource.spec.parameters.clusters }}
+            ---
             apiVersion: cluster.mobilabsolutions.com/v1alpha1
             kind: Cluster
             metadata:
@@ -107,7 +108,47 @@ spec:
                 whl: {{ $cluster.whl }}
                 {{ end }}
               providerConfigRef:
-                name: databricks-provider-config
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{- end }}
+            ---
+            {{- range $catalog := $.observed.composite.resource.spec.parameters.catalogs }}
+            ---
+            apiVersion: catalog.mobilabsolutions.com/v1alpha1
+            kind: Catalog
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $catalog.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: {{ $catalog.name }}
+              labels:
+                name: {{ $catalog.name }}
+              name: {{ $catalog.name }}
+            spec:
+              forProvider:
+                storageRoot: {{ $catalog.storageRoot }}
+                properties: {{ default $catalog.name $catalog.properties }}
+                metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
+                owner: {{ $catalog.owner }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            kind: Grants
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: grants-catalog-{{ $catalog.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: grants-catalog-{{ $catalog.name }}
+              name: grants-catalog-{{ $catalog.name }}
+            spec:
+              forProvider:
+                catalogSelector:
+                  matchControllerRef: true
+                  matchLabels: 
+                    name: {{ $catalog.name }}
+                grant: {{ $catalog.grants | toYaml | nindent 4 }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{- end }}
 
     - step: auto-ready
