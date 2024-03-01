@@ -307,6 +307,7 @@ spec:
                 adfIdentityPrincipalId: {{ index $adfIdentities 0 "principalId" }}
                 {{ $accessConnectorIdentities := (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.identity }}
                 accessConnectorIdentityPrincipalId: {{ index $accessConnectorIdentities 0 "principalId" }}
+                accessConnectorId: {{ (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.id }}
                 {{ if contains "dbw-public" $subnets.name }}
                 publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPublicSubnetName: {{ $subnets.name }}

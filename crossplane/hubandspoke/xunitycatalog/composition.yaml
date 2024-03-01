@@ -150,6 +150,23 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{- end }}
+            ---
+            apiVersion: storagecredential.mobilabsolutions.com/v1alpha1
+            kind: Credential
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: sc-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: sc-{{ $prefix }}
+              name: sc-{{ $prefix }}
+            spec:
+              forProvider:
+                owner:
+                azureManagedIdentity:
+                - accessConnectorId: {{ $outputs.accessConnectorId }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
 
     - step: auto-ready
       functionRef:
