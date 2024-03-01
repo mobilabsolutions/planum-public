@@ -41,6 +41,22 @@ spec:
                     type: string
                   metastoreId:
                     type: string
+                  clusters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        sparkVersion:
+                          type: string
+                        nodeTypeId:
+                          type: string
+                        runtimeEngine:
+                          type: string
+                        numWorkers:
+                          type: integer
+                          minimum: 0
 
           status:
             type: object

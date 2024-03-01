@@ -59,24 +59,25 @@ spec:
               providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            {{- range $cluster := $.observed.composite.resource.spec.parameters.clusters }}
             apiVersion: cluster.mobilabsolutions.com/v1alpha1
             kind: Cluster
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: dbw-cluster-{{ $prefix }}
+                gotemplating.fn.crossplane.io/composition-resource-name: cluster-{{ $cluster.name }}-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: dbw-cluster-{{ $prefix }}
-              name: dbw-cluster-{{ $prefix }}
+                crossplane.io/external-name: cluster-{{ $cluster.name }}-{{ $prefix }}
+              name: cluster-{{ $cluster.name }}-{{ $prefix }}
             spec:
               forProvider:
-                clusterName: {{ default "Cluster" }}
-                sparkVersion: {{ default "12.2.x-scala2.12" }}
-                nodeTypeId: {{ default "Standard_DS3_v2" }}
-                runtimeEngine: {{ default "PHOTON" }}
-                numWorkers: {{ default "1" }} 
+                clusterName: {{ $cluster.name }}
+                sparkVersion: {{ default "12.2.x-scala2.12" $cluster.sparkVersion }}
+                nodeTypeId: {{ default "Standard_DS3_v2" $cluster.nodeTypeId }}
+                runtimeEngine: {{ default "PHOTON" $cluster.runtimeEngine }}
+                numWorkers: {{ default 1 $cluster.numWorkers }} 
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-
+            {{- end }}
         
     - step: auto-ready
       functionRef:
