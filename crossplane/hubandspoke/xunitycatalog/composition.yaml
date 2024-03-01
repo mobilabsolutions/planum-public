@@ -58,7 +58,25 @@ spec:
                 workspaceId: {{ $outputs.dbwId }}
               providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-                        
+            ---
+            apiVersion: cluster.mobilabsolutions.com/v1alpha1
+            kind: Cluster
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: dbw-cluster-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: dbw-cluster-{{ $prefix }}
+              name: dbw-cluster-{{ $prefix }}
+            spec:
+              forProvider:
+                clusterName: {{ default "Cluster" }}
+                sparkVersion: {{ default "12.2.x-scala2.12" }}
+                nodeTypeId: {{ default "Standard_DS3_v2" }}
+                runtimeEngine: {{ default "PHOTON" }}
+                numWorkers: {{ default "1" }} 
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+
         
     - step: auto-ready
       functionRef:
