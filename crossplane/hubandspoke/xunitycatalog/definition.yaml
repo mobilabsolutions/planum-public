@@ -108,6 +108,29 @@ spec:
                                 items:
                                   type: string
 
+                  locations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        owner:
+                          type: string
+                        url:
+                          type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: object
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
+
           status:
             type: object
             properties:

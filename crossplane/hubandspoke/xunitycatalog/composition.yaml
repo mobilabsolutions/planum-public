@@ -167,6 +167,46 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            {{- range $location := $.observed.composite.resource.spec.parameters.locations }}
+            ---
+            apiVersion: externallocation.mobilabsolutions.com/v1alpha1
+            kind: Location
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $location.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: {{ $location.name }}
+              labels:
+                name: {{ $location.name }}
+              name: {{ $location.name }}
+            spec:
+              forProvider:
+                credentialNameSelector:
+                  matchControllerRef: true
+                metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
+                owner: {{ $location.owner }}
+                url: {{ $location.url }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            kind: Grants
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: grants-location-{{ $location.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: grants-location-{{ $location.name }}
+              name: grants-location-{{ $location.name }}
+            spec:
+              forProvider:
+                externalLocationSelector:
+                  matchControllerRef: true
+                  matchLabels: 
+                    name: {{ $location.name }}
+                grant: {{ $location.grants | toYaml | nindent 4 }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{- end }}
 
     - step: auto-ready
       functionRef:
