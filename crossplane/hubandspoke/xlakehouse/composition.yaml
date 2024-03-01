@@ -248,6 +248,18 @@ spec:
             {{ end }}
             {{ end }}
             ---
+            apiVersion: nop.crossplane.io/v1alpha1  
+            kind: NopResource 
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nop
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nop-2
+            spec:
+              forProvider:
+                fields:
+                  outputs: {{ $.context | toYaml | nindent 7 }}
+            ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XLakehouse
             status:
@@ -260,8 +272,6 @@ spec:
                 adlsId: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 databricksId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.id }}
                 dbwUrl: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
-                {{ $tokenId := (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
-                workspaceId: {{ regexFind "(\\d+)\\." $tokenId }}
                 dfsEndpoint: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.primaryDfsEndpoint }}
                 keyvaultId: {{ (index $.observed.resources (printf "kv%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 adfId: {{ (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.id }}
