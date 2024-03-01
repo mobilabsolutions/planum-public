@@ -67,6 +67,8 @@ spec:
                 gotemplating.fn.crossplane.io/composition-resource-name: cluster-{{ $cluster.name }}-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
                 crossplane.io/external-name: cluster-{{ $cluster.name }}-{{ $prefix }}
+              labels: 
+                name: {{ $cluster.name }}
               name: cluster-{{ $cluster.name }}-{{ $prefix }}
             spec:
               forProvider:
@@ -77,8 +79,37 @@ spec:
                 numWorkers: {{ default 1 $cluster.numWorkers }} 
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: library.mobilabsolutions.com/v1alpha1
+            kind: Library
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: library-{{ $cluster.name }}-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: cluster-{{ $cluster.name }}-{{ $prefix }}
+              name: databricks-library
+            spec:
+              forProvider:
+                clusterIdSelector:
+                  matchControllerRef: true
+                  matchLabels: 
+                    name: {{ $cluster.name }}
+                {{ if ne $cluster.pypi nil }}
+                pypi: {{ $cluster.pypi | toYaml | nindent 6 }}
+                {{ end }}
+                {{ if ne $cluster.maven nil }}
+                maven: {{ $cluster.maven | toYaml | nindent 6 }}
+                {{ end }}
+                {{ if ne $cluster.jar nil }}
+                jar: {{ $cluster.jar }}
+                {{ end }}
+                {{ if ne $cluster.whl nil }}
+                whl: {{ $cluster.whl }}
+                {{ end }}
+              providerConfigRef:
+                name: databricks-provider-config
             {{- end }}
-        
+
     - step: auto-ready
       functionRef:
         name: function-auto-ready
