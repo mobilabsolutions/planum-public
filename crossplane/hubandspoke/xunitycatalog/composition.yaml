@@ -159,7 +159,6 @@ spec:
               name: sc-{{ $prefix }}
             spec:
               forProvider:
-                owner: ""
                 azureManagedIdentity:
                 - accessConnectorId: {{ $outputs.accessConnectorId }}
               providerConfigRef:
