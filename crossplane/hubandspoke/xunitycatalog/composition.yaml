@@ -159,6 +159,7 @@ spec:
               name: sc-{{ $prefix }}
             spec:
               forProvider:
+                metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
                 azureManagedIdentity:
                 - accessConnectorId: {{ $outputs.accessConnectorId }}
               providerConfigRef:
