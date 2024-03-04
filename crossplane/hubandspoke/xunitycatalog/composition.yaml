@@ -125,7 +125,6 @@ spec:
             spec:
               forProvider:
                 storageRoot: {{ $catalog.storageRoot }}
-                properties: {{ default "" $catalog.properties }}
                 metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
                 owner: {{ $catalog.owner }}
               providerConfigRef:
