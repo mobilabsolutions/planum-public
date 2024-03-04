@@ -165,19 +165,19 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: grants.mobilabsolutions.com/v1alpha1
-            kind: Grants
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: grants-sc-cred
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: grants-sc-cred
-            spec:
-              forProvider:
-                storageCredential: {{ print "sc-%s" $prefix }}
-                grant: {{ $catalog.grants | toYaml | nindent 4 }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            # apiVersion: grants.mobilabsolutions.com/v1alpha1
+            # kind: Grants
+            # metadata:
+            #   annotations:
+            #     gotemplating.fn.crossplane.io/composition-resource-name: grants-sc-cred
+            #     gotemplating.fn.crossplane.io/ready: "True"
+            #   name: grants-sc-cred
+            # spec:
+            #   forProvider:
+            #     storageCredential: {{ print "sc-%s" $prefix }}
+            #     grant:
+            #   providerConfigRef:
+            #     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             {{- range $location := $.observed.composite.resource.spec.parameters.locations }}
             ---
