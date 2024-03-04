@@ -148,6 +148,40 @@ spec:
                 grant: {{ $catalog.grants | toYaml | nindent 4 }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            {{- range $schema := $catalog.schemas }}
+            apiVersion: schema.mobilabsolutions.com/v1alpha1
+            kind: Schema
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: schema-{{ $schema.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: schema-{{ $schema.name }}
+            spec:
+              forProvider:
+                catalogName: {{ $catalog.name }}
+                name: {{ $schema.name }}
+                owner: {{ $catalog.owner }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            kind: Grants
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: grants-schema-{{ $schema.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: grants-schema-{{ $schema.name }}
+            spec:
+              forProvider:
+                schemaSelector:
+                  matchControllerRef: true
+                  matchLabels: 
+                    name: {{ $schema.name }}
+                grant: {{ $schema.grants | toYaml | nindent 4 }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{- end }}
             {{- end }}
             ---
             apiVersion: storagecredential.mobilabsolutions.com/v1alpha1
