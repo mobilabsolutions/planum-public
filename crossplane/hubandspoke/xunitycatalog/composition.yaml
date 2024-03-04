@@ -85,10 +85,9 @@ spec:
             kind: Library
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: library-{{ $cluster.name }}-{{ $prefix }}
+                gotemplating.fn.crossplane.io/composition-resource-name: library-{{ $cluster.name }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: cluster-{{ $cluster.name }}-{{ $prefix }}
-              name: databricks-library
+              name: library-{{ $cluster.name }}
             spec:
               forProvider:
                 clusterIdSelector:
@@ -126,7 +125,7 @@ spec:
             spec:
               forProvider:
                 storageRoot: {{ $catalog.storageRoot }}
-                properties: {{ $catalog.properties }}
+                properties: {{ default "" $catalog.properties }}
                 metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
                 owner: {{ $catalog.owner }}
               providerConfigRef:
