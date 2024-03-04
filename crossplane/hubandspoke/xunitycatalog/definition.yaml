@@ -125,7 +125,7 @@ spec:
                             type: object
                             properties:
                               principal:
-                                type: object
+                                type: string
                               privileges:
                                 type: array
                                 items:
