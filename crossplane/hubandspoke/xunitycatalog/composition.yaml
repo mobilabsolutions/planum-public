@@ -50,7 +50,6 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: metastore-assignment-dbw
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: metastore-assignment-dbw
               name: metastore-assignment-dbw
             spec:
               forProvider:
@@ -67,7 +66,6 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $cluster.name }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: {{ $cluster.name }}
               labels: 
                 name: {{ $cluster.name }}
               name: {{ $cluster.name }}
@@ -118,7 +116,6 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $catalog.name }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: {{ $catalog.name }}
               labels:
                 name: {{ $catalog.name }}
               name: {{ $catalog.name }}
@@ -141,7 +138,6 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: grants-catalog-{{ $catalog.name }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: grants-catalog-{{ $catalog.name }}
               name: grants-catalog-{{ $catalog.name }}
             spec:
               forProvider:
@@ -160,7 +156,6 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: sc-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: sc-{{ $prefix }}
               name: sc-{{ $prefix }}
             spec:
               forProvider:
@@ -178,7 +173,6 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: {{ $location.name }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: {{ $location.name }}
               labels:
                 name: {{ $location.name }}
               name: {{ $location.name }}
