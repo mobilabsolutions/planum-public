@@ -159,7 +159,8 @@ spec:
               name: schema-{{ $schema.name }}
             spec:
               forProvider:
-                catalogName: {{ $catalog.name }}
+                catalogNameRef:
+                  name: {{ $catalog.name }}
                 name: {{ $schema.name }}
                 owner: {{ $catalog.owner }}
               providerConfigRef:
