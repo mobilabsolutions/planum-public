@@ -65,12 +65,12 @@ spec:
             kind: Cluster
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: cluster-{{ $cluster.name }}-{{ $prefix }}
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $cluster.name }}
                 gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: cluster-{{ $cluster.name }}-{{ $prefix }}
+                crossplane.io/external-name: {{ $cluster.name }}
               labels: 
                 name: {{ $cluster.name }}
-              name: cluster-{{ $cluster.name }}-{{ $prefix }}
+              name: {{ $cluster.name }}
             spec:
               forProvider:
                 clusterName: {{ $cluster.name }}
