@@ -124,7 +124,12 @@ spec:
               name: {{ $catalog.name }}
             spec:
               forProvider:
+                {{ if ne $catalog.storageRoot nil }}
                 storageRoot: {{ $catalog.storageRoot }}
+                {{ end }}
+                {{ if ne $catalog.properties nil }}
+                properties: {{ $catalog.properties }}
+                {{ end }}
                 metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
                 owner: {{ $catalog.owner }}
               providerConfigRef:
