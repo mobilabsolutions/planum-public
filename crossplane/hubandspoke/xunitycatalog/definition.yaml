@@ -149,6 +149,25 @@ spec:
                                 items:
                                   type: string
 
+                  volumes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        catalogName:
+                          type: string
+                        schemaName:
+                          type: string
+                        volumeType:
+                          type: string
+                          enum:
+                          - MANAGED
+                          - EXTERNAL
+                        owner:
+                          type: string
+                        storageLocation:
+                          type: string
+
           status:
             type: object
             properties:
