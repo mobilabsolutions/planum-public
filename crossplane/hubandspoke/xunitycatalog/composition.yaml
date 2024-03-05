@@ -257,7 +257,10 @@ spec:
             apiVersion: volume.mobilabsolutions.com/v1alpha1
             kind: Volume
             metadata:
-              name: crossplane-volume
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: volume-{{ $volume.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: volume-{{ $volume.name }}
             spec:
               forProvider:
                 catalogName: {{ $volume.catalogName }}
