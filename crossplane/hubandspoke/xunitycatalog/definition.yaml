@@ -158,6 +158,8 @@ spec:
                           type: string
                         schemaName:
                           type: string
+                        name:
+                          type: string
                         volumeType:
                           type: string
                           enum:
