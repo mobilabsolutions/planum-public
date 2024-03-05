@@ -252,28 +252,28 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{- end }}
-            ---
-            {{- range $volume := $.observed.composite.resource.spec.parameters.volumes }}
-            apiVersion: volume.mobilabsolutions.com/v1alpha1
-            kind: Volume
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: volume-{{ $volume.name }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: volume-{{ $volume.name }}
-            spec:
-              forProvider:
-                catalogName: {{ $volume.catalogName }}
-                schemaName: {{ $volume.schemaName }}
-                owner: {{ default $volume.name $volume.owner }}
-                {{ if ne $volume.storageLocation nil }}
-                storageLocation: {{ $volume.storageLocation }}
-                {{ end }}
-                name: {{ $volume.name }}
-                volumeType: {{ $volume.volumeType }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            {{- end }}
+            # ---
+            # {{- range $volume := $.observed.composite.resource.spec.parameters.volumes }}
+            # apiVersion: volume.mobilabsolutions.com/v1alpha1
+            # kind: Volume
+            # metadata:
+            #   annotations:
+            #     gotemplating.fn.crossplane.io/composition-resource-name: volume-{{ $volume.name }}
+            #     gotemplating.fn.crossplane.io/ready: "True"
+            #   name: volume-{{ $volume.name }}
+            # spec:
+            #   forProvider:
+            #     catalogName: {{ $volume.catalogName }}
+            #     schemaName: {{ $volume.schemaName }}
+            #     owner: {{ default $volume.name $volume.owner }}
+            #     {{ if ne $volume.storageLocation nil }}
+            #     storageLocation: {{ $volume.storageLocation }}
+            #     {{ end }}
+            #     name: {{ $volume.name }}
+            #     volumeType: {{ $volume.volumeType }}
+            #   providerConfigRef:
+            #     name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            # {{- end }}
 
     - step: auto-ready
       functionRef:
