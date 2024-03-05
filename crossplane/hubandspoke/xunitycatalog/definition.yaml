@@ -107,6 +107,24 @@ spec:
                                 type: array
                                 items:
                                   type: string
+                        schemas:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              grants:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    principal:
+                                      type: string
+                                    privileges:
+                                      type: array
+                                      items:
+                                        type: string
 
                   locations:
                     type: array
@@ -130,24 +148,6 @@ spec:
                                 type: array
                                 items:
                                   type: string
-                        schemas:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              name:
-                                type: string
-                              grants:
-                                type: array
-                                items:
-                                  type: object
-                                  properties:
-                                    principal:
-                                      type: string
-                                    privileges:
-                                      type: array
-                                      items:
-                                        type: string
 
           status:
             type: object

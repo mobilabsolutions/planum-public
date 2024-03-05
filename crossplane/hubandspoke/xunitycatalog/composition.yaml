@@ -149,7 +149,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            {{- range $schema := $catalog.schemas }}
+            {{ range $schema := $catalog.schemas }}
             apiVersion: schema.mobilabsolutions.com/v1alpha1
             kind: Schema
             metadata:
@@ -182,7 +182,7 @@ spec:
                 grant: {{ $schema.grants | toYaml | nindent 4 }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            {{- end }}
+            {{ end }}
             {{- end }}
             ---
             apiVersion: storagecredential.mobilabsolutions.com/v1alpha1
