@@ -37,10 +37,182 @@ spec:
                 description: Unity Catalog Input parameters
                 type: object
                 properties:
+                  xLakehouseName:
+                    type: string
                   metastoreId:
                     type: string
-                  storageAccountName:
-                    type: string
+                  clusters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        sparkVersion:
+                          type: string
+                        nodeTypeId:
+                          type: string
+                        runtimeEngine:
+                          type: string
+                        numWorkers:
+                          type: integer
+                          minimum: 0
+                        jar:
+                          type: string
+                        maven:
+                          items:
+                            properties:
+                              coordinates:
+                                type: string
+                              exclusions:
+                                items:
+                                  type: string
+                                type: array
+                              repo:
+                                type: string
+                            type: object
+                          type: array
+                        pypi:
+                          items:
+                            properties:
+                              package:
+                                type: string
+                              repo:
+                                type: string
+                            type: object
+                          type: array
+                        whl:
+                          type: string
+                  catalogs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        owner:
+                          type: string
+                        storageRoot:
+                          type: string
+                        properties:
+                          type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: string
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
+                        schemas:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              grants:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    principal:
+                                      type: string
+                                    privileges:
+                                      type: array
+                                      items:
+                                        type: string
+
+                  locations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        owner:
+                          type: string
+                        url:
+                          type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: string
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
+
+                  volumes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        catalogName:
+                          type: string
+                        schemaName:
+                          type: string
+                        name:
+                          type: string
+                        volumeType:
+                          type: string
+                          enum:
+                          - MANAGED
+                          - EXTERNAL
+                        owner:
+                          type: string
+                        storageLocation:
+                          type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: string
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
+
+                  tables:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        catalogName:
+                          type: string
+                        schemaName:
+                          type: string
+                        storageLocation:
+                          type: string
+                        tableType:
+                          type: string
+                          enum:
+                          - MANAGED
+                          - EXTERNAL
+                          - VIEW
+                        dataSourceFormat:
+                          type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: string
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
 
           status:
             type: object

@@ -33,78 +33,46 @@ spec:
 
   mode: Pipeline
   pipeline:
-    # - step: patch-and-transform
-    #   functionRef:
-    #     name: upbound-function-patch-and-transform
-    #   input:
-    #     apiVersion: pt.fn.crossplane.io/v1beta1
-    #     kind: Resources
-    #     metadata:
-    #       name:
-    #     resources:
-    #     - name: nop
-    #       base:
-    #         apiVersion: nop.crossplane.io/v1alpha1
-    #         kind: NopResource
-    #         spec:
-    #           forProvider:
-    #             fields:
-    #       patches:
-    #         - type: FromEnvironmentFieldPath
-    #           fromFieldPath: outputs
-    #           toFieldPath: spec.forProvider.fields
-    #         - type: ToCompositeFieldPath
-    #           fromFieldPath: spec.forProvider.fields
-    #           toFieldPath: status.outputs
-    #         - type: CombineFromComposite
-    #           combine:
-    #             variables:
-    #               - fromFieldPath: metadata.name
-    #             strategy: string
-    #             string:
-    #               fmt: "nop-%s"
-    #           toFieldPath: metadata.name
+    - step: patch-and-transform
+      functionRef:
+        name: upbound-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        metadata:
+          name:
+        resources:
+        - name: environment-config
+          readinessChecks:
+          - type: None
+          base:
+            apiVersion: apiextensions.crossplane.io/v1alpha1
+            kind: EnvironmentConfig
+            metadata:
+              labels:
+                type: xlakehouse
+                name: 
+              name: 
+            data:
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "ec-spoke-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: metadata.name
+              toFieldPath: metadata.labels.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs
+              toFieldPath: data.outputs
 
-    # - step: patch-and-transform
-    #   functionRef:
-    #     name: upbound-function-patch-and-transform
-    #   input:
-    #     apiVersion: pt.fn.crossplane.io/v1beta1
-    #     kind: Resources
-    #     metadata:
-    #       name:
-    #     resources:
-    #     - name: environment-config
-    #       readinessChecks:
-    #       - type: None
-    #       base:
-    #         apiVersion: apiextensions.crossplane.io/v1alpha1
-    #         kind: EnvironmentConfig
-    #         metadata:
-    #           labels:
-    #             type: xlakehouse
-    #             name: 
-    #           name: 
-    #         data:
-    #       patches:
-    #       - type: CombineFromComposite
-    #         combine:
-    #           variables:
-    #             - fromFieldPath: metadata.name
-    #             - fromFieldPath: spec.resourceConfig.environment
-    #             - fromFieldPath: spec.resourceConfig.location
-    #           strategy: string
-    #           string:
-    #             fmt: "ec-spoke-%s-%s-%s"
-    #         toFieldPath: metadata.name
-    #       - type: FromCompositeFieldPath
-    #         fromFieldPath: metadata.name
-    #         toFieldPath: metadata.labels.name
-    #       - type: FromCompositeFieldPath
-    #         fromFieldPath: status.outputs
-    #         toFieldPath: data.outputs
-
-    - step: render-dlz-objects
+    - step: render-lakehouse-objects
       functionRef:
         name: function-go-templating
       input:
@@ -329,9 +297,10 @@ spec:
               outputs:
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                 adlsId: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
+                storageAccountName: {{ printf "adls%s" $prefix | replace "-" "" }}
                 databricksId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.id }}
-                databricksTokenId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceId }}
                 dbwUrl: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
+                dbwId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceId | toYaml }}
                 dfsEndpoint: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.primaryDfsEndpoint }}
                 keyvaultId: {{ (index $.observed.resources (printf "kv%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 adfId: {{ (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.id }}
@@ -339,6 +308,7 @@ spec:
                 adfIdentityPrincipalId: {{ index $adfIdentities 0 "principalId" }}
                 {{ $accessConnectorIdentities := (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.identity }}
                 accessConnectorIdentityPrincipalId: {{ index $accessConnectorIdentities 0 "principalId" }}
+                accessConnectorId: {{ (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.id }}
                 {{ if contains "dbw-public" $subnets.name }}
                 publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPublicSubnetName: {{ $subnets.name }}
@@ -401,7 +371,7 @@ spec:
                 gotemplating.fn.crossplane.io/composition-resource-name: dbw-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
                 crossplane.io/external-name: dbw-{{ $prefix }}
-              name: dbw{{ $prefix | replace "-" "" }}
+              name: dbw-{{ $prefix }}
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
@@ -552,7 +522,7 @@ spec:
             spec:
               forProvider:
                 principalId: {{ $.observed.composite.resource.status.outputs.accessConnectorIdentityPrincipalId }}
-                roleDefinitionName: "Contributor"
+                roleDefinitionName: "Storage Blob Data Contributor"
                 scope: {{ $.observed.composite.resource.status.outputs.adlsId }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
