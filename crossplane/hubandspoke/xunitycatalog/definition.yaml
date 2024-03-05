@@ -181,6 +181,39 @@ spec:
                                 items:
                                   type: string
 
+                  tables:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        catalogName:
+                          type: string
+                        schemaName:
+                          type: string
+                        storageLocation:
+                          type: string
+                        tableType:
+                          type: string
+                          enum:
+                          - MANAGED
+                          - EXTERNAL
+                          - VIEW
+                        dataSourceFormat:
+                          type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: string
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
+
           status:
             type: object
             properties:

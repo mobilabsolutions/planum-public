@@ -288,6 +288,40 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{- end }}
+            ---
+            {{- range $table := $.observed.composite.resource.spec.parameters.tables }}
+            apiVersion: sqltable.mobilabsolutions.com/v1alpha1
+            kind: Table
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: table-{{ $table.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: table-{{ $table.name }}
+            spec:
+              forProvider:
+                name: {{ $table.name }}
+                catalogName: {{ $table.catalogName }}
+                storageLocation: {{ $table.storageLocation }}
+                schemaName: {{ $table.schemaName }}
+                tableType: {{ $table.tableType }}
+                dataSourceFormat: {{ $table.dataSourceFormat }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            kind: Grants
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: grants-table-{{ $table.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: grants-table-{{ $table.name }}
+            spec:
+              forProvider:
+                table: {{ $table.name }}
+                grant: {{ $table.grants | toYaml | nindent 4 }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{- end }}
 
     - step: auto-ready
       functionRef:
