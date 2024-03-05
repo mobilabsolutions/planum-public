@@ -273,6 +273,20 @@ spec:
                 volumeType: {{ $volume.volumeType }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            kind: Grants
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: grants-vol-{{ $volume.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: grants-vol-{{ $volume.name }}
+            spec:
+              forProvider:
+                volume: {{ $volume.name }}
+                grant: {{ $volume.grants | toYaml | nindent 4 }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{- end }}
 
     - step: auto-ready

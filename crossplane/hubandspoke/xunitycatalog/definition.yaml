@@ -169,6 +169,17 @@ spec:
                           type: string
                         storageLocation:
                           type: string
+                        grants:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              principal:
+                                type: string
+                              privileges:
+                                type: array
+                                items:
+                                  type: string
 
           status:
             type: object
