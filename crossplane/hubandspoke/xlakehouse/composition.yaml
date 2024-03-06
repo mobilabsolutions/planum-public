@@ -531,6 +531,8 @@ spec:
                   key: {{ $secret }}
                   name: lakehouse-secret
                   namespace: crossplane-system
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{ end }}
             {{ end }}
             ---
