@@ -85,6 +85,11 @@ spec:
                               items:
                                 type: string
                               type: array
+                      secrets:
+                        items:
+                          type: string
+                        type: array
+
           status:
             type: object
             properties:
