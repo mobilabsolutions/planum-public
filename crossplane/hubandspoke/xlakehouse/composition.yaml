@@ -519,9 +519,9 @@ spec:
             kind: Secret
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: secret-{{ $secret }}
+                gotemplating.fn.crossplane.io/composition-resource-name: secret-{{ $secret | lower }}
                 gotemplating.fn.crossplane.io/ready: "True"
-              name: secret-{{ $secret }}
+              name: secret-{{ $secret | lower }}
             spec:
               forProvider:
                 keyVaultIdSelector:
