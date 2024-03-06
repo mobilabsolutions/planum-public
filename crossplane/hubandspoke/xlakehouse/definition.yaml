@@ -47,7 +47,7 @@ spec:
                   subnets:
                     type: array
                     default:
-                    - name: "snet-cp-spoke-eus-agent"
+                    - name: "snet-cp-spoke-eus-ir"
                       addressPostfix: "64/29"
                     - name: "snet-cp-spoke-eus-pe"
                       addressPostfix: "0/26"
@@ -85,10 +85,18 @@ spec:
                               items:
                                 type: string
                               type: array
-                      secrets:
-                        items:
-                          type: string
-                        type: array
+
+                      secretRef:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                          keys:
+                            type: array
+                            items:
+                              type: string
 
           status:
             type: object
