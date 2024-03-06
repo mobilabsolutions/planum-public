@@ -512,6 +512,22 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            {{ if eq $.observed.resources nil }}
+            {{- $randomString := randAlphaNum 10 -}}
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: secret-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: secret-{{ $prefix }}
+              namespace: crossplane-system
+            type: Opaque
+            data:
+              shirVmPassword: {{ $randomString | b64enc | quote }}
+              shirRegistrationSecretKey: {{ (index $.observed.resources (printf "self-hosted-ir-%s" $prefix)).resource.status.atProvider.primaryAuthorizationKey | b64enc | quote }}
+            {{ end }}
+            ---
             apiVersion: authorization.azure.upbound.io/v1beta1
             kind: RoleAssignment
             metadata:
