@@ -512,7 +512,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            {{ if ne $.observed.composite.resource.spec.parameters.keyvault.secrets }}
+            {{ if ne $.observed.composite.resource.spec.parameters.keyvault.secrets nil }}
             {{ range $secret:= $.observed.composite.resource.spec.parameters.keyvault.secrets }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
