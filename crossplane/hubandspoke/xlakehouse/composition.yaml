@@ -524,6 +524,7 @@ spec:
               name: secret-{{ $secret | lower }}
             spec:
               forProvider:
+                name: {{ $secret }}
                 keyVaultIdSelector:
                   matchControllerRef: true
                 valueSecretRef:
