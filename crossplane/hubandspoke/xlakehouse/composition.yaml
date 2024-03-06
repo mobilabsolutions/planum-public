@@ -512,20 +512,25 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            {{ if eq $.observed.resources nil }}
-            {{- $randomString := randAlphaNum 10 -}}
-            apiVersion: v1
+            {{ if ne $.observed.composite.resource.spec.parameters.keyvault.secrets }}
+            {{ range $secret:= $.observed.composite.resource.spec.parameters.keyvault.secrets }}
+            ---
+            apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: Secret
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: secret-{{ $prefix }}
+                gotemplating.fn.crossplane.io/composition-resource-name: secret-{{ $secret }}
                 gotemplating.fn.crossplane.io/ready: "True"
-              name: secret-{{ $prefix }}
-              namespace: crossplane-system
-            type: Opaque
-            data:
-              shirVmPassword: {{ $randomString | b64enc | quote }}
-              shirRegistrationSecretKey: {{ (index $.observed.resources (printf "self-hosted-ir-%s" $prefix)).resource.status.atProvider.primaryAuthorizationKey | b64enc | quote }}
+              name: secret-{{ $secret }}
+            spec:
+              forProvider:
+                keyVaultIdSelector:
+                  matchControllerRef: true
+                valueSecretRef:
+                  key: {{ $secret }}
+                  name: lakehouse-secret
+                  namespace: crossplane-system
+            {{ end }}
             {{ end }}
             ---
             apiVersion: authorization.azure.upbound.io/v1beta1
