@@ -47,10 +47,8 @@ spec:
                   subnets:
                     type: array
                     default:
-                    - name: "snet-cp-spoke-eus-agent"
-                      addressPostfix: "64/29"
                     - name: "snet-cp-spoke-eus-ir"
-                      addressPostfix: "72/29"
+                      addressPostfix: "64/29"
                     - name: "snet-cp-spoke-eus-pe"
                       addressPostfix: "0/26"
                     - name: "snet-cp-spoke-eus-dbw-public"
