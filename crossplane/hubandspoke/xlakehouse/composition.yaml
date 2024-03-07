@@ -776,7 +776,7 @@ spec:
                     namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
                   type: "CustomScriptExtension"
                   typeHandlerVersion: "1.9"
-                  virtualMachineId: {{ $outputs.virtualMachineId }}
+                  virtualMachineId: {{ $.observed.composite.resource.status.outputs.virtualMachineId }}
                 providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
               {{- end }}
