@@ -317,6 +317,7 @@ spec:
                 privateNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
                 dbwPrivateSubnetName: {{ $subnets.name }}
                 {{ end }}
+                virtualMachineId: {{ (index $.observed.resources (printf "vm-%s" $prefix)).resource.status.atProvider.id }}
             {{ end }}
             {{- end }}
             ---
@@ -775,10 +776,7 @@ spec:
                     namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
                   type: "CustomScriptExtension"
                   typeHandlerVersion: "1.9"
-                  virtualMachineIdSelector:
-                    matchControllerRef: true
-                    matchLabels:
-                      name: vm-{{ $prefix }}
+                  virtualMachineId: {{ $outputs.virtualMachineId }}
                 providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
               {{- end }}
