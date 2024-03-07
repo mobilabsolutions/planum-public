@@ -723,7 +723,7 @@ spec:
                   resourceGroupName: {{ $outputs.ResourceGroupName }}
                 providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              ---
+            ---
               apiVersion: compute.azure.upbound.io/v1beta1
               kind: WindowsVirtualMachine
               metadata:
@@ -756,7 +756,7 @@ spec:
                     version: latest
                 providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              ---
+            ---
               apiVersion: compute.azure.upbound.io/v1beta1
               kind: VirtualMachineExtension
               metadata:
