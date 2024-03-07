@@ -761,9 +761,9 @@ spec:
             kind: VirtualMachineExtension
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: ext-vm-{{ $prefix }}
+                gotemplating.fn.crossplane.io/composition-resource-name: "ext-adf-shir"
                 gotemplating.fn.crossplane.io/ready: "True"
-              name: ext-vm-{{ $prefix }}
+              name: "ext-adf-shir"
             spec:
               forProvider:
                 publisher: "Microsoft.Compute"
