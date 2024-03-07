@@ -730,6 +730,8 @@ spec:
                 annotations:
                   gotemplating.fn.crossplane.io/composition-resource-name: vm-{{ $prefix }}
                   gotemplating.fn.crossplane.io/ready: "True"
+                labels:
+                  name: vm-{{ $prefix }}
                 name: vm-{{ $prefix }}
               spec:
                 forProvider:
@@ -775,6 +777,8 @@ spec:
                   typeHandlerVersion: "1.9"
                   virtualMachineIdSelector:
                     matchControllerRef: true
+                    matchLabels:
+                      name: vm-{{ $prefix }}
                 providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
               {{- end }}
