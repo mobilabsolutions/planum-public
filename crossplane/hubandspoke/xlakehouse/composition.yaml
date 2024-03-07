@@ -585,6 +585,7 @@ spec:
             {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
             {{ $dns := $.observed.composite.resource.spec.parameters.dns }}
             {{ if contains "-pe" $subnets.name }}
+            ---
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PrivateEndpoint
             metadata:
