@@ -725,6 +725,27 @@ spec:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             apiVersion: compute.azure.upbound.io/v1beta1
+            kind: VirtualMachineExtension
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: "ext-adf-shir"
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: "ext-adf-shir"
+            spec:
+              forProvider:
+                publisher: "Microsoft.Compute"
+                protectedSettingsSecretRef:
+                  key: {{ index $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys 1 }}
+                  name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
+                  namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
+                type: "CustomScriptExtension"
+                typeHandlerVersion: "1.9"
+                virtualMachineIdSelector:
+                  matchControllerRef: true
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: compute.azure.upbound.io/v1beta1
             kind: WindowsVirtualMachine
             metadata:
               annotations:
@@ -754,27 +775,6 @@ spec:
                   publisher: MicrosoftWindowsServer
                   sku: 2022-Datacenter
                   version: latest
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            apiVersion: compute.azure.upbound.io/v1beta1
-            kind: VirtualMachineExtension
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: "ext-adf-shir"
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: "ext-adf-shir"
-            spec:
-              forProvider:
-                publisher: "Microsoft.Compute"
-                protectedSettingsSecretRef:
-                  key: {{ index $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys 1 }}
-                  name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
-                  namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
-                type: "CustomScriptExtension"
-                typeHandlerVersion: "1.9"
-                virtualMachineIdSelector:
-                  matchControllerRef: true
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{ end }}
