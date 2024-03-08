@@ -44,7 +44,7 @@ spec:
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
             ---
-            apiVersion: metastoreassignment.mobilabsolutions.com/v1alpha1
+            apiVersion: metastoreassignment.planum.mblb.net/v1alpha1
             kind: Assignment
             metadata:
               annotations:
@@ -60,7 +60,7 @@ spec:
             ---
             {{- range $cluster := $.observed.composite.resource.spec.parameters.clusters }}
             ---
-            apiVersion: cluster.mobilabsolutions.com/v1alpha1
+            apiVersion: cluster.planum.mblb.net/v1alpha1
             kind: Cluster
             metadata:
               annotations:
@@ -79,7 +79,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: library.mobilabsolutions.com/v1alpha1
+            apiVersion: library.planum.mblb.net/v1alpha1
             kind: Library
             metadata:
               annotations:
@@ -110,7 +110,7 @@ spec:
             ---
             {{- range $catalog := $.observed.composite.resource.spec.parameters.catalogs }}
             ---
-            apiVersion: catalog.mobilabsolutions.com/v1alpha1
+            apiVersion: catalog.planum.mblb.net/v1alpha1
             kind: Catalog
             metadata:
               annotations:
@@ -132,7 +132,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            apiVersion: grants.planum.mblb.net/v1alpha1
             kind: Grants
             metadata:
               annotations:
@@ -150,12 +150,14 @@ spec:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             {{ range $schema := $catalog.schemas }}
-            apiVersion: schema.mobilabsolutions.com/v1alpha1
+            apiVersion: schema.planum.mblb.net/v1alpha1
             kind: Schema
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: schema-{{ $schema.name }}
                 gotemplating.fn.crossplane.io/ready: "True"
+              labels:
+                name: {{ $schema.name }}
               name: schema-{{ $schema.name }}
             spec:
               forProvider:
@@ -166,7 +168,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            apiVersion: grants.planum.mblb.net/v1alpha1
             kind: Grants
             metadata:
               annotations:
@@ -185,7 +187,7 @@ spec:
             {{ end }}
             {{- end }}
             ---
-            apiVersion: storagecredential.mobilabsolutions.com/v1alpha1
+            apiVersion: storagecredential.planum.mblb.net/v1alpha1
             kind: Credential
             metadata:
               annotations:
@@ -200,7 +202,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            # apiVersion: grants.mobilabsolutions.com/v1alpha1
+            # apiVersion: grants.planum.mblb.net/v1alpha1
             # kind: Grants
             # metadata:
             #   annotations:
@@ -216,7 +218,7 @@ spec:
             ---
             {{- range $location := $.observed.composite.resource.spec.parameters.locations }}
             ---
-            apiVersion: externallocation.mobilabsolutions.com/v1alpha1
+            apiVersion: externallocation.planum.mblb.net/v1alpha1
             kind: Location
             metadata:
               annotations:
@@ -235,7 +237,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            apiVersion: grants.planum.mblb.net/v1alpha1
             kind: Grants
             metadata:
               annotations:
@@ -254,7 +256,7 @@ spec:
             {{- end }}
             ---
             {{- range $volume := $.observed.composite.resource.spec.parameters.volumes }}
-            apiVersion: volume.mobilabsolutions.com/v1alpha1
+            apiVersion: volume.planum.mblb.net/v1alpha1
             kind: Volume
             metadata:
               annotations:
@@ -274,7 +276,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            apiVersion: grants.planum.mblb.net/v1alpha1
             kind: Grants
             metadata:
               annotations:
@@ -290,7 +292,7 @@ spec:
             {{- end }}
             ---
             {{- range $table := $.observed.composite.resource.spec.parameters.tables }}
-            apiVersion: sqltable.mobilabsolutions.com/v1alpha1
+            apiVersion: sqltable.planum.mblb.net/v1alpha1
             kind: Table
             metadata:
               annotations:
@@ -308,7 +310,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: grants.mobilabsolutions.com/v1alpha1
+            apiVersion: grants.planum.mblb.net/v1alpha1
             kind: Grants
             metadata:
               annotations:
