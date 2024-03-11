@@ -144,9 +144,11 @@ spec:
                 environment: {{ $.observed.composite.resource.spec.resourceConfig.environment }}
               parameters:
                 vnetAddressSpace: {{ $spoke.vnetAddressSpace }}
-                {{ if eq $.observed.composite.resource.status.outputs.inboundEndpointIp nil }}
+                {{ if ne $.observed.composite.resource.status.outputs.inboundEndpointIp nil }}
                 dnsServers: 
                 - {{ $.observed.composite.resource.status.outputs.inboundEndpointIp }}
+                {{ else }}
+                dnsServers: [] 
                 {{ end }}
                   {{ if eq $.observed.resources nil }}
                 routeTableId: ""
