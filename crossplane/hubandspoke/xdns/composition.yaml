@@ -131,7 +131,9 @@ spec:
             status:
               outputs:
                 {{ $name | lower }}: {{ (index $.observed.resources $name).resource.status.atProvider.id }}
+                {{ if ne (index $.observed.resources (printf "in-%s" $prefix)).resource.status.atProvider.inboundEndpointIp nil }}
                 privateDnsResolverInboundEndpointIp: {{ (index $.observed.resources (printf "in-%s" $prefix)).resource.status.atProvider.inboundEndpointIp }}
+                {{ end }}
             {{ end }}
             {{- end }}
 
