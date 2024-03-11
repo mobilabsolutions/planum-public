@@ -41,6 +41,8 @@ spec:
                     type: string
                   metastoreId:
                     type: string
+                  metastoreAdmin:
+                    type: string
                   clusters:
                     type: array
                     items:
