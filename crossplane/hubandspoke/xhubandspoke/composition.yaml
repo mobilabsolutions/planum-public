@@ -144,7 +144,7 @@ spec:
                 environment: {{ $.observed.composite.resource.spec.resourceConfig.environment }}
               parameters:
                 vnetAddressSpace: {{ $spoke.vnetAddressSpace }}
-                {{ if ne $.observed.composite.resource.status.outputs.inboundEndpointIp nil }}
+                {{ if eq $.observed.composite.resource.status.outputs.inboundEndpointIp nil }}
                 dnsServers: 
                 - {{ $.observed.composite.resource.status.outputs.inboundEndpointIp }}
                 {{ end }}
