@@ -94,6 +94,22 @@ spec:
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
                 allocationMethod: Static
                 sku: Standard
+            ---
+            {{ if contains "Bastion" $subnets.name }}
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: BastionHost
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: bastion-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: bastion-{{ $prefix }}
+            spec:
+              resourceGroupName: {{ $outputs.ResourceGroupName }}
+              location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+              publicIp: {{ printf "ip-bastion-%s" $prefix }}
+              vnetName: {{ $outputs.VirtualNetworkName }}
+              providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
             {{- end }}
             ---
             apiVersion: recoveryservices.azure.upbound.io/v1beta1
