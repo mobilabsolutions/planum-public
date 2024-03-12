@@ -90,7 +90,6 @@ spec:
                 gotemplating.fn.crossplane.io/ready: "True"
               name: law-{{ $prefix }}
             spec:
-              forProvider:
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+              resourceGroupName: {{ $outputs.ResourceGroupName }}
+              location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+              providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
