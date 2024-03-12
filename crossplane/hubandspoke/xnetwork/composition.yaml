@@ -121,9 +121,9 @@ spec:
             - type: FromCompositeFieldPath
               fromFieldPath: status.outputs
               toFieldPath: data.outputs
-            - type: FromCompositeFieldPath
-              fromFieldPath: spec.parameters.routeTableId
-              toFieldPath: data.outputs['routeTableId']
+#            - type: FromCompositeFieldPath
+#              fromFieldPath: spec.parameters.routeTableId
+#              toFieldPath: data.outputs['routeTableId']
 
     - step: render-subnets
       functionRef:
