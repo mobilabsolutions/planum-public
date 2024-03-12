@@ -101,6 +101,9 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: status.outputs['inboundEndpointIp']
       toFieldPath: spec.parameters.dnsServers[0]
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.routeTableId
+      toFieldPath: spec.parameters.routeTableId
 
   - name: dns
     readinessChecks:
