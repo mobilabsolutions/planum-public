@@ -62,7 +62,7 @@ spec:
                 US: "eastus"
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.publicKey"
-          toFieldPath: "spec.forProvider.adminSshKey.publicKey"
+          toFieldPath: "spec.forProvider.adminSshKey[0].publicKey"
     - name: nic
       base:
         apiVersion: network.azure.upbound.io/v1beta1
