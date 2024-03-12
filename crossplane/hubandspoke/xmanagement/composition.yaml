@@ -5,6 +5,18 @@ metadata:
   labels:
     planum.mblb.net/managed-by: "true"
 spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xnetwork
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.parameters.xNetworkName
+
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XManagement #has to be singular
