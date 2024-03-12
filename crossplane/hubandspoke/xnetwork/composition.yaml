@@ -142,6 +142,7 @@ spec:
                 routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
             {{ end }}
             ---
+            {{if ne $.observed.composite.resource.status.outputs.VirtualNetworkId nil }}
             {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
@@ -174,6 +175,7 @@ spec:
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
             {{ end }}
             {{- end }}
+            {{ end }}
 
     - step: auto-ready
       functionRef:
