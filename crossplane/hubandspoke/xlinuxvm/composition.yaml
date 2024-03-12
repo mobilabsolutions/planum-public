@@ -111,10 +111,10 @@ spec:
           fromFieldPath: "spec.addressPrefixes"
           toFieldPath: "spec.forProvider.addressPrefixes"
         - type: FromEnvironmentFieldPath
-          fromFieldPath: "ResourceGroupName"
+          fromFieldPath: "outputs.ResourceGroupName"
           toFieldPath: "spec.forProvider.resourceGroupName"
         - type: FromEnvironmentFieldPath
-          fromFieldPath: "VirtualNetworkName"
+          fromFieldPath: "outputs.VirtualNetworkName"
           toFieldPath: "spec.forProvider.virtualNetworkName"
     - name: resourcegroup
       base:
