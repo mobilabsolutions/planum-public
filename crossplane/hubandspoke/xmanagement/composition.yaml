@@ -41,6 +41,7 @@ spec:
               "switzerlandnorth" "sln"
             }}
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
+            {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
             {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
             ---
