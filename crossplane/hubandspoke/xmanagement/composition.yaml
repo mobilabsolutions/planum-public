@@ -84,6 +84,21 @@ spec:
             {{ end }}
             {{- end }}
             ---
+            apiVersion: recoveryservices.azure.upbound.io/v1beta1
+            kind: Vault
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: rsv-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: rsv-{{ $prefix }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                sku: {{ $.observed.composite.resource.spec.resourceConfig.vaultSku }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: LogAnalyticsWorkspace
             metadata:
