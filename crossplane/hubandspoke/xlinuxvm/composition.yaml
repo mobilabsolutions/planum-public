@@ -30,6 +30,8 @@ spec:
           providerConfigRef:
             name: X
           forProvider:
+            priority: "Spot"
+            evictionPolicy: "Deallocate"
             adminUsername: adminuser
             adminSshKey:
               - publicKey: X
@@ -40,7 +42,7 @@ spec:
                 storageAccountType: Standard_LRS
             resourceGroupNameSelector:
               matchControllerRef: true
-            size: Standard_B1ms
+            size: Standard_DS1_v2
             sourceImageReference:
               - offer: debian-11
                 publisher: Debian
