@@ -46,6 +46,7 @@ spec:
               parameters:
                 vnetAddressSpace: 
                 - {{ printf "%s.0/24" $hubConfig.vnetAddressPrefix }}
+                routeTableId: {{ (index $.observed.resources (print "rt-hub-spokes")).resource.status.atProvider.id }}
                 subnets: 
                 - name: "GatewaySubnet"
                   addressSpace: {{ printf "%s.0/26" $hubConfig.vnetAddressPrefix }}

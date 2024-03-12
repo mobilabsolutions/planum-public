@@ -1,0 +1,64 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xmanagements.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XManagement
+    plural: xmanagements
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              resourceConfig:
+                description: ResourceConfig defines general properties
+                type: object
+                properties:
+                  providerConfigName:
+                    type: string
+                  location:
+                    type: string
+                  environment:
+                    type: string
+                  tenantId:
+                    type: string 
+                required:
+                  - providerConfigName
+                  - location
+              parameters:
+                description: DMLZ Input parameters
+                type: object
+                properties:
+                  xNetworkName:
+                    type: string
+                  virtualNetworkPrefix:
+                    type: string
+                  subnets:
+                    type: array
+                    default:
+                    - name: "snet-cp-management-eus-bastion"
+                      addressPostfix: "64/29"
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        addressPostfix:
+                          type: string
+
+          status:
+            type: object
+            properties:
+              outputs:
+                type: object
+                additionalProperties:
+                  type: string
