@@ -95,7 +95,7 @@ spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
-                sku: {{ $.observed.composite.resource.spec.resourceConfig.vaultSku }}
+                sku: {{ $.observed.composite.resource.spec.parameters.vaultSku }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
