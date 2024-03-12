@@ -94,6 +94,8 @@ spec:
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
                 allocationMethod: Static
                 sku: Standard
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             {{ if contains "Bastion" $subnets.name }}
             apiVersion: planum.mblb.net/v1alpha1
