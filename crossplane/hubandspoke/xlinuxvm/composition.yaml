@@ -36,7 +36,7 @@ spec:
             adminSshKey:
               - publicKey: X
                 username: adminuser
-            location: "westeurope"
+            location: "northeurope"
             osDisk:
               - caching: ReadWrite
                 storageAccountType: Standard_LRS
@@ -60,7 +60,8 @@ spec:
           transforms:
             - type: map
               map:
-                EU: "westeurope"
+                NEU: "northeurope"
+                WEU: "westeurope"
                 US: "eastus"
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.publicKey"
@@ -78,7 +79,7 @@ spec:
                 privateIpAddressAllocation: Dynamic
                 subnetIdSelector:
                   matchControllerRef: true
-            location: "westeurope"
+            location: "northeurope"
             resourceGroupNameSelector:
               matchControllerRef: true
       patches:
@@ -91,7 +92,8 @@ spec:
           transforms:
             - type: map
               map:
-                EU: "westeurope"
+                NEU: "northeurope"
+                WEU: "westeurope"
                 US: "eastus"
     - name: subnet
       base:
@@ -144,7 +146,7 @@ spec:
           providerConfigRef:
             name: X
           forProvider:
-            location: "westeurope"
+            location: "northeurope"
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.providerConfigRef"
@@ -155,5 +157,6 @@ spec:
           transforms:
             - type: map
               map:
-                EU: "westeurope"
+                NEU: "northeurope"
+                WEU: "westeurope"
                 US: "eastus"

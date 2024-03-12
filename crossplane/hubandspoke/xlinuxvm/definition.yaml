@@ -24,7 +24,8 @@ spec:
               location:
                 type: string
                 oneOf:
-                  - pattern: '^EU$'
+                  - pattern: '^NEU$'
+                  - pattern: '^WEU$'
                   - pattern: '^US$'
               publicKey:
                 type: string
