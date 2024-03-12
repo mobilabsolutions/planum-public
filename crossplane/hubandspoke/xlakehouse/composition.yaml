@@ -300,14 +300,12 @@ spec:
                 storageAccountName: {{ printf "adls%s" $prefix | replace "-" "" }}
                 databricksId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.id }}
                 dbwUrl: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
-                dbwId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceId | toYaml }}
+                dbwId: {{ default "databricks" (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceId | toYaml }}
                 dfsEndpoint: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.primaryDfsEndpoint }}
                 keyvaultId: {{ (index $.observed.resources (printf "kv%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 adfId: {{ (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.id }}
                 {{ $adfIdentities := (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.identity }}
-                {{ if ne (index $adfIdentities 0) nil }}
                 adfIdentityPrincipalId: {{ index $adfIdentities 0 "principalId" }}
-                {{ end }}
                 {{ $accessConnectorIdentities := (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.identity }}
                 accessConnectorIdentityPrincipalId: {{ index $accessConnectorIdentities 0 "principalId" }}
                 accessConnectorId: {{ (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.id }}
