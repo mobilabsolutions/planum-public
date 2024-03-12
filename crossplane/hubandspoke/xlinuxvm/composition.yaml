@@ -1,0 +1,119 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xlinuxvms.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xnetwork
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.xNetworkName
+
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XLinuxVM #has to be singular
+
+  resources:
+    - name: vm
+      base:
+        apiVersion: compute.azure.upbound.io/v1beta1
+        kind: LinuxVirtualMachine
+        spec:
+          forProvider:
+            adminUsername: adminuser
+            adminSshKey:
+              - publicKey: X
+                username: adminuser
+            location: "westeurope"
+            osDisk:
+              - caching: ReadWrite
+                storageAccountType: Standard_LRS
+            resourceGroupNameSelector:
+              matchControllerRef: true
+            size: Standard_B1ms
+            sourceImageReference:
+              - offer: debian-11
+                publisher: Debian
+                sku: 11-backports-gen2
+                version: latest
+            networkInterfaceIdsSelector:
+              matchControllerRef: true
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+          transforms:
+            - type: map
+              map:
+                EU: "westeurope"
+                US: "eastus"
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.publicKey"
+          toFieldPath: "spec.forProvider.adminSshKey.publicKey"
+    - name: quickstart-nic
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: NetworkInterface
+        spec:
+          forProvider:
+            ipConfiguration:
+              - name: ip-configuration
+                privateIpAddressAllocation: Dynamic
+                subnetIdSelector:
+                  matchControllerRef: true
+            location: "westeurope"
+            resourceGroupNameSelector:
+              matchControllerRef: true
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+          transforms:
+            - type: map
+              map:
+                EU: "westeurope"
+                US: "eastus"
+    - name: subnet
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: Subnet
+        spec:
+          forProvider:
+            addressPrefixes:
+              - 10.1.0.0/29
+            virtualNetworkName: X
+            resourceGroupName: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.addressPrefixes"
+          toFieldPath: "spec.forProvider.addressPrefixes"
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: "ResourceGroupName"
+          toFieldPath: "spec.forProvider.resourceGroupName"
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: "VirtualNetworkName"
+          toFieldPath: "spec.forProvider.virtualNetworkName"
+    - name: resourcegroup
+      base:
+        apiVersion: azure.upbound.io/v1beta1
+        kind: ResourceGroup
+        spec:
+          forProvider:
+            location: "westeurope"
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+          transforms:
+            - type: map
+              map:
+                EU: "westeurope"
+                US: "eastus"

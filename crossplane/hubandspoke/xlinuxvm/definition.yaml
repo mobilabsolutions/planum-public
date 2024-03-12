@@ -1,0 +1,39 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xlinuxvms.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XLinuxVM
+    plural: xlinuxvms
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              location:
+                type: string
+                oneOf:
+                  - pattern: '^EU$'
+                  - pattern: '^US$'
+              publicKey:
+                type: string
+              xNetworkName:
+                type: string
+              addressPrefixes:
+                type: array
+                items:
+                  type: string
+            required:
+              - location
+              - publicKey
+              - xNetworkName
+              - addressPrefixes
