@@ -64,7 +64,6 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            {{ if ne $.observed.resources nil }}
             apiVersion: network.azure.upbound.io/v1beta1
             kind: SubnetRouteTableAssociation
             metadata:
@@ -81,7 +80,19 @@ spec:
                     name: {{ $subnets.name }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            {{ end }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PublicIP
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: ip-bastion-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: ip-bastion-{{ $prefix }}
+            spec:
+              forProvider:
+                allocationMethod: Static
+                sku: Standard
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
             {{- end }}
             ---
             apiVersion: recoveryservices.azure.upbound.io/v1beta1
