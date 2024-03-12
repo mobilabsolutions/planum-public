@@ -305,7 +305,9 @@ spec:
                 keyvaultId: {{ (index $.observed.resources (printf "kv%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
                 adfId: {{ (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.id }}
                 {{ $adfIdentities := (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.identity }}
+                {{ if ne (index $adfIdentities 0) nil }}
                 adfIdentityPrincipalId: {{ index $adfIdentities 0 "principalId" }}
+                {{ end }}
                 {{ $accessConnectorIdentities := (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.identity }}
                 accessConnectorIdentityPrincipalId: {{ index $accessConnectorIdentities 0 "principalId" }}
                 accessConnectorId: {{ (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.id }}
