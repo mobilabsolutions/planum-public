@@ -207,7 +207,7 @@ data:
     az account set --subscription $subscriptionId
 
     existing=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP_NAME -n $NAME 2>&1)
-     if ! [[ "$existing" == *"ResourceNotFound"* ]]
+    if ! [[ "$existing" == *"ResourceNotFound"* ]]
     then
       echo "Log Analytics Workspace $NAME already exist in $RESOURCE_GROUP_NAME"
     else
@@ -215,6 +215,7 @@ data:
       ID=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP_NAME -n $NAME | jq -r .id)
       TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
       echo $1 | jq --arg TIME "$TIME" --arg ID "$ID" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.atProvider.id = $ID | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
+    fi
 
   "loganalyticsworkspaces-delete.sh": |
     echo "loganalyticsworkspace delete $1"
