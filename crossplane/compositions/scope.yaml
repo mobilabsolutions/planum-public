@@ -117,7 +117,7 @@ spec:
           forProvider:
             principalId: X
             roleDefinitionName: Private DNS Zone Contributor
-            scope: "/subscriptions/e63d5ad3-c25d-468e-a386-55349257c0f8/resourceGroups/rg-hubandspokes-7ltkj-demo-eastus"
+            scope: "/subscriptions/e63d5ad3-c25d-468e-a386-55349257c0f8"
           providerConfigRef:
             name: "e63d5ad3-c25d-468e-a386-55349257c0f8"
       patches:
