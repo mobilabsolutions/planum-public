@@ -162,7 +162,7 @@ data:
       if [[ "$state" == "Failed"* ]]
       then
         echo "provisioningState is failed, deleting..."
-        az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME
+        az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME --yes
       fi
     else
       az dns-resolver inbound-endpoint create --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations [{id:$SUBNET_ID}] --resource-group $RESOURCE_GROUP_NAME
