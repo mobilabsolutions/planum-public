@@ -90,9 +90,10 @@ spec:
               name: ip-bastion-{{ $prefix }}
             spec:
               forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 allocationMethod: Static
                 sku: Standard
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
             {{- end }}
             ---
             apiVersion: recoveryservices.azure.upbound.io/v1beta1
