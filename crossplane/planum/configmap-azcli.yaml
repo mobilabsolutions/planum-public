@@ -165,7 +165,7 @@ data:
         az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME --yes
       fi
     else
-      az dns-resolver inbound-endpoint create --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations [{id:$SUBNET_ID}] --resource-group $RESOURCE_GROUP_NAME
+      az dns-resolver inbound-endpoint create --no-wait true --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations [{id:$SUBNET_ID}] --resource-group $RESOURCE_GROUP_NAME
       INBOUND_IP=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" --query "[ipConfigurations[0].privateIpAddress]" -o tsv)
       TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
       echo $1 | jq --arg TIME "$TIME" --arg INBOUND_IP "$INBOUND_IP" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.atProvider.inboundEndpointIp = $INBOUND_IP | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
@@ -185,7 +185,7 @@ data:
     existing=$(az dns-resolver inbound-endpoint show --dns-resolver-name $DNS_RESOLVER_NAME --resource-group $RESOURCE_GROUP_NAME --name "dns-inbound-endpoint" 2>&1)
     if ! [[ "$existing" == *"NotFound"* ]]
     then
-      az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME
+      az dns-resolver inbound-endpoint delete --no-wait true --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME
     else
       echo "Inbound Endpoint does not exist"
     fi
