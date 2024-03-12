@@ -118,6 +118,19 @@ spec:
         - type: FromEnvironmentFieldPath
           fromFieldPath: "outputs.VirtualNetworkName"
           toFieldPath: "spec.forProvider.virtualNetworkName"
+    - name: subnet-routetable-association
+      base:
+        apiVersion: azure.upbound.io/v1beta1
+        kind: SubnetRouteTableAssociation
+        spec:
+          forProvider:
+            routeTableId: X
+            subnetIdSelector:
+              matchControllerRef: true
+      patches:
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: "outputs.routeTableId"
+          toFieldPath: "spec.forProvider.routeTableId"
     - name: resourcegroup
       base:
         apiVersion: azure.upbound.io/v1beta1
