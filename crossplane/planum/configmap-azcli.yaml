@@ -197,7 +197,7 @@ data:
     echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
 
   "loganalyticsworkspaces-create.sh": |
-    echo "loganalyticsworkspace delete $1"
+    echo "loganalyticsworkspace create $1"
     LOCATION=$(echo $1 | jq -r '.spec.location')
     RESOURCE_GROUP_NAME=$(echo $1 | jq -r '.spec.resourceGroupName')
     NAME=$(echo $1 | jq -r '.metadata.name')
@@ -216,7 +216,7 @@ data:
       TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
       echo $1 | jq --arg TIME "$TIME" --arg ID "$ID" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.atProvider.id = $ID | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
 
-  "loganalyticsworkspaces-delete.sh"
+  "loganalyticsworkspaces-delete.sh": |
     echo "loganalyticsworkspace delete $1"
     LOCATION=$(echo $1 | jq -r '.spec.location')
     RESOURCE_GROUP_NAME=$(echo $1 | jq -r '.spec.resourceGroupName')
