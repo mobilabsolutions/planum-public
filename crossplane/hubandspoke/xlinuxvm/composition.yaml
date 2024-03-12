@@ -120,7 +120,7 @@ spec:
           toFieldPath: "spec.forProvider.virtualNetworkName"
     - name: subnet-routetable-association
       base:
-        apiVersion: azure.upbound.io/v1beta1
+        apiVersion: network.azure.upbound.io/v1beta1
         kind: SubnetRouteTableAssociation
         spec:
           providerConfigRef:
