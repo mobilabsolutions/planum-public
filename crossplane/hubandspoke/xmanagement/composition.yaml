@@ -81,6 +81,8 @@ spec:
                     name: {{ $subnets.name }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
+            {{- end }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: LogAnalyticsWorkspace
