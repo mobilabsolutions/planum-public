@@ -105,6 +105,9 @@ spec:
             resourceGroupName: X
       patches:
         - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
           fromFieldPath: "spec.addressPrefixes"
           toFieldPath: "spec.forProvider.addressPrefixes"
         - type: FromEnvironmentFieldPath
