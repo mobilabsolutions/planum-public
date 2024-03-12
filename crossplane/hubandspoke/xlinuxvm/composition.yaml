@@ -27,6 +27,8 @@ spec:
         apiVersion: compute.azure.upbound.io/v1beta1
         kind: LinuxVirtualMachine
         spec:
+          providerConfigRef:
+            name: X
           forProvider:
             adminUsername: adminuser
             adminSshKey:
@@ -48,6 +50,9 @@ spec:
               matchControllerRef: true
       patches:
         - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
           fromFieldPath: "spec.location"
           toFieldPath: "spec.forProvider.location"
           transforms:
@@ -58,11 +63,13 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.publicKey"
           toFieldPath: "spec.forProvider.adminSshKey.publicKey"
-    - name: quickstart-nic
+    - name: nic
       base:
         apiVersion: network.azure.upbound.io/v1beta1
         kind: NetworkInterface
         spec:
+          providerConfigRef:
+            name: X
           forProvider:
             ipConfiguration:
               - name: ip-configuration
@@ -73,6 +80,9 @@ spec:
             resourceGroupNameSelector:
               matchControllerRef: true
       patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.location"
           toFieldPath: "spec.forProvider.location"
@@ -86,6 +96,8 @@ spec:
         apiVersion: network.azure.upbound.io/v1beta1
         kind: Subnet
         spec:
+          providerConfigRef:
+            name: X
           forProvider:
             addressPrefixes:
               - 10.1.0.0/29
@@ -106,9 +118,14 @@ spec:
         apiVersion: azure.upbound.io/v1beta1
         kind: ResourceGroup
         spec:
+          providerConfigRef:
+            name: X
           forProvider:
             location: "westeurope"
       patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.location"
           toFieldPath: "spec.forProvider.location"
