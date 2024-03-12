@@ -48,18 +48,8 @@ spec:
                 - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
                 virtualNetworkName: {{ $outputs.VirtualNetworkName }}
-                {{ if contains "dbw" $subnets.name }}
-                delegation:
-                - name: "subnet-delegation"
-                  serviceDelegation:
-                  - name: "Microsoft.Databricks/workspaces"
-                    actions: 
-                    - "Microsoft.Network/virtualNetworks/subnets/join/action"
-                    - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
-                    - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
-                {{ end }}
               providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             {{ if ne $.observed.resources nil }}
             apiVersion: network.azure.upbound.io/v1beta1
@@ -79,3 +69,15 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: LogAnalyticsWorkspace
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: law-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: law-{{ $prefix }}
+            spec:
+              forProvider:
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
