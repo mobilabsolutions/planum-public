@@ -235,7 +235,7 @@ data:
     existing=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP_NAME -n $NAME 2>&1)
     if ! [[ "$existing" == *"ResourceNotFound"* ]]
     then
-      az monitor log-analytics workspace delete -g $RESOURCE_GROUP_NAME -n $NAME
+      az monitor log-analytics workspace delete -g $RESOURCE_GROUP_NAME -n $NAME --yes
     else
       echo "Log Analytics Workspace does not exist"
     fi
@@ -279,7 +279,7 @@ data:
     existing=$(az network bastion show -g $RESOURCE_GROUP_NAME -n $NAME 2>&1)
     if ! [[ "$existing" == *"ResourceNotFound"* ]]
     then
-      az network bastion delete -g $RESOURCE_GROUP_NAME -n $NAME --location $LOCATION
+      az network bastion delete -g $RESOURCE_GROUP_NAME -n $NAME
     else
       echo "Bastion Host does not exist"
     fi
