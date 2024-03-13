@@ -64,6 +64,8 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            {{ if contains "Bastion" $subnets.name }}
+            {{ else }}
             apiVersion: network.azure.upbound.io/v1beta1
             kind: SubnetRouteTableAssociation
             metadata:
@@ -80,6 +82,7 @@ spec:
                     name: {{ $subnets.name | lower }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PublicIP
