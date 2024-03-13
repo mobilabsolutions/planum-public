@@ -144,6 +144,8 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: status.outputs['dnssubnet']
       toFieldPath: spec.parameters.dnsSubnetId
+      policy:
+        fromFieldPath: Required
     - type: ToCompositeFieldPath
       fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
       toFieldPath: status.outputs['inboundEndpointIp']
