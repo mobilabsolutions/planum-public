@@ -1,12 +1,12 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xmanagements.planum.mblb.net
+  name: xidentities.planum.mblb.net
 spec:
   group: planum.mblb.net
   names:
-    kind: XManagement
-    plural: xmanagements
+    kind: XIdentity
+    plural: xidentities
 
   versions:
   - name: v1alpha1
@@ -35,7 +35,7 @@ spec:
                   - providerConfigName
                   - location
               parameters:
-                description: Management Input parameters
+                description: Identity Input parameters
                 type: object
                 properties:
                   xNetworkName:
@@ -45,7 +45,7 @@ spec:
                   subnets:
                     type: array
                     default:
-                    - name: "AzureBastionSubnet"
+                    - name: "snet-identity-virtual-machines"
                       addressPostfix: "64/29"
                     items:
                       type: object
