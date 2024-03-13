@@ -77,7 +77,7 @@ spec:
                 subnetIdSelector:
                   matchControllerRef: true
                   matchLabels:
-                    name: {{ $subnets.name }}
+                    name: {{ $subnets.name | lower }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
