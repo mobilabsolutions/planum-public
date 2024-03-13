@@ -5,6 +5,18 @@ metadata:
   labels:
     planum.mblb.net/managed-by: "true"
 spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xnetwork
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.parameters.xNetworkName
+
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XManagement #has to be singular
@@ -29,6 +41,7 @@ spec:
               "switzerlandnorth" "sln"
             }}
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
+            {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
             {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
             ---
@@ -48,20 +61,9 @@ spec:
                 - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
                 virtualNetworkName: {{ $outputs.VirtualNetworkName }}
-                {{ if contains "dbw" $subnets.name }}
-                delegation:
-                - name: "subnet-delegation"
-                  serviceDelegation:
-                  - name: "Microsoft.Databricks/workspaces"
-                    actions: 
-                    - "Microsoft.Network/virtualNetworks/subnets/join/action"
-                    - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
-                    - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
-                {{ end }}
               providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            {{ if ne $.observed.resources nil }}
             apiVersion: network.azure.upbound.io/v1beta1
             kind: SubnetRouteTableAssociation
             metadata:
@@ -79,3 +81,62 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PublicIP
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: ip-bastion-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: ip-bastion-{{ $prefix }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                allocationMethod: Static
+                sku: Standard
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            {{ if contains "Bastion" $subnets.name }}
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: BastionHost
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: bastion-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: bastion-{{ $prefix }}
+            spec:
+              resourceGroupName: {{ $outputs.ResourceGroupName }}
+              location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+              publicIp: {{ printf "ip-bastion-%s" $prefix }}
+              vnetName: {{ $outputs.VirtualNetworkName }}
+              providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
+            {{- end }}
+            ---
+            apiVersion: recoveryservices.azure.upbound.io/v1beta1
+            kind: Vault
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: rsv-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: rsv-{{ $prefix }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                sku: {{ $.observed.composite.resource.spec.parameters.vaultSku }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: LogAnalyticsWorkspace
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: law-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: law-{{ $prefix }}
+            spec:
+              resourceGroupName: {{ $outputs.ResourceGroupName }}
+              location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+              providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}

@@ -45,7 +45,7 @@ spec:
                   subnets:
                     type: array
                     default:
-                    - name: "snet-cp-management-eus-bastion"
+                    - name: "AzureBastionSubnet"
                       addressPostfix: "64/29"
                     items:
                       type: object
@@ -54,6 +54,9 @@ spec:
                           type: string
                         addressPostfix:
                           type: string
+                  vaultSku:
+                    type: string
+                    default: "Standard"
 
           status:
             type: object
