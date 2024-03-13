@@ -235,7 +235,7 @@ data:
     existing=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP_NAME -n $NAME 2>&1)
     if ! [[ "$existing" == *"ResourceNotFound"* ]]
     then
-      az monitor log-analytics workspace delete -g $RESOURCE_GROUP_NAME -n $NAME --location $LOCATION
+      az monitor log-analytics workspace delete -g $RESOURCE_GROUP_NAME -n $NAME
     else
       echo "Log Analytics Workspace does not exist"
     fi
