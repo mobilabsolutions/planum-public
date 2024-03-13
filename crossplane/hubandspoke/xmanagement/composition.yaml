@@ -68,9 +68,9 @@ spec:
             kind: SubnetRouteTableAssociation
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: rt-association-{{ $subnets.name }}
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ printf "rt-association-%s" $subnets.name | lower }}
                 gotemplating.fn.crossplane.io/ready: "True"
-              name: rt-association-{{ $subnets.name }}
+              name: {{ printf "rt-association-%s" $subnets.name | lower }}
             spec:
               forProvider:
                 routeTableId: {{ $outputs.routeTableId }}
