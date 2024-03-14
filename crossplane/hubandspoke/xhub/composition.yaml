@@ -104,6 +104,9 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: spec.parameters.routeTableId
       toFieldPath: spec.parameters.routeTableId
+    - type: FromCompositeFieldPath
+      fromFieldPath: metadata.name
+      toFieldPath: metadata.name
 
   - name: dns
     readinessChecks:
