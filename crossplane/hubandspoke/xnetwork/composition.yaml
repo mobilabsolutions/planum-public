@@ -173,9 +173,7 @@ spec:
             {{ else }}
             status:
               outputs:
-                {{ if ne (index $.observed.resources $subnets.name).resource.status.atProvider.id nil }}
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                {{ end }}
             {{ end }}
             {{- end }}
             {{ end }}
