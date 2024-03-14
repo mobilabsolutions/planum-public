@@ -80,6 +80,8 @@ spec:
               {{- toYaml (index $.observed.resources "hub").resource.status.outputs | nindent 6 }}
             {{ end }}
             ---
+            {{- if ne (len .observed.composite.resource.spec.parameters.spokeConfigs) 0 }}
+            ---
             apiVersion: network.azure.upbound.io/v1beta1
             kind: RouteTable
             metadata:
@@ -120,6 +122,7 @@ spec:
                   matchLabels:
                     name: rt-hub-spokes
                 subnetId: {{ $.observed.composite.resource.status.outputs.gatewaysubnet }}
+            {{- end }}
 
     - step: render-spokes-networking
       functionRef:
