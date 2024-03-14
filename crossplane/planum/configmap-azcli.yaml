@@ -180,7 +180,6 @@ data:
       fi
     else
       echo az dns-resolver inbound-endpoint create --debug --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations "[{private-ip-allocation-method:'Dynamic',id:'$SUBNET_ID'}]" --resource-group $RESOURCE_GROUP_NAME
-      az dns-resolver inbound-endpoint create --debug --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations "[{private-ip-allocation-method:'Dynamic',id:'$SUBNET_ID'}]" --resource-group $RESOURCE_GROUP_NAME
     fi
 
   "resolverinboundendpoint-delete.sh": |
