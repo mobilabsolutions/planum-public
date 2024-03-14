@@ -112,8 +112,6 @@ spec:
     base:
       apiVersion: planum.mblb.net/v1alpha1
       kind: XDns
-      metadata:
-        name: hub
       spec:
         resourceConfig:
           providerConfigName: 
@@ -123,6 +121,16 @@ spec:
           resourceGroupName:
           dnsZoneNames: [""]
     patches:
+    - type: CombineFromComposite
+      combine:
+        variables:
+          - fromFieldPath: metadata.name
+          - fromFieldPath: spec.resourceConfig.environment
+          - fromFieldPath: spec.resourceConfig.location
+        strategy: string
+        string:
+          fmt: "dns-%s-%s-%s"
+      toFieldPath: metadata.name
     - type: FromCompositeFieldPath
       fromFieldPath: spec.resourceConfig.providerConfigName
       toFieldPath: spec.resourceConfig.providerConfigName
@@ -144,17 +152,11 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: status.outputs['dnssubnet']
       toFieldPath: spec.parameters.dnsSubnetId
+      policy:
+        fromFieldPath: Required
     - type: ToCompositeFieldPath
       fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
       toFieldPath: status.outputs['inboundEndpointIp']
-    - type: CombineFromComposite
-      combine:
-        variables:
-          - fromFieldPath: metadata.name
-        strategy: string
-        string:
-          fmt: "dns-%s"
-      toFieldPath: metadata.name
 
   - name: public-ip
     readinessChecks:	
@@ -192,22 +194,24 @@ spec:
         toFieldPath: metadata.name  
 
   - name: vnet-gateway
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
+    readinessChecks:
+    - matchCondition:
+        status: 'True'
+        type: Ready
       type: MatchCondition
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: VirtualNetworkGateway
       spec:
         forProvider:
+          tags:
+            inboundEndpointIp:
           ipConfiguration:
             - name: VnetGatewayConfig
               privateIpAddressAllocation: Dynamic
               publicIpAddressIdSelector:
                 matchControllerRef: true
-                matchLabels: 
+                matchLabels:
                   used-with: vnet-gw
               subnetId:
           location:
@@ -216,7 +220,7 @@ spec:
           type: Vpn
           vpnClientConfiguration:
             - addressSpace:
-              aadIssuer: 
+              aadIssuer:
               aadAudience: "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
               aadTenant:
               vpnClientProtocols: ["OpenVPN"]
@@ -225,6 +229,11 @@ spec:
     patches:
       - type: PatchSet
         patchSetName: common-parameters
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['inboundEndpointIp']
+#        toFieldPath: spec.forProvider.tags.inboundEndpointIp
+#        policy:
+#          fromFieldPath: Required
       - type: CombineFromComposite
         combine:
           variables:
@@ -244,6 +253,8 @@ spec:
       - type: FromCompositeFieldPath
         fromFieldPath: status.outputs['gatewaysubnet']
         toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
+        policy:
+          fromFieldPath: Required
       - type: FromCompositeFieldPath
         fromFieldPath: spec.resourceConfig.tenantId
         toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadTenant
@@ -264,90 +275,90 @@ spec:
         fromFieldPath: status.atProvider.id
         toFieldPath: status.outputs['VnetGwId']
 
-  - name: local-network-gw
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: LocalNetworkGateway
-      metadata:
-        name: 
-      spec:
-        forProvider:
-          addressSpace:
-          gatewayAddress:
-          location:
-          resourceGroupName:
-    patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.parameters.lgwGatewayConfig.addressSpace
-        toFieldPath: spec.forProvider.addressSpace
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.parameters.lgwGatewayConfig.gatewayAddress
-        toFieldPath: spec.forProvider.gatewayAddress
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "lgw-%s-%s-%s"
-        toFieldPath: metadata.name
-      - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.id
-        toFieldPath: status.outputs['LgwId']
+#  - name: local-network-gw
+#    readinessChecks:
+#    - matchCondition:
+#        status: 'True'
+#        type: Ready
+#      type: MatchCondition
+#    base:
+#      apiVersion: network.azure.upbound.io/v1beta1
+#      kind: LocalNetworkGateway
+#      metadata:
+#        name:
+#      spec:
+#        forProvider:
+#          addressSpace:
+#          gatewayAddress:
+#          location:
+#          resourceGroupName:
+#    patches:
+#      - type: PatchSet
+#        patchSetName: common-parameters
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: spec.parameters.lgwGatewayConfig.addressSpace
+#        toFieldPath: spec.forProvider.addressSpace
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: spec.parameters.lgwGatewayConfig.gatewayAddress
+#        toFieldPath: spec.forProvider.gatewayAddress
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['HubResourceGroupName']
+#        toFieldPath: spec.forProvider.resourceGroupName
+#      - type: CombineFromComposite
+#        combine:
+#          variables:
+#            - fromFieldPath: metadata.name
+#            - fromFieldPath: spec.resourceConfig.environment
+#            - fromFieldPath: spec.resourceConfig.location
+#          strategy: string
+#          string:
+#            fmt: "lgw-%s-%s-%s"
+#        toFieldPath: metadata.name
+#      - type: ToCompositeFieldPath
+#        fromFieldPath: status.atProvider.id
+#        toFieldPath: status.outputs['LgwId']
 
-  - name: vnetgw-connection
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: VirtualNetworkGatewayConnection
-      metadata:
-        name: 
-      spec:
-        forProvider:
-          location:
-          resourceGroupName:
-          type: IPsec
-          sharedKeySecretRef:
-            key: 
-            name: hub-secrets
-            namespace: crossplane-system
-          localNetworkGatewayId: 
-          virtualNetworkGatewayId: 
-          sku: Standard
-    patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['VnetGwId']
-        toFieldPath: spec.forProvider.virtualNetworkGatewayId
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['LgwId']
-        toFieldPath: spec.forProvider.localNetworkGatewayId
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.parameters.lgwGatewayConfig.connectionName
-        toFieldPath: metadata.name
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.parameters.lgwGatewayConfig.sharedKeySecretKeyName
-        toFieldPath: spec.forProvider.sharedKeySecretRef.key
+#  - name: vnetgw-connection
+#    readinessChecks:
+#    - matchCondition:
+#        status: 'True'
+#        type: Ready
+#      type: MatchCondition
+#    base:
+#      apiVersion: network.azure.upbound.io/v1beta1
+#      kind: VirtualNetworkGatewayConnection
+#      metadata:
+#        name:
+#      spec:
+#        forProvider:
+#          location:
+#          resourceGroupName:
+#          type: IPsec
+#          sharedKeySecretRef:
+#            key:
+#            name: hub-secrets
+#            namespace: crossplane-system
+#          localNetworkGatewayId:
+#          virtualNetworkGatewayId:
+#          sku: Standard
+#    patches:
+#      - type: PatchSet
+#        patchSetName: common-parameters
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['HubResourceGroupName']
+#        toFieldPath: spec.forProvider.resourceGroupName
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['VnetGwId']
+#        toFieldPath: spec.forProvider.virtualNetworkGatewayId
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['LgwId']
+#        toFieldPath: spec.forProvider.localNetworkGatewayId
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: spec.parameters.lgwGatewayConfig.connectionName
+#        toFieldPath: metadata.name
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: spec.parameters.lgwGatewayConfig.sharedKeySecretKeyName
+#        toFieldPath: spec.forProvider.sharedKeySecretRef.key
 
   - name: public-ip-fw
     readinessChecks:	
@@ -393,8 +404,6 @@ spec:
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: Firewall
-      metadata:
-        name:
       spec:
         forProvider:
           ipConfiguration:
@@ -408,20 +417,6 @@ spec:
           skuName: AZFW_VNet
           skuTier: Standard
     patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['azurefirewallsubnet']
-        toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
-      - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.ipConfiguration[0].privateIpAddress
-        toFieldPath: status.outputs['fwPrivateIpAddress']
-      - type: ToCompositeFieldPath
-        fromFieldPath: metadata.name
-        toFieldPath: status.outputs['firewallName']
       - type: CombineFromComposite
         combine:
           variables:
@@ -432,4 +427,20 @@ spec:
           string:
             fmt: "fw-%s-%s-%s"
         toFieldPath: metadata.name
+      - type: PatchSet
+        patchSetName: common-parameters
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['HubResourceGroupName']
+        toFieldPath: spec.forProvider.resourceGroupName
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['azurefirewallsubnet']
+        toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
+        policy:
+          fromFieldPath: Required
+      - type: ToCompositeFieldPath
+        fromFieldPath: status.atProvider.ipConfiguration[0].privateIpAddress
+        toFieldPath: status.outputs['fwPrivateIpAddress']
+      - type: ToCompositeFieldPath
+        fromFieldPath: metadata.name
+        toFieldPath: status.outputs['firewallName']
 

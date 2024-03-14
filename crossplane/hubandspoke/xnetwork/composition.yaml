@@ -164,18 +164,17 @@ spec:
                   matchControllerRef: true
               providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{- end }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XNetwork
-            {{ if eq $.observed.resources nil }}
-            status:
-              outputs: {}
-            {{ else }}
             status:
               outputs:
-                {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-            {{ end }}
-            {{- end }}
+              {{- range $observed := $.observed.resources }}
+                {{ if ne $observed.resource.status.atProvider.id nil }}
+                {{ $observed.resource.metadata.name | lower }}: {{ $observed.resource.status.atProvider.id }}
+                {{ end }}
+              {{- end }}
             {{ end }}
 
     - step: auto-ready
