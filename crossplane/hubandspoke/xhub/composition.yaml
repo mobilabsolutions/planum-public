@@ -113,7 +113,7 @@ spec:
       apiVersion: planum.mblb.net/v1alpha1
       kind: XDns
       metadata:
-        name: hub
+        name:
       spec:
         resourceConfig:
           providerConfigName: 
@@ -153,9 +153,11 @@ spec:
       combine:
         variables:
           - fromFieldPath: metadata.name
+          - fromFieldPath: spec.resourceConfig.environment
+          - fromFieldPath: spec.resourceConfig.location
         strategy: string
         string:
-          fmt: "dns-%s"
+          fmt: "dns-%s-%s-%s"
       toFieldPath: metadata.name
 
   - name: public-ip
@@ -229,16 +231,6 @@ spec:
     patches:
       - type: PatchSet
         patchSetName: common-parameters
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "vgw-%s-%s-%s"
-        toFieldPath: metadata.name
 #      - type: FromCompositeFieldPath
 #        fromFieldPath: status.outputs['inboundEndpointIp']
 #        toFieldPath: spec.forProvider.tags.inboundEndpointIp
