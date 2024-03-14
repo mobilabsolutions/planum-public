@@ -112,8 +112,6 @@ spec:
     base:
       apiVersion: planum.mblb.net/v1alpha1
       kind: XDns
-      metadata:
-        name:
       spec:
         resourceConfig:
           providerConfigName: 
@@ -406,8 +404,6 @@ spec:
     base:
       apiVersion: network.azure.upbound.io/v1beta1
       kind: Firewall
-      metadata:
-        name:
       spec:
         forProvider:
           ipConfiguration:
