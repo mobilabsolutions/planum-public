@@ -191,78 +191,78 @@ spec:
             fmt: "ip-%s-%s-%s"
         toFieldPath: metadata.name  
 
-  - name: vnet-gateway
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: VirtualNetworkGateway
-      spec:
-        forProvider:
-          ipConfiguration:
-            - name: VnetGatewayConfig
-              privateIpAddressAllocation: Dynamic
-              publicIpAddressIdSelector:
-                matchControllerRef: true
-                matchLabels: 
-                  used-with: vnet-gw
-              subnetId:
-          location:
-          resourceGroupName:
-          sku: VpnGw1
-          type: Vpn
-          vpnClientConfiguration:
-            - addressSpace:
-              aadIssuer: 
-              aadAudience: "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-              aadTenant:
-              vpnClientProtocols: ["OpenVPN"]
-              vpnAuthTypes: ["AAD"]
-          vpnType: RouteBased
-    patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "vgw-%s-%s-%s"
-        toFieldPath: metadata.name
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.parameters.vnetGatewayConfig.addressSpace
-        toFieldPath: spec.forProvider.vpnClientConfiguration[0].addressSpace
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['gatewaysubnet']
-        toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.resourceConfig.tenantId
-        toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadTenant
-        transforms:
-        - type: string
-          string:
-            type: Format
-            fmt: "https://login.microsoftonline.com/%s/"
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.resourceConfig.tenantId
-        toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadIssuer
-        transforms:
-        - type: string
-          string:
-            type: Format
-            fmt: "https://sts.windows.net/%s/"
-      - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.id
-        toFieldPath: status.outputs['VnetGwId']
+#  - name: vnet-gateway
+#    readinessChecks:
+#    - matchCondition:
+#        status: 'True'
+#        type: Ready
+#      type: MatchCondition
+#    base:
+#      apiVersion: network.azure.upbound.io/v1beta1
+#      kind: VirtualNetworkGateway
+#      spec:
+#        forProvider:
+#          ipConfiguration:
+#            - name: VnetGatewayConfig
+#              privateIpAddressAllocation: Dynamic
+#              publicIpAddressIdSelector:
+#                matchControllerRef: true
+#                matchLabels:
+#                  used-with: vnet-gw
+#              subnetId:
+#          location:
+#          resourceGroupName:
+#          sku: VpnGw1
+#          type: Vpn
+#          vpnClientConfiguration:
+#            - addressSpace:
+#              aadIssuer:
+#              aadAudience: "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
+#              aadTenant:
+#              vpnClientProtocols: ["OpenVPN"]
+#              vpnAuthTypes: ["AAD"]
+#          vpnType: RouteBased
+#    patches:
+#      - type: PatchSet
+#        patchSetName: common-parameters
+#      - type: CombineFromComposite
+#        combine:
+#          variables:
+#            - fromFieldPath: metadata.name
+#            - fromFieldPath: spec.resourceConfig.environment
+#            - fromFieldPath: spec.resourceConfig.location
+#          strategy: string
+#          string:
+#            fmt: "vgw-%s-%s-%s"
+#        toFieldPath: metadata.name
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: spec.parameters.vnetGatewayConfig.addressSpace
+#        toFieldPath: spec.forProvider.vpnClientConfiguration[0].addressSpace
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['HubResourceGroupName']
+#        toFieldPath: spec.forProvider.resourceGroupName
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['gatewaysubnet']
+#        toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: spec.resourceConfig.tenantId
+#        toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadTenant
+#        transforms:
+#        - type: string
+#          string:
+#            type: Format
+#            fmt: "https://login.microsoftonline.com/%s/"
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: spec.resourceConfig.tenantId
+#        toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadIssuer
+#        transforms:
+#        - type: string
+#          string:
+#            type: Format
+#            fmt: "https://sts.windows.net/%s/"
+#      - type: ToCompositeFieldPath
+#        fromFieldPath: status.atProvider.id
+#        toFieldPath: status.outputs['VnetGwId']
 
 #  - name: local-network-gw
 #    readinessChecks:
