@@ -176,6 +176,18 @@ spec:
                 {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
             {{ end }}
             {{- end }}
+            ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XNetwork
+            status:
+              outputs:
+              {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
+                {{ if ne (index $.observed.resources $subnets.name).resource.status.atProvider.id nil }}
+                  {{ $subnets.name | lower }}_yes: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                {{ else }}
+                  {{ $subnets.name | lower }}_no: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                {{ end }}
+              {{- end }}
             {{ end }}
 
     - step: auto-ready
