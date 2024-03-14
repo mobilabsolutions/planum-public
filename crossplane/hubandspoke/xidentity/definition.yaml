@@ -53,7 +53,7 @@ spec:
                         name:
                           type: string
                         addressPostfix:
-                          type: string0
+                          type: string
 
                   vaultSku:
                     type: string
