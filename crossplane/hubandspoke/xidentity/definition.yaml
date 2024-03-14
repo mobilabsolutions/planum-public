@@ -53,10 +53,23 @@ spec:
                         name:
                           type: string
                         addressPostfix:
-                          type: string
+                          type: string0
+
                   vaultSku:
                     type: string
                     default: "Standard"
+
+                  secretRef:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                      keys:
+                        type: array
+                        items:
+                          type: string
 
           status:
             type: object

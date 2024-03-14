@@ -80,6 +80,65 @@ spec:
                     name: {{ $subnets.name | lower }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            {{ if contains "virtual" $subnets.name }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: NetworkInterface
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nic-vm-addc-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nic-vm-addc-{{ $prefix }}
+            spec:
+              forProvider:
+                ipConfiguration:
+                  - name: internal
+                    privateIpAddressAllocation: Dynamic
+                    subnetIdSelector:
+                      matchLabels:
+                        name: {{ $subnets.name }}
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: compute.azure.upbound.io/v1beta1
+            kind: WindowsVirtualMachine
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: vm-addc-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              labels:
+                name: vm-addc-{{ $prefix }}
+              name: vm-addc-{{ $prefix }}
+            spec:
+              forProvider:
+                adminPasswordSecretRef:
+                  key: {{ index $.observed.composite.resource.spec.parameters.secretRef.keys 0 }}
+                  name: {{ $.observed.composite.resource.spec.parameters.secretRef.name }}
+                  namespace: {{ $.observed.composite.resource.spec.parameters.secretRef.namespace }}
+                adminUsername: adminuser
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                computerName: "addc-planum"
+                networkInterfaceIdsSelector:
+                  matchControllerRef: true
+                osDisk:
+                - caching: ReadWrite
+                  storageAccountType: Premium_LRS
+                  diskSizeGb: 128
+                size: Standard_B2ms
+                provisionVmAgent: true
+                identity:
+                - type: "SystemAssigned"
+                sourceImageReference:
+                - offer: WindowsServer
+                  publisher: MicrosoftWindowsServer
+                  sku: 2022-Datacenter
+                  version: latest
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
             {{- end }}
             ---
             apiVersion: recoveryservices.azure.upbound.io/v1beta1
