@@ -170,13 +170,10 @@ spec:
             kind: XNetwork
             status:
               outputs:
-              {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
-                {{ if ne (index $.observed.resources $subnets.name).resource.status.atProvider.id nil }}
-                {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+              {{- range $observed := $.observed.resources }}
+                {{ if ne $observed.resource.status.atProvider.id nil }}
+                {{ $observed.resource.metadata.name | lower }}: {{ $observed.resource.status.atProvider.id }}
                 {{ end }}
-              {{- end }}
-              {{- range $obres := $.observed.resources }}
-                {{ $obres.resource.metadata.name | lower }}_providerid: {{ $obres.resource.status.atProvider.id }}
               {{- end }}
             {{ end }}
 
