@@ -179,7 +179,8 @@ data:
         echo $1 | jq --arg TIME "$TIME" --arg INBOUND_IP "$INBOUND_IP" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.atProvider.inboundEndpointIp = $INBOUND_IP | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
       fi
     else
-      az dns-resolver inbound-endpoint create --debug --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations "[{private-ip-address:'10.0.0.68',private-ip-allocation-method:'Static',id:'$SUBNET_ID'}]" --resource-group $RESOURCE_GROUP_NAME
+      echo az dns-resolver inbound-endpoint create --debug --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations "[{private-ip-allocation-method:'Dynamic',id:'$SUBNET_ID'}]" --resource-group $RESOURCE_GROUP_NAME
+      az dns-resolver inbound-endpoint create --debug --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --location $LOCATION --ip-configurations "[{private-ip-allocation-method:'Dynamic',id:'$SUBNET_ID'}]" --resource-group $RESOURCE_GROUP_NAME
     fi
 
   "resolverinboundendpoint-delete.sh": |
