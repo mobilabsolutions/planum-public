@@ -121,6 +121,16 @@ spec:
           resourceGroupName:
           dnsZoneNames: [""]
     patches:
+    - type: CombineFromComposite
+      combine:
+        variables:
+          - fromFieldPath: metadata.name
+          - fromFieldPath: spec.resourceConfig.environment
+          - fromFieldPath: spec.resourceConfig.location
+        strategy: string
+        string:
+          fmt: "dns-%s-%s-%s"
+      toFieldPath: metadata.name
     - type: FromCompositeFieldPath
       fromFieldPath: spec.resourceConfig.providerConfigName
       toFieldPath: spec.resourceConfig.providerConfigName
@@ -147,16 +157,6 @@ spec:
     - type: ToCompositeFieldPath
       fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
       toFieldPath: status.outputs['inboundEndpointIp']
-    - type: CombineFromComposite
-      combine:
-        variables:
-          - fromFieldPath: metadata.name
-          - fromFieldPath: spec.resourceConfig.environment
-          - fromFieldPath: spec.resourceConfig.location
-        strategy: string
-        string:
-          fmt: "dns-%s-%s-%s"
-      toFieldPath: metadata.name
 
   - name: public-ip
     readinessChecks:	
@@ -417,6 +417,16 @@ spec:
           skuName: AZFW_VNet
           skuTier: Standard
     patches:
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: metadata.name
+            - fromFieldPath: spec.resourceConfig.environment
+            - fromFieldPath: spec.resourceConfig.location
+          strategy: string
+          string:
+            fmt: "fw-%s-%s-%s"
+        toFieldPath: metadata.name
       - type: PatchSet
         patchSetName: common-parameters
       - type: FromCompositeFieldPath
@@ -433,14 +443,4 @@ spec:
       - type: ToCompositeFieldPath
         fromFieldPath: metadata.name
         toFieldPath: status.outputs['firewallName']
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "fw-%s-%s-%s"
-        toFieldPath: metadata.name
 
