@@ -144,6 +144,8 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: status.outputs['dnssubnet']
       toFieldPath: spec.parameters.dnsSubnetId
+      policy:
+        fromFieldPath: Required
     - type: ToCompositeFieldPath
       fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
       toFieldPath: status.outputs['inboundEndpointIp']
@@ -261,6 +263,8 @@ spec:
       - type: FromCompositeFieldPath
         fromFieldPath: status.outputs['gatewaysubnet']
         toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
+        policy:
+          fromFieldPath: Required
       - type: FromCompositeFieldPath
         fromFieldPath: spec.resourceConfig.tenantId
         toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadTenant
@@ -433,6 +437,8 @@ spec:
       - type: FromCompositeFieldPath
         fromFieldPath: status.outputs['azurefirewallsubnet']
         toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
+        policy:
+          fromFieldPath: Required
       - type: ToCompositeFieldPath
         fromFieldPath: status.atProvider.ipConfiguration[0].privateIpAddress
         toFieldPath: status.outputs['fwPrivateIpAddress']
