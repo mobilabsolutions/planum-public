@@ -171,8 +171,11 @@ data:
       state=$(echo $existing | jq -r '.provisioningState')
       if [[ "$state" == "Failed"* ]]
       then
-        echo "provisioningState is failed, deleting..."
-        echo az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME --yes --no-wait true
+        echo "provisioningState is failed, wait 60 seconds then deleting..."
+        {
+          sleep 60
+          az dns-resolver inbound-endpoint delete --dns-resolver-name $DNS_RESOLVER_NAME --name "dns-inbound-endpoint" --resource-group $RESOURCE_GROUP_NAME --yes --no-wait true
+        }&
       else
         INBOUND_IP=$(echo $existing | jq -r '.ipConfigurations[0].privateIpAddress')
         TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")

@@ -237,11 +237,11 @@ spec:
           string:
             fmt: "vgw-%s-%s-%s"
         toFieldPath: metadata.name
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['inboundEndpointIp']
-        toFieldPath: spec.forProvider.tags.inboundEndpointIp
-        policy:
-          fromFieldPath: Required
+#      - type: FromCompositeFieldPath
+#        fromFieldPath: status.outputs['inboundEndpointIp']
+#        toFieldPath: spec.forProvider.tags.inboundEndpointIp
+#        policy:
+#          fromFieldPath: Required
       - type: CombineFromComposite
         combine:
           variables:
