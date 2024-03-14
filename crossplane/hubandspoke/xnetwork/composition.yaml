@@ -172,7 +172,7 @@ spec:
               outputs:
               {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
                 {{ if ne (index $.observed.resources $subnets.name).resource.status.atProvider.id nil }}
-                  {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+                {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
                 {{ end }}
               {{- end }}
               {{- range $obres := $.observed.resources }}
