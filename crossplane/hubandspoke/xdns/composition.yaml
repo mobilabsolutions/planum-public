@@ -134,6 +134,11 @@ spec:
                 {{ if ne (index $.observed.resources (printf "in-%s" $prefix)).resource.status.atProvider.inboundEndpointIp nil }}
                 privateDnsResolverInboundEndpointIp: {{ (index $.observed.resources (printf "in-%s" $prefix)).resource.status.atProvider.inboundEndpointIp }}
                 {{ end }}
+                {{- range $observed := $.observed.resources }}
+                {{ if ne $observed.resource.status.atProvider.id nil }}
+                {{ printf "%s_url" $observed.resource.metadata.name | lower }}: {{ printf "https://portal.azure.com/#@mobilabsolutions.com/resource%s" $observed.resource.status.atProvider.id }}
+                {{ end }}
+              {{- end }}
             {{ end }}
             {{- end }}
 
