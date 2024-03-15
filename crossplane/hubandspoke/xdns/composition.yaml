@@ -37,11 +37,9 @@ spec:
               combine:
                 variables:
                   - fromFieldPath: metadata.name
-                  - fromFieldPath: spec.resourceConfig.environment
-                  - fromFieldPath: spec.resourceConfig.location
                 strategy: string
                 string:
-                  fmt: "ec-%s-%s-%s"
+                  fmt: "ec-%s"
               toFieldPath: metadata.name
             - type: FromCompositeFieldPath
               fromFieldPath: metadata.name
@@ -59,7 +57,7 @@ spec:
         source: Inline
         inline:
           template: |
-            {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $.observed.composite.resource.spec.resourceConfig.location  }}
+            {{ $prefix := printf "%s" $.observed.composite.resource.metadata.name }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PrivateDNSResolver
