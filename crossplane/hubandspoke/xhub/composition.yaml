@@ -274,7 +274,7 @@ spec:
       - type: ToCompositeFieldPath
         fromFieldPath: status.atProvider.id
         toFieldPath: status.outputs['VnetGwId']
-      - type: FromCompositeFieldPath
+      - type: ToCompositeFieldPath
         fromFieldPath: status.atProvider.id
         toFieldPath: status.outputs['VnetGw_url']
         transforms:
@@ -451,7 +451,7 @@ spec:
       - type: ToCompositeFieldPath
         fromFieldPath: metadata.name
         toFieldPath: status.outputs['firewallName']
-      - type: FromCompositeFieldPath
+      - type: ToCompositeFieldPath
         fromFieldPath: status.atProvider.id
         toFieldPath: status.outputs['Firewall_url']
         transforms:
