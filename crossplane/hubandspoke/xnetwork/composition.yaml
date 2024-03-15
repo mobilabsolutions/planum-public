@@ -173,6 +173,7 @@ spec:
               {{- range $observed := $.observed.resources }}
                 {{ if ne $observed.resource.status.atProvider.id nil }}
                 {{ $observed.resource.metadata.name | lower }}: {{ $observed.resource.status.atProvider.id }}
+                {{ printf "%s_url" $observed.resource.metadata.name | lower }}: {{ printf "https://portal.azure.com/#@mobilabsolutions.com/%s" $observed.resource.status.atProvider.id }}
                 {{ end }}
               {{- end }}
             {{ end }}
