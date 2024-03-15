@@ -133,6 +133,7 @@ spec:
         source: Inline
         inline:
           template: |
+            {{ $prefix := printf "%s-%s" $.observed.composite.resource.spec.resourceConfig.environment $.observed.composite.resource.spec.resourceConfig.location  }}
             {{- range $spoke := $.observed.composite.resource.spec.parameters.spokeConfigs }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
