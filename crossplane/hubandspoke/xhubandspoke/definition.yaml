@@ -129,7 +129,7 @@ spec:
                               addressSpace:
                                 type: string
                         createRsv:
-                          type: bool
+                          type: boolean
                           default: false
 
           status:
