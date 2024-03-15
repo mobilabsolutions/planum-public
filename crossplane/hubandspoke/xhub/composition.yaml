@@ -229,11 +229,6 @@ spec:
     patches:
       - type: PatchSet
         patchSetName: common-parameters
-#      - type: FromCompositeFieldPath
-#        fromFieldPath: status.outputs['inboundEndpointIp']
-#        toFieldPath: spec.forProvider.tags.inboundEndpointIp
-#        policy:
-#          fromFieldPath: Required
       - type: CombineFromComposite
         combine:
           variables:
@@ -244,6 +239,11 @@ spec:
           string:
             fmt: "vgw-%s-%s-%s"
         toFieldPath: metadata.name
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['inboundEndpointIp']
+        toFieldPath: spec.forProvider.tags.inboundEndpointIp
+        policy:
+          fromFieldPath: Required
       - type: FromCompositeFieldPath
         fromFieldPath: spec.parameters.vnetGatewayConfig.addressSpace
         toFieldPath: spec.forProvider.vpnClientConfiguration[0].addressSpace
