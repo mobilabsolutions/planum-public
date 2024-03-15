@@ -274,6 +274,14 @@ spec:
       - type: ToCompositeFieldPath
         fromFieldPath: status.atProvider.id
         toFieldPath: status.outputs['VnetGwId']
+      - type: ToCompositeFieldPath
+        fromFieldPath: status.atProvider.id
+        toFieldPath: status.outputs['VnetGw_url']
+        transforms:
+        - type: string
+          string:
+            type: Format
+            fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
 
 #  - name: local-network-gw
 #    readinessChecks:
@@ -443,4 +451,11 @@ spec:
       - type: ToCompositeFieldPath
         fromFieldPath: metadata.name
         toFieldPath: status.outputs['firewallName']
-
+      - type: ToCompositeFieldPath
+        fromFieldPath: status.atProvider.id
+        toFieldPath: status.outputs['Firewall_url']
+        transforms:
+        - type: string
+          string:
+            type: Format
+            fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
