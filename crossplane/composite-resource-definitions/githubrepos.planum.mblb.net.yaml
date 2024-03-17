@@ -61,9 +61,8 @@ spec:
                 atProvider:
                   type: object
                   properties:
-                    inboundEndpointIp:
+                    id:
                       type: string
-                      default: "novalue"
 
   names:
     kind: GitHubRepo
