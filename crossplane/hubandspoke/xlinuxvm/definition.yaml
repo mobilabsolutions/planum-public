@@ -41,3 +41,10 @@ spec:
               - publicKey
               - xNetworkName
               - addressPrefixes
+          status:
+            type: object
+            properties:
+              outputs:
+                type: object
+                additionalProperties:
+                  type: string

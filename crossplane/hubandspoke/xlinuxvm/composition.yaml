@@ -66,6 +66,14 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.publicKey"
           toFieldPath: "spec.forProvider.adminSshKey[0].publicKey"
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.outputs['vm_url']
+          transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
     - name: nic
       base:
         apiVersion: network.azure.upbound.io/v1beta1
