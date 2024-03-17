@@ -88,8 +88,11 @@ data:
     else
       echo "$name repo already exists"
     fi
+    TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    echo $1 | jq --arg TIME "$TIME" --arg ID "$id" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.atProvider.id = $ID | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
   "githubrepos-delete.sh": |
     echo "githubrepo delete $1"
+    echo $1 | jq -c 'del(.metadata.finalizers[])' | kubectl apply -f -
   "vmids-create.sh": |
     echo "vmid create $1"
     id=$(echo $1 | jq -r '.spec.identity')
