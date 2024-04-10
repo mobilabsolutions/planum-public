@@ -177,7 +177,9 @@ spec:
               outputs:
                 {{ $spoke.name }}ResourceGroupName: {{ (index $.observed.resources $spoke.name).resource.status.outputs.ResourceGroupName }}
                 {{ $spoke.name }}ResourceGroupId: {{ (index $.observed.resources $spoke.name).resource.status.outputs.ResourceGroupId }}
+                {{ if ne (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkId nil }}
                 {{ $spoke.name }}VirtualNetworkId: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkId }}
+                {{ end }}
                 {{ $spoke.name }}VirtualNetworkName: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkName }}
             {{ end }}
             ---
