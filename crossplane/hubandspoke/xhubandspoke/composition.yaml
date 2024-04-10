@@ -239,14 +239,15 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.parameters.hubConfig.providerConfigName }}
             ---
+            {{ $prefix := printf "%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment }}
             {{ if $spoke.createRsv }}
             apiVersion: recoveryservices.azure.upbound.io/v1beta1
             kind: Vault
             metadata:
               annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: rsv-{{ $prefix }}
+                gotemplating.fn.crossplane.io/composition-resource-name: rsv-{{ $spoke.name }}-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
-              name: rsv-{{ $prefix }}
+              name: rsv-{{ $spoke.name }}-{{ $prefix }}
             spec:
               forProvider:
                 location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
