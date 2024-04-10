@@ -43,7 +43,7 @@ spec:
                 storageAccountType: Standard_LRS
             resourceGroupNameSelector:
               matchControllerRef: true
-            size: Standard_B2ms
+            size: Standard_DS1_v2
             sourceImageReference:
               - offer: WindowsServer
                 publisher: MicrosoftWindowsServer
