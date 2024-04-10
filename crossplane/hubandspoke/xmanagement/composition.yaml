@@ -132,14 +132,18 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            apiVersion: planum.mblb.net/v1alpha1
-            kind: LogAnalyticsWorkspace
+            apiVersion: operationalinsights.azure.upbound.io/v1beta1
+            kind: Workspace
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: law-{{ $prefix }}
                 gotemplating.fn.crossplane.io/ready: "True"
               name: law-{{ $prefix }}
             spec:
-              resourceGroupName: {{ $outputs.ResourceGroupName }}
-              location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-              providerConfigName: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                retentionInDays: 30
+                sku: PerGB2018
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}

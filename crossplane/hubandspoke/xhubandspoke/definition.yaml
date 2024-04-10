@@ -114,6 +114,9 @@ spec:
                           type: string
                         providerConfigName:
                           type: string
+                        createRsv:
+                          type: boolean
+                          default: false
                         vnetAddressSpace:
                           type: array
                           items:
