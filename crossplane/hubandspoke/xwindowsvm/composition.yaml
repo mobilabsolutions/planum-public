@@ -72,6 +72,9 @@ spec:
               string:
                 type: Format
                 fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.outputs['vm_id']
 
     - name: vm-extension
       base:
@@ -83,12 +86,14 @@ spec:
             type: AADLoginForWindows
             typeHandlerVersion: "1.0"
             autoUpgradeMinorVersion: true
-            virtualMachineIdSelector:
-              matchControllerRef: true
+            virtualMachineId: "X"
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.providerConfigRef"
           toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.outputs['vm_id']
+          toFieldPath: spec.forProvider.virtualMachineId
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.location"
           toFieldPath: "spec.forProvider.location"
