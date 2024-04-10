@@ -30,6 +30,11 @@ spec:
           providerConfigRef:
             name: X
           forProvider:
+            adminPasswordSecretRef:
+              key: "admin.password"
+              name: "argocd-secret"
+              namespace: "argocd"
+            adminUsername: adminuser
             priority: "Spot"
             evictionPolicy: "Deallocate"
             location: "northeurope"
