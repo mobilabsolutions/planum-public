@@ -84,8 +84,7 @@ spec:
             typeHandlerVersion: "1.0"
             autoUpgradeMinorVersion: true
             virtualMachineIdSelector:
-              matchLabels:
-                matchControllerRef: true
+              matchControllerRef: true
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: "spec.providerConfigRef"
