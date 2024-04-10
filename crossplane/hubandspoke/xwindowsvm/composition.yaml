@@ -1,0 +1,194 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xwindowsvms.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xnetwork
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.xNetworkName
+
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XWindowsVm #has to be singular
+
+  resources:
+    - name: vm
+      base:
+        apiVersion: compute.azure.upbound.io/v1beta1
+        kind: WindowsVirtualMachine
+        spec:
+          providerConfigRef:
+            name: X
+          forProvider:
+            priority: "Spot"
+            evictionPolicy: "Deallocate"
+            location: "northeurope"
+            osDisk:
+              - caching: ReadWrite
+                storageAccountType: Standard_LRS
+            resourceGroupNameSelector:
+              matchControllerRef: true
+            size: Standard_B2ms
+            sourceImageReference:
+              - offer: WindowsServer
+                publisher: MicrosoftWindowsServer
+                sku: 2022-Datacenter
+                version: latest
+            networkInterfaceIdsSelector:
+              matchControllerRef: true
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+          transforms:
+            - type: map
+              map:
+                NEU: "northeurope"
+                WEU: "westeurope"
+                US: "eastus"
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.outputs['vm_url']
+          transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
+
+    - name: vm-extension
+      base:
+        apiVersion: compute.azure.upbound.io/v1beta1
+        kind: VirtualMachineExtension
+        spec:
+          forProvider:
+            publisher: Microsoft.Azure.ActiveDirectory
+            type: AADLoginForWindows
+            typeHandlerVersion: "1.0"
+            autoUpgradeMinorVersion: true
+            virtualMachineIdSelector:
+              matchLabels:
+                matchControllerRef: true
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+          transforms:
+            - type: map
+              map:
+                NEU: "northeurope"
+                WEU: "westeurope"
+                US: "eastus"
+
+    - name: nic
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: NetworkInterface
+        spec:
+          providerConfigRef:
+            name: X
+          forProvider:
+            ipConfiguration:
+              - name: ip-configuration
+                privateIpAddressAllocation: Dynamic
+                subnetIdSelector:
+                  matchControllerRef: true
+            location: "northeurope"
+            resourceGroupNameSelector:
+              matchControllerRef: true
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+          transforms:
+            - type: map
+              map:
+                NEU: "northeurope"
+                WEU: "westeurope"
+                US: "eastus"
+
+    - name: subnet
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: Subnet
+        spec:
+          providerConfigRef:
+            name: X
+          forProvider:
+            addressPrefixes:
+              - 10.1.0.0/29
+            virtualNetworkName: X
+            resourceGroupName: X
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.addressPrefixes"
+          toFieldPath: "spec.forProvider.addressPrefixes"
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: "outputs.ResourceGroupName"
+          toFieldPath: "spec.forProvider.resourceGroupName"
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: "outputs.VirtualNetworkName"
+          toFieldPath: "spec.forProvider.virtualNetworkName"
+
+    - name: subnet-routetable-association
+      base:
+        apiVersion: network.azure.upbound.io/v1beta1
+        kind: SubnetRouteTableAssociation
+        spec:
+          providerConfigRef:
+            name: X
+          forProvider:
+            routeTableId: X
+            subnetIdSelector:
+              matchControllerRef: true
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: "outputs.routeTableId"
+          toFieldPath: "spec.forProvider.routeTableId"
+
+    - name: resourcegroup
+      base:
+        apiVersion: azure.upbound.io/v1beta1
+        kind: ResourceGroup
+        spec:
+          providerConfigRef:
+            name: X
+          forProvider:
+            location: "northeurope"
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.providerConfigRef"
+          toFieldPath: "spec.providerConfigRef.name"
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.location"
+          transforms:
+            - type: map
+              map:
+                NEU: "northeurope"
+                WEU: "westeurope"
+                US: "eastus"

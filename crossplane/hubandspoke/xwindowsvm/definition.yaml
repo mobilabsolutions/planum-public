@@ -1,0 +1,50 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xwindowsvms.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XWindowsVm
+    plural: xwindowsvms
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              providerConfigRef:
+                type: string
+              location:
+                type: string
+                oneOf:
+                  - pattern: '^NEU$'
+                  - pattern: '^WEU$'
+                  - pattern: '^US$'
+              publicKey:
+                type: string
+              xNetworkName:
+                type: string
+              addressPrefixes:
+                type: array
+                items:
+                  type: string
+            required:
+              - providerConfigRef
+              - location
+              - publicKey
+              - xNetworkName
+              - addressPrefixes
+          status:
+            type: object
+            properties:
+              outputs:
+                type: object
+                additionalProperties:
+                  type: string
