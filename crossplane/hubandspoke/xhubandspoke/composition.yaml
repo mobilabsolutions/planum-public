@@ -181,7 +181,7 @@ spec:
                 {{ $spoke.name }}VirtualNetworkName: {{ (index $.observed.resources $spoke.name).resource.status.outputs.VirtualNetworkName }}
             {{ end }}
             ---
-            {{ if ne (index $.observed.composite.resource.status.outputs (printf "%s%s" $spoke.name VirtualNetworkId)) nil }}
+            {{ if ne (index $.observed.composite.resource.status.outputs (printf "%sVirtualNetworkId" $spoke.name)) nil }}
             apiVersion: network.azure.upbound.io/v1beta1
             kind: RouteTable
             metadata:
