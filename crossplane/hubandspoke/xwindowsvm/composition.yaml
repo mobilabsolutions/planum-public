@@ -37,8 +37,6 @@ spec:
             adminUsername: adminuser
             priority: "Spot"
             evictionPolicy: "Deallocate"
-            identity: 
-              type: "SystemAssigned"
             location: "northeurope"
             osDisk:
               - caching: ReadWrite
