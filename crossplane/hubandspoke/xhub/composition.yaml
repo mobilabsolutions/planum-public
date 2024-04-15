@@ -208,9 +208,7 @@ spec:
             - asn: 65515
               peerWeight: 0
               peeringAddresses:
-                - defaultAddresses:
-                    - 10.0.0.62
-                  ipConfigurationName: VnetGatewayConfig
+                - ipConfigurationName: VnetGatewayConfig
           tags:
             inboundEndpointIp:
           ipConfiguration:
