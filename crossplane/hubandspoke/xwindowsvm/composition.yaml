@@ -141,7 +141,7 @@ spec:
         - type: FromEnvironmentFieldPath
           fromFieldPath: "outputs.VirtualNetworkName"
           toFieldPath: "spec.forProvider.virtualNetworkName"
-                - type: CombineFromComposite
+        - type: CombineFromComposite
           combine:
             variables:
               - fromFieldPath: metadata.name
