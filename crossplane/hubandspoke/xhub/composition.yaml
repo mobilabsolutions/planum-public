@@ -226,6 +226,8 @@ spec:
               vpnClientProtocols: ["OpenVPN"]
               vpnAuthTypes: ["AAD"]
           vpnType: RouteBased
+        initProvider:
+          bgpSettings: []
     patches:
       - type: PatchSet
         patchSetName: common-parameters
