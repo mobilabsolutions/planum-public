@@ -266,7 +266,7 @@ data:
     then
       echo "Bastion Host $NAME already exist in $RESOURCE_GROUP_NAME"
     else
-      az network bastion create -g $RESOURCE_GROUP_NAME --location $LOCATION --vnet-name $VNETNAME --public-ip-address $PUBLICIP --name $NAME
+      az network bastion create --no-wait true -g $RESOURCE_GROUP_NAME --location $LOCATION --vnet-name $VNETNAME --public-ip-address $PUBLICIP --name $NAME
       ID=$(az network bastion show -g $RESOURCE_GROUP_NAME -n $NAME | jq -r .id)
       TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
       echo $1 | jq --arg TIME "$TIME" --arg ID "$ID" '.metadata += {finalizers: ["finalizer.planum.mblb.net"]} | .status.atProvider.id = $ID | .status.conditions[0] = {"lastTransitionTime": $TIME, "type": "Ready", "reason": "Available", "status": "True" }' | kubectl apply -f -
@@ -287,7 +287,7 @@ data:
     existing=$(az network bastion show -g $RESOURCE_GROUP_NAME -n $NAME 2>&1)
     if ! [[ "$existing" == *"ResourceNotFound"* ]]
     then
-      az network bastion delete -g $RESOURCE_GROUP_NAME -n $NAME
+      az network bastion delete --no-wait true -g $RESOURCE_GROUP_NAME -n $NAME
     else
       echo "Bastion Host does not exist"
     fi
