@@ -203,3 +203,8 @@ spec:
             string:
               fmt: "rg-%s-%s-%s"
           toFieldPath: metadata.name
+          transforms:
+          - type: string
+            string:
+              type: Convert
+              convert: "ToLower"
