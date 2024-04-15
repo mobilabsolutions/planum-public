@@ -204,6 +204,13 @@ spec:
       kind: VirtualNetworkGateway
       spec:
         forProvider:
+          bgpSettings:
+            - asn: 65515
+              peerWeight: 0
+              peeringAddresses:
+                - defaultAddresses:
+                    - 10.0.0.62
+                  ipConfigurationName: VnetGatewayConfig
           tags:
             inboundEndpointIp:
           ipConfiguration:
@@ -226,8 +233,6 @@ spec:
               vpnClientProtocols: ["OpenVPN"]
               vpnAuthTypes: ["AAD"]
           vpnType: RouteBased
-        initProvider:
-          bgpSettings: []
     patches:
       - type: PatchSet
         patchSetName: common-parameters
