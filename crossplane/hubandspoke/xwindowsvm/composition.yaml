@@ -99,7 +99,7 @@ spec:
             strategy: string
             string:
               fmt: "%s-%s"
-          toFieldPath: spec.computerName
+          toFieldPath: spec.forProvider.computerName
           transforms:
           - type: string
             string:
