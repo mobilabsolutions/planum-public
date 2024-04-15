@@ -75,6 +75,16 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.id
           toFieldPath: status.outputs['vm_id']
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.resourceConfig.environment
+              - fromFieldPath: spec.resourceConfig.location
+            strategy: string
+            string:
+              fmt: "vm-%s-%s-%s"
+          toFieldPath: metadata.name
 
     - name: nic
       base:
@@ -131,6 +141,16 @@ spec:
         - type: FromEnvironmentFieldPath
           fromFieldPath: "outputs.VirtualNetworkName"
           toFieldPath: "spec.forProvider.virtualNetworkName"
+                - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.resourceConfig.environment
+              - fromFieldPath: spec.resourceConfig.location
+            strategy: string
+            string:
+              fmt: "nic-%s-%s-%s"
+          toFieldPath: metadata.name
 
     - name: subnet-routetable-association
       base:
@@ -173,3 +193,13 @@ spec:
                 NEU: "northeurope"
                 WEU: "westeurope"
                 US: "eastus"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.resourceConfig.environment
+              - fromFieldPath: spec.resourceConfig.location
+            strategy: string
+            string:
+              fmt: "rg-%s-%s-%s"
+          toFieldPath: metadata.name
