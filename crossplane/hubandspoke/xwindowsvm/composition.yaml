@@ -85,6 +85,11 @@ spec:
             string:
               fmt: "vm-%s-%s-%s"
           toFieldPath: metadata.name
+          transforms:
+          - type: string
+            string:
+              type: Convert
+              convert: "ToLower"
 
     - name: nic
       base:
@@ -115,6 +120,21 @@ spec:
                 NEU: "northeurope"
                 WEU: "westeurope"
                 US: "eastus"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.xNetworkName
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "nic-%s-%s-%s"
+          toFieldPath: metadata.name
+          transforms:
+          - type: string
+            string:
+              type: Convert
+              convert: "ToLower"
 
     - name: subnet
       base:
@@ -141,16 +161,6 @@ spec:
         - type: FromEnvironmentFieldPath
           fromFieldPath: "outputs.VirtualNetworkName"
           toFieldPath: "spec.forProvider.virtualNetworkName"
-        - type: CombineFromComposite
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-              - fromFieldPath: spec.xNetworkName
-              - fromFieldPath: spec.location
-            strategy: string
-            string:
-              fmt: "nic-%s-%s-%s"
-          toFieldPath: metadata.name
 
     - name: subnet-routetable-association
       base:
