@@ -38,6 +38,7 @@ spec:
             priority: "Spot"
             evictionPolicy: "Deallocate"
             location: "northeurope"
+            computerName: ""
             osDisk:
               - caching: ReadWrite
                 storageAccountType: Standard_LRS
@@ -85,6 +86,20 @@ spec:
             string:
               fmt: "vm-%s-%s-%s"
           toFieldPath: metadata.name
+          transforms:
+          - type: string
+            string:
+              type: Convert
+              convert: "ToLower"
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: spec.location
+            strategy: string
+            string:
+              fmt: "%s-%s"
+          toFieldPath: spec.computerName
           transforms:
           - type: string
             string:
