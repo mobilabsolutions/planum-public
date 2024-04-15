@@ -79,8 +79,8 @@ spec:
           combine:
             variables:
               - fromFieldPath: metadata.name
-              - fromFieldPath: spec.resourceConfig.environment
-              - fromFieldPath: spec.resourceConfig.location
+              - fromFieldPath: spec.xNetworkName
+              - fromFieldPath: spec.location
             strategy: string
             string:
               fmt: "vm-%s-%s-%s"
@@ -145,8 +145,8 @@ spec:
           combine:
             variables:
               - fromFieldPath: metadata.name
-              - fromFieldPath: spec.resourceConfig.environment
-              - fromFieldPath: spec.resourceConfig.location
+              - fromFieldPath: spec.xNetworkName
+              - fromFieldPath: spec.location
             strategy: string
             string:
               fmt: "nic-%s-%s-%s"
@@ -197,8 +197,8 @@ spec:
           combine:
             variables:
               - fromFieldPath: metadata.name
-              - fromFieldPath: spec.resourceConfig.environment
-              - fromFieldPath: spec.resourceConfig.location
+              - fromFieldPath: spec.xNetworkName
+              - fromFieldPath: spec.location
             strategy: string
             string:
               fmt: "rg-%s-%s-%s"
