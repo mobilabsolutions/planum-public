@@ -1,0 +1,61 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xsubnets.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XSubnet
+    plural: xsubnets
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              resourceConfig:
+                description: ResourceConfig defines general properties
+                type: object
+                properties:
+                  providerConfigName:
+                    type: string
+                  location:
+                    type: string
+                  environment:
+                    type: string  
+                  tenantId:
+                    type: string 
+                required:
+                  - providerConfigName
+                  - location
+              parameters:
+                description: Network Input parameters
+                type: object
+                properties:
+                  xNetworkName:
+                    type: string
+                  createNsg:
+                    type: boolean
+                    default: true
+                  subnets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        addressSpace:
+                          type: string
+          status:
+            type: object
+            properties:
+              outputs:
+                type: object
+                additionalProperties:
+                  type: string

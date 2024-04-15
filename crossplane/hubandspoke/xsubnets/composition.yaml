@@ -1,0 +1,129 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xsubnets.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XSubnet #has to be singular
+
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: upbound-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        patchSets:
+        - name: common-parameters
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.location
+            toFieldPath: spec.forProvider.location
+
+    - step: render-subnets
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{if ne $.observed.composite.resource.status.outputs.VirtualNetworkId nil }}
+            {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
+            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: Subnet
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: {{ $subnets.name }}
+              name: {{ $subnets.name | lower }}
+            spec:
+              forProvider:
+                addressPrefixes: 
+                - {{ $subnets.addressSpace }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                virtualNetworkName: {{ $outputs.VirtualNetworkName }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{- end }}
+            ---
+            {{ if ne $.observed.resources nil }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: rt-association-{{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: rt-association-{{ $subnets.name }}
+            spec:
+              forProvider:
+                routeTableId: {{ $outputs.routeTableId }}
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    name: {{ $subnets.name }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            {{ if $subnets.createNsg }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SecurityGroup
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nsg-{{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+                crossplane.io/external-name: nsg-{{ $subnets.name }}
+              name: nsg-{{ $subnets.name | lower }}
+            spec:
+              forProvider:
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetNetworkSecurityGroupAssociation
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name:  nsg-association-{{ $subnets.name }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nsg-association-{{ $subnets.name }}
+            spec:
+              forProvider:
+                networkSecurityGroupIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    name: nsg-{{ $subnets.name | lower }}
+                subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
+            {{ end }}
+            ---
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XSubnet
+            status:
+              outputs:
+              {{- range $observed := $.observed.resources }}
+                {{ if ne $observed.resource.status.atProvider.id nil }}
+                {{ $observed.resource.metadata.name | lower }}: {{ $observed.resource.status.atProvider.id }}
+                {{ printf "%s_url" $observed.resource.metadata.name | lower }}: {{ printf "https://portal.azure.com/#@mobilabsolutions.com/resource%s" $observed.resource.status.atProvider.id }}
+                {{ end }}
+              {{- end }}
+            {{ end }}
+
+    - step: auto-ready
+      functionRef:
+        name: function-auto-ready
