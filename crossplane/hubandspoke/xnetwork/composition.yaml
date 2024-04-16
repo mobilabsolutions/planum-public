@@ -141,7 +141,8 @@ spec:
             status:
               outputs:
                 routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
-                vnetPrefix: {{ regexFind "^.*(?=\.)" (index $.observed.composite.resource.spec.parameters.vnetAddressSpace 0) }}
+                {{ $vnetAddressSpace := index $.observed.composite.resource.spec.parameters.vnetAddressSpace 0 }}
+                vnetPrefix: {{ regexFind "^.*(?=\.)" $vnetAddressSpace }}
             {{ end }}
             ---
             {{if ne $.observed.composite.resource.status.outputs.VirtualNetworkId nil }}
