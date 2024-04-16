@@ -521,7 +521,7 @@ spec:
             {{- $shirRegisterJson := printf "{\"fileUris\": \"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1\", \"commandToExecute\": \"curl -L -O https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1 && powershell.exe -ExecutionPolicy Unrestricted -File gatewayInstall.ps1 -gatewayKey %s\"}" $primaryAuth }}
             {{- $secretArray := list "shirVmPassword" "shirRegistrationSecretKey" -}}
             ---
-            apiVersion: kubernetes.crossplane.io/v1alpha2
+            apiVersion: kubernetes.crossplane.io/v1alpha1
             kind: Object
             metadata:
               annotations:
