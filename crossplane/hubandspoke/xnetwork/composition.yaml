@@ -91,6 +91,9 @@ spec:
             - type: ToCompositeFieldPath
               fromFieldPath: metadata.name
               toFieldPath: status.outputs['VirtualNetworkName']
+            - type: ToCompositeFieldPath
+              fromFieldPath: spec.parameters.vnetAddressSpace[0]
+              toFieldPath: status.outputs['vnetAddressSpace']
 
         - name: environment-config
           readinessChecks:
