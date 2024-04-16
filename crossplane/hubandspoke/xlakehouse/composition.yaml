@@ -91,6 +91,7 @@ spec:
             {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
+            {{ $vnetPrefix := (regexFind "^[^.]*" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix) }}
             {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
@@ -106,7 +107,7 @@ spec:
             spec:
               forProvider:
                 addressPrefixes: 
-                - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
+                - {{ printf "%s.%s" $vnetPrefix $subnets.addressPostfix }}
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
                 virtualNetworkName: {{ $outputs.VirtualNetworkName }}
                 {{ if contains "dbw" $subnets.name }}
@@ -513,8 +514,33 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            {{ if ne $.observed.composite.resource.spec.parameters.keyvault.secretRef nil }}
-            {{ range $secret := $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys }}
+            {{ if ne $.observed.resources nil }}
+            {{- $randomPassword := randAlphaNum 12 -}}
+            {{ $primaryAuth := (index $.observed.resources (printf "self-hosted-ir-%s" $prefix)).resource.status.atProvider.primaryAuthorizationKey }}
+            {{- $shirRegisterJson := printf "{\"fileUris\": \"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1\", \"commandToExecute\": \"curl -L -O https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1 && powershell.exe -ExecutionPolicy Unrestricted -File gatewayInstall.ps1 -gatewayKey %s\"}" $primaryAuth }}
+            {{- $secretArray := list "shirVmPassword" "shirRegistrationSecretKey" -}}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: secret-ir-password
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: secret-ir-password
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    namespace: crossplane-system
+                  data:
+                    {{ index $secretArray 0 }}: {{ $randomPassword | b64enc }}
+                    {{ index $secretArray 1 }}: {{ $shirRegisterJson | b64enc }}
+              providerConfigRef:
+                name: kubernetes
+            ---
+            {{ range $secret := $secretArray }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: Secret
@@ -530,8 +556,8 @@ spec:
                   matchControllerRef: true
                 valueSecretRef:
                   key: {{ $secret }}
-                  name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
-                  namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
+                  name: "secret-ir-password"
+                  namespace: "crossplane-system"
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{ end }}
