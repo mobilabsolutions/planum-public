@@ -93,7 +93,7 @@ spec:
               toFieldPath: status.outputs['VirtualNetworkName']
             - type: ToCompositeFieldPath
               fromFieldPath: status.atProvider.addressSpace[0]
-              toFieldPath: status.outputs['vnetAddressSpace']
+              toFieldPath: status.outputs['myvnetAddressSpace']
 
         - name: environment-config
           readinessChecks:
