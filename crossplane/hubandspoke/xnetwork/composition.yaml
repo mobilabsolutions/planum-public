@@ -141,7 +141,7 @@ spec:
             status:
               outputs:
                 routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
-                {{ $vnetAddressSpace := $.observed.composite.resource.spec.parameters.vnetAddressSpace | toYaml | toString }}
+                {{ $vnetAddressSpace := $.observed.composite.resource.spec.parameters.vnetAddressSpace | toYaml | nindent 4 | toString }}
                 vnetPrefix: {{ $vnetAddressSpace }}
             {{ end }}
             ---
