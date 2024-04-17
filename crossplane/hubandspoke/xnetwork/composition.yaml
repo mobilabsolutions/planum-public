@@ -91,9 +91,6 @@ spec:
             - type: ToCompositeFieldPath
               fromFieldPath: metadata.name
               toFieldPath: status.outputs['VirtualNetworkName']
-            - type: ToCompositeFieldPath
-              fromFieldPath: status.atProvider.addressSpace
-              toFieldPath: status.outputs['vnetAddressSpace']
 
         - name: environment-config
           readinessChecks:
@@ -144,7 +141,7 @@ spec:
             status:
               outputs:
                 routeTableId: {{ $.observed.composite.resource.spec.parameters.routeTableId }}
-                {{ $temp := $.observed.composite.resource.status.outputs.vnetAddressSpace | toString }}
+                {{ $temp := $.observed.composite.resource.spec.parameters.vnetAddressSpace | toString }}
                 {{ $anotherTemp := regexFind "^[^.]*" $temp }}
                 vnetAddressPrefix: {{ $anotherTemp | toString }}
             {{ end }}
