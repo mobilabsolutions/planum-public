@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-azure-datafactory
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-datafactory:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-datafactory:v1.0.1

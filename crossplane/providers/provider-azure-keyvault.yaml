@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-azure-keyvault
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-keyvault:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-keyvault:v1.0.1
