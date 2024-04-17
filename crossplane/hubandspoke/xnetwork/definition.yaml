@@ -62,4 +62,9 @@ spec:
             properties:
               outputs:
                 type: object
-                additionalProperties: true
+                additionalProperties:
+                  type: string
+                vnetAddressPrefix:
+                  type: object
+                vnetAddressSpace:
+                  type: object
