@@ -91,6 +91,15 @@ spec:
             - type: ToCompositeFieldPath
               fromFieldPath: metadata.name
               toFieldPath: status.outputs['VirtualNetworkName']
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.addressSpace[0]
+              toFieldPath: status.outputs['addressSpace']
+              transforms:
+              - type: string
+                string:
+                  type: Regexp
+                  regexp:
+                    match: '^.*(?=\.)'
 
         - name: environment-config
           readinessChecks:
