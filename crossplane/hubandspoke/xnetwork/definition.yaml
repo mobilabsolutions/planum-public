@@ -64,5 +64,5 @@ spec:
                 type: object
                 additionalProperties:
                   type: string
-                vnetAddressSpace:
+                vnetAddressPrefix:
                   type: object
