@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-azure-storage
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-storage:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-storage:v1.0.1

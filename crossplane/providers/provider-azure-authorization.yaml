@@ -3,6 +3,6 @@ kind: Provider
 metadata:
   name: provider-azure-authorization
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-authorization:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-authorization:v1.0.1
   controllerConfigRef:
     name: azure-config  

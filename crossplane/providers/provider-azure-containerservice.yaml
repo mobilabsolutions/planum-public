@@ -3,6 +3,6 @@ kind: Provider
 metadata:
   name: provider-azure-containerservice
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-containerservice:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-containerservice:v1.0.1
   controllerConfigRef:
     name: azure-config  

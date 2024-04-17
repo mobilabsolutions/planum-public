@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-azure-recoveryservices
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-recoveryservices:v0.42.1
+  package: xpkg.upbound.io/upbound/provider-azure-recoveryservices:v1.0.1

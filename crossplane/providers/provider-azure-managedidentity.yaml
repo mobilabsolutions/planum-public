@@ -3,4 +3,4 @@ kind: Provider
 metadata:
   name: provider-azure-managedidentity
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-managedidentity:v0.42.0
+  package: xpkg.upbound.io/upbound/provider-azure-managedidentity:v1.0.1
