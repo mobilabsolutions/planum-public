@@ -430,9 +430,10 @@ spec:
               providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            {{ $policy := list }}
             {{ $defaultPolicy := dict "objectId" $outputs.appId "secretPermissions" (list "Set" "Delete" "Get" "List") "keyPermissions" (list) }}
-            {{ $accessPolicies := $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
-            {{- range $policy := list }}
+            {{ $policy = $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
+            {{- range $policy }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: AccessPolicy
