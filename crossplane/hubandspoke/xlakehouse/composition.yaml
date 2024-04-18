@@ -437,7 +437,19 @@ spec:
             {{ $policy := list }}
             {{ $defaultPolicy := dict "objectId" $appId "secretPermissions" (list "Set" "Delete" "Get" "List") "keyPermissions" (list) }}
             {{ $policy = $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
-            {{- range $policy }}
+            {{- range $policy = list }}
+            ---
+            apiVersion: nop.crossplane.io/v1alpha1
+            kind: NopResource
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nop-2
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nop-2
+            spec:
+              forProvider:
+                fields:
+                  outputs: {{ $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: AccessPolicy
