@@ -27,10 +27,9 @@ spec:
               type: FromCompositeFieldPath
               valueFromFieldPath: spec.parameters.xDnsName
 
-      - type: Selector
-        selector:
-          ref:
-            name: vm
+      - type: Reference
+        ref:
+          name: vm
 
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
