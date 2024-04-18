@@ -110,7 +110,7 @@ spec:
             spec:
               forProvider:
                 fields:
-                  outputs: {{ (index $.context "apiextensions.crossplane.io/environment").outputs }}
+                  outputs: {{ (index $.context "apiextensions.crossplane.io/environment") }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
             kind: Subnet
