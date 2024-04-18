@@ -618,7 +618,6 @@ spec:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
               {{ end }}
               {{- end }}
-              {{- end }}
             ---
             {{ range $secret := $secretArray }}
             ---
@@ -642,6 +641,7 @@ spec:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{ end }}
             {{ end }}
+            {{- end }}
             ---
             apiVersion: authorization.azure.upbound.io/v1beta1
             kind: RoleAssignment
