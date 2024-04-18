@@ -95,7 +95,7 @@ spec:
               "germanywestcentral" "gwc"
               "switzerlandnorth" "sln"
             }}
-            {{ $appId := (index $.context "apiextensions.crossplane.io/environment").appId }}
+            {{ $objectId := (index $.context "apiextensions.crossplane.io/environment").objectId }}
             {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
@@ -446,7 +446,7 @@ spec:
                 keyPermissions: ["Set", "Delete", "Get", List]
                 keyVaultIdSelector:
                   matchControllerRef: true
-                objectId: {{ $appId }}
+                objectId: {{ $objectId }}
                 tenantId: {{ $.observed.composite.resource.spec.resourceConfig.tenantId }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
