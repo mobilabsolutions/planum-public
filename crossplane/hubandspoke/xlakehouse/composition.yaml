@@ -514,7 +514,7 @@ spec:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
             {{ if ne $.observed.resources nil }}
-            {{- $randomPassword := randAlphaNum 12 -}}
+            {{- $shirVmPass := randAlphaNum 12 -}}
             {{ $primaryAuth := (index $.observed.resources (printf "self-hosted-ir-%s" $prefix)).resource.status.atProvider.primaryAuthorizationKey }}
             {{- $shirRegisterJson := printf "{\"fileUris\": \"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1\", \"commandToExecute\": \"curl -L -O https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1 && powershell.exe -ExecutionPolicy Unrestricted -File gatewayInstall.ps1 -gatewayKey %s\"}" $primaryAuth }}
             {{- $secretArray := list "shirVmPassword" "shirRegistrationSecretKey" -}}
@@ -534,7 +534,7 @@ spec:
                   metadata:
                     namespace: crossplane-system
                   data:
-                    {{ index $secretArray 0 }}: {{ $randomPassword | b64enc }}
+                    {{ index $secretArray 0 }}: {{ $shirVmPass | b64enc }}
                     {{ index $secretArray 1 }}: {{ $shirRegisterJson | b64enc }}
               providerConfigRef:
                 name: kubernetes
@@ -763,9 +763,9 @@ spec:
               spec:
                 forProvider:
                   adminPasswordSecretRef:
-                    key: {{ index $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys 0 }}
-                    name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
-                    namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
+                    key: {{ index $secretArray 0 }}
+                    name: "secret-ir-password"
+                    namespace: "crossplane-system"
                   adminUsername: adminuser
                   location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
                   resourceGroupName: {{ $outputs.ResourceGroupName }}
@@ -797,9 +797,9 @@ spec:
                 forProvider:
                   publisher: "Microsoft.Compute"
                   protectedSettingsSecretRef:
-                    key: {{ index $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys 1 }}
-                    name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
-                    namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
+                    key: {{ index $secretArray 1 }}
+                    name: "secret-ir-password"
+                    namespace: "crossplane-system"
                   type: "CustomScriptExtension"
                   typeHandlerVersion: "1.9"
                   virtualMachineId: {{ $.observed.composite.resource.status.outputs.virtualMachineId }}
