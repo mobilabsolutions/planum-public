@@ -448,7 +448,7 @@ spec:
             spec:
               forProvider:
                 fields:
-                  outputs: {{ $defaultPolicy }}
+                  outputs: {{ $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
             ---
             {{- range $policy = list }}
             ---
