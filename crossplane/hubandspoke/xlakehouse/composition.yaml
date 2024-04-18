@@ -436,7 +436,7 @@ spec:
             ---
             {{ $policy := list }}
             {{ $defaultPolicy := dict "objectId" $appId "secretPermissions" (list "Set" "Delete" "Get" "List") "keyPermissions" (list) }}
-            {{ $policy = $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
+            #{{ $policy = $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
             ---
             apiVersion: nop.crossplane.io/v1alpha1
             kind: NopResource
@@ -448,7 +448,7 @@ spec:
             spec:
               forProvider:
                 fields:
-                  outputs: {{ $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
+                  outputs: {{ $defaultPolicy }}
             ---
             {{- range $policy = list }}
             ---
