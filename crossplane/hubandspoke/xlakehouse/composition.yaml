@@ -75,6 +75,22 @@ spec:
             - type: FromCompositeFieldPath
               fromFieldPath: status.outputs
               toFieldPath: data.outputs
+          
+        - name: nooop
+          readinessChecks:
+          - type: None
+          base:
+            apiVersion: nop.crossplane.io/v1alpha1
+            kind: NopResource
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nop-2
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nop-2
+            spec:
+              forProvider:
+                fields:
+                  outputs: {{ (index $.context "apiextensions.crossplane.io/environment").outputs | toYaml | nindent 7 }}
 
     - step: render-lakehouse-objects
       functionRef:
