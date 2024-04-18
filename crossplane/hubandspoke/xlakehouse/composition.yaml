@@ -30,7 +30,7 @@ spec:
       - type: Selector
         selector:
           ref:
-            name: example-environment
+            name: vm
 
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
