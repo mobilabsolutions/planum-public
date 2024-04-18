@@ -84,18 +84,6 @@ spec:
                                 type: string
                               type: array
 
-                      secretRef:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          namespace:
-                            type: string
-                          keys:
-                            type: array
-                            items:
-                              type: string
-
           status:
             type: object
             properties:
