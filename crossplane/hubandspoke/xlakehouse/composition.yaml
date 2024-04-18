@@ -29,10 +29,8 @@ spec:
 
       - type: Selector
         selector:
-          matchLabels:
-            - key: name
-              type: Value
-              value: vm
+          ref:
+            name: example-environment
 
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
