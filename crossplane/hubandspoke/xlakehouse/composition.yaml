@@ -437,7 +437,7 @@ spec:
             {{ $policy := list }}
             {{ $defaultPolicy := dict "objectId" $appId "secretPermissions" (list "Set" "Delete" "Get" "List") "keyPermissions" (list) }}
             {{ $policy = $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies | toJson | indent 2 }}
-            {{- range $policy = list }}
+            {{- range $policy }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: AccessPolicy
