@@ -322,6 +322,7 @@ spec:
                 dbwPrivateSubnetName: {{ $subnets.name }}
                 {{ end }}
                 virtualMachineId: {{ (index $.observed.resources (printf "vm-%s" $prefix)).resource.status.atProvider.id }}
+                appId: {{ $outputs.appId }}
             {{ end }}
             {{- end }}
             ---
@@ -433,7 +434,7 @@ spec:
             {{ $policy := list }}
             {{ $defaultPolicy := dict "objectId" $outputs.appId "secretPermissions" (list "Set" "Delete" "Get" "List") "keyPermissions" (list) }}
             {{ $policy = $defaultPolicy | append $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
-            {{- range $policy }}
+            {{- range $policy = list }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: AccessPolicy
