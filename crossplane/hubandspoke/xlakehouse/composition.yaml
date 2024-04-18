@@ -91,8 +91,6 @@ spec:
             {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
-            {{- $address := index (split "/" $outputs.vnetAddressSpace) 0 -}}
-            {{ $vnetPrefix := (regexFind ".*(?=\.)" $outputs.address) }}
             {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
             ---
             apiVersion: network.azure.upbound.io/v1beta1
@@ -108,7 +106,7 @@ spec:
             spec:
               forProvider:
                 addressPrefixes: 
-                - {{ printf "%s.%s" $vnetPrefix $subnets.addressPostfix }}
+                - {{ printf "%s.%s" $outputs.vnetAddressPrefix $subnets.addressPostfix }}
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
                 virtualNetworkName: {{ $outputs.VirtualNetworkName }}
                 {{ if contains "dbw" $subnets.name }}

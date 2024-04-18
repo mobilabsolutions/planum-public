@@ -42,8 +42,6 @@ spec:
                     type: string
                   xDnsName:
                     type: string
-                  virtualNetworkPrefix:
-                    type: string
                   subnets:
                     type: array
                     default:
