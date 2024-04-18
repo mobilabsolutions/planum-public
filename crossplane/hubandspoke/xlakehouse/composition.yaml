@@ -513,6 +513,7 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
             {{ if ne $.observed.resources nil }}
             {{- $shirVmPass := randAlphaNum 12 -}}
             {{ $primaryAuth := (index $.observed.resources (printf "self-hosted-ir-%s" $prefix)).resource.status.atProvider.primaryAuthorizationKey | default "empty" }}
@@ -616,6 +617,7 @@ spec:
                 providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
               {{ end }}
+              {{- end }}
               {{- end }}
             ---
             {{ range $secret := $secretArray }}
