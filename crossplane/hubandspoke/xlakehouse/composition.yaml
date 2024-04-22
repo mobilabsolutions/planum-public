@@ -443,11 +443,8 @@ spec:
               name: default-kv-policy
             spec:
               forProvider:
-                keyPermissions:
-                - Set
-                - Delete
-                - Get
-                - List
+                secretPermissions: ["Set", "Delete", "Get", List]
+                keyPermissions: []
                 keyVaultIdSelector:
                   matchControllerRef: true
                 objectId: {{ $objectId }}
