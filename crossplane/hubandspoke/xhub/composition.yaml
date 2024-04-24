@@ -8,367 +8,375 @@ spec:
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XHub #has to be singular
-  
-  patchSets:
-  - name: common-parameters
-    patches:
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.providerConfigName
-      toFieldPath: spec.providerConfigRef.name
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.location
-      toFieldPath: spec.forProvider.location
 
-  resources:
-  - name: environment-config
-    readinessChecks:
-    - type: None
-    base:
-      apiVersion: apiextensions.crossplane.io/v1alpha1
-      kind: EnvironmentConfig
-      metadata:
-        labels:
-          type: xhub
-          name: 
-        name: 
-      data:
-    patches:
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "ec-%s-%s-%s"
-        toFieldPath: metadata.name
-      - type: FromCompositeFieldPath
-        fromFieldPath: metadata.name
-        toFieldPath: metadata.labels.name
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs
-        toFieldPath: data.outputs
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: upbound-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        patchSets:  
+        - name: common-parameters
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.location
+            toFieldPath: spec.forProvider.location
 
-  - name: network
-    readinessChecks:
-    - type: None
-    base:
-      apiVersion: planum.mblb.net/v1alpha1
-      kind: XNetwork
-      metadata:
-        name: network
-      spec:
-        resourceConfig:
-          providerConfigName:
-          location:
-          environment:
-        parameters:
-          vnetAddressSpace: 
-          dnsServers: []
-          subnets:
-    patches:
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.providerConfigName
-      toFieldPath: spec.resourceConfig.providerConfigName
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.location
-      toFieldPath: spec.resourceConfig.location
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.environment
-      toFieldPath: spec.resourceConfig.environment
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.parameters.vnetAddressSpace
-      toFieldPath: spec.parameters.vnetAddressSpace
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.parameters.subnets
-      toFieldPath: spec.parameters.subnets
-    - type: ToCompositeFieldPath
-      fromFieldPath: status.outputs
-      toFieldPath: status.outputs
-    - type: ToCompositeFieldPath
-      fromFieldPath: status.outputs['ResourceGroupName']
-      toFieldPath: status.outputs['HubResourceGroupName']
-    - type: ToCompositeFieldPath
-      fromFieldPath: status.outputs['ResourceGroupId']
-      toFieldPath: status.outputs['HubResourceGroupId']
-    - type: ToCompositeFieldPath
-      fromFieldPath: status.outputs['VirtualNetworkId']
-      toFieldPath: status.outputs['HubVirtualNetworkId']
-    - type: ToCompositeFieldPath
-      fromFieldPath: status.outputs['VirtualNetworkName']
-      toFieldPath: status.outputs['HubVirtualNetworkName']
-    - type: FromCompositeFieldPath
-      fromFieldPath: status.outputs['inboundEndpointIp']
-      toFieldPath: spec.parameters.dnsServers[0]
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.parameters.routeTableId
-      toFieldPath: spec.parameters.routeTableId
+        resources:
+        - name: environment-config
+          readinessChecks:
+          - type: None
+          base:
+            apiVersion: apiextensions.crossplane.io/v1alpha1
+            kind: EnvironmentConfig
+            metadata:
+              labels:
+                type: xhub
+                name: 
+              name: 
+            data:
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "ec-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: metadata.name
+              toFieldPath: metadata.labels.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs
+              toFieldPath: data.outputs
 
-  - name: dns
-    readinessChecks:
-    - type: NonEmpty
-      fieldPath: status.outputs.privateDnsResolverInboundEndpointIp
-    base:
-      apiVersion: planum.mblb.net/v1alpha1
-      kind: XDns
-      spec:
-        resourceConfig:
-          providerConfigName: 
-          location: 
-          environment:
-        parameters:
-          resourceGroupName:
-          dnsZoneNames: [""]
-    patches:
-    - type: CombineFromComposite
-      combine:
-        variables:
-          - fromFieldPath: metadata.name
-          - fromFieldPath: spec.resourceConfig.environment
-          - fromFieldPath: spec.resourceConfig.location
-        strategy: string
-        string:
-          fmt: "dns-%s-%s-%s"
-      toFieldPath: metadata.name
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.providerConfigName
-      toFieldPath: spec.resourceConfig.providerConfigName
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.location
-      toFieldPath: spec.resourceConfig.location
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.resourceConfig.environment
-      toFieldPath: spec.resourceConfig.environment
-    - type: FromCompositeFieldPath
-      fromFieldPath: spec.parameters.dnsZoneNames
-      toFieldPath: spec.parameters.dnsZoneNames
-    - type: FromCompositeFieldPath
-      fromFieldPath: status.outputs['HubResourceGroupName']
-      toFieldPath: spec.parameters.resourceGroupName
-    - type: FromCompositeFieldPath
-      fromFieldPath: status.outputs['HubVirtualNetworkId']
-      toFieldPath: spec.parameters.hubVirtualNetworkId
-    - type: FromCompositeFieldPath
-      fromFieldPath: status.outputs['dnssubnet']
-      toFieldPath: spec.parameters.dnsSubnetId
-      policy:
-        fromFieldPath: Required
-    - type: ToCompositeFieldPath
-      fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
-      toFieldPath: status.outputs['inboundEndpointIp']
+        - name: network
+          readinessChecks:
+          - type: None
+          base:
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XNetwork
+            metadata:
+              name: network
+            spec:
+              resourceConfig:
+                providerConfigName:
+                location:
+                environment:
+              parameters:
+                vnetAddressSpace: 
+                dnsServers: []
+                subnets:
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.providerConfigName
+            toFieldPath: spec.resourceConfig.providerConfigName
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.location
+            toFieldPath: spec.resourceConfig.location
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.environment
+            toFieldPath: spec.resourceConfig.environment
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.vnetAddressSpace
+            toFieldPath: spec.parameters.vnetAddressSpace
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.subnets
+            toFieldPath: spec.parameters.subnets
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.outputs
+            toFieldPath: status.outputs
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.outputs['ResourceGroupName']
+            toFieldPath: status.outputs['HubResourceGroupName']
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.outputs['ResourceGroupId']
+            toFieldPath: status.outputs['HubResourceGroupId']
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.outputs['VirtualNetworkId']
+            toFieldPath: status.outputs['HubVirtualNetworkId']
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.outputs['VirtualNetworkName']
+            toFieldPath: status.outputs['HubVirtualNetworkName']
+          - type: FromCompositeFieldPath
+            fromFieldPath: status.outputs['inboundEndpointIp']
+            toFieldPath: spec.parameters.dnsServers[0]
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.routeTableId
+            toFieldPath: spec.parameters.routeTableId
 
-  - name: public-ip
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: PublicIP
-      metadata:
-        name: 
-        labels:
-          used-with: vnet-gw
-      spec:
-        forProvider:
-          allocationMethod: Static
-          sku: Standard
-          resourceGroupName:
-    patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "ip-%s-%s-%s"
-        toFieldPath: metadata.name  
+        - name: dns
+          readinessChecks:
+          - type: NonEmpty
+            fieldPath: status.outputs.privateDnsResolverInboundEndpointIp
+          base:
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XDns
+            spec:
+              resourceConfig:
+                providerConfigName: 
+                location: 
+                environment:
+              parameters:
+                resourceGroupName:
+                dnsZoneNames: [""]
+          patches:
+          - type: CombineFromComposite
+            combine:
+              variables:
+                - fromFieldPath: metadata.name
+                - fromFieldPath: spec.resourceConfig.environment
+                - fromFieldPath: spec.resourceConfig.location
+              strategy: string
+              string:
+                fmt: "dns-%s-%s-%s"
+            toFieldPath: metadata.name
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.providerConfigName
+            toFieldPath: spec.resourceConfig.providerConfigName
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.location
+            toFieldPath: spec.resourceConfig.location
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.resourceConfig.environment
+            toFieldPath: spec.resourceConfig.environment
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.parameters.dnsZoneNames
+            toFieldPath: spec.parameters.dnsZoneNames
+          - type: FromCompositeFieldPath
+            fromFieldPath: status.outputs['HubResourceGroupName']
+            toFieldPath: spec.parameters.resourceGroupName
+          - type: FromCompositeFieldPath
+            fromFieldPath: status.outputs['HubVirtualNetworkId']
+            toFieldPath: spec.parameters.hubVirtualNetworkId
+          - type: FromCompositeFieldPath
+            fromFieldPath: status.outputs['dnssubnet']
+            toFieldPath: spec.parameters.dnsSubnetId
+            policy:
+              fromFieldPath: Required
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.outputs['privateDnsResolverInboundEndpointIp']
+            toFieldPath: status.outputs['inboundEndpointIp']
 
-  - name: public-ip-bastion
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: PublicIP
-      metadata:
-        name: 
-        labels:
-          used-with: bastion
-      spec:
-        forProvider:
-          allocationMethod: Static
-          sku: Standard
-          resourceGroupName:
-    patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: ToCompositeFieldPath
-        fromFieldPath: metadata.name
-        toFieldPath: status.outputs['bastionPublicIpName']
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "ip-bastion-%s-%s-%s"
-        toFieldPath: metadata.name
+        - name: public-ip
+          readinessChecks:	
+          - matchCondition:	
+              status: 'True'	
+              type: Ready	
+            type: MatchCondition
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PublicIP
+            metadata:
+              name: 
+              labels:
+                used-with: vnet-gw
+            spec:
+              forProvider:
+                allocationMethod: Static
+                sku: Standard
+                resourceGroupName:
+          patches:
+            - type: PatchSet
+              patchSetName: common-parameters
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['HubResourceGroupName']
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "ip-%s-%s-%s"
+              toFieldPath: metadata.name  
 
-  - name: bastion
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: planum.mblb.net/v1alpha1
-      kind: BastionHost
-      metadata:
-        name:
-      spec:
-        resourceGroupName:
-        location:
-        publicIp:
-        vnetName:
-        providerConfigName:
-    patches:
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.resourceGroupName
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.resourceConfig.location
-        toFieldPath: spec.location
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['bastionPublicIpName']
-        toFieldPath: spec.publicIp
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubVirtualNetworkName']
-        toFieldPath: spec.vnetName
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.resourceConfig.providerConfigName
-        toFieldPath: spec.providerConfigName
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "bastion-%s-%s-%s"
-        toFieldPath: metadata.name
+        - name: public-ip-bastion
+          readinessChecks:	
+          - matchCondition:	
+              status: 'True'	
+              type: Ready	
+            type: MatchCondition
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PublicIP
+            metadata:
+              name: 
+              labels:
+                used-with: bastion
+            spec:
+              forProvider:
+                allocationMethod: Static
+                sku: Standard
+                resourceGroupName:
+          patches:
+            - type: PatchSet
+              patchSetName: common-parameters
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['HubResourceGroupName']
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: ToCompositeFieldPath
+              fromFieldPath: metadata.name
+              toFieldPath: status.outputs['bastionPublicIpName']
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "ip-bastion-%s-%s-%s"
+              toFieldPath: metadata.name
 
-  - name: vnet-gateway
-    readinessChecks:
-    - matchCondition:
-        status: 'True'
-        type: Ready
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: VirtualNetworkGateway
-      spec:
-        forProvider:
-          bgpSettings:
-            - asn: 65515
-              peerWeight: 0
-              peeringAddresses:
-                - ipConfigurationName: VnetGatewayConfig
-          tags:
-            inboundEndpointIp:
-          ipConfiguration:
-            - name: VnetGatewayConfig
-              privateIpAddressAllocation: Dynamic
-              publicIpAddressIdSelector:
-                matchControllerRef: true
-                matchLabels:
-                  used-with: vnet-gw
-              subnetId:
-          location:
-          resourceGroupName:
-          sku: VpnGw1
-          type: Vpn
-          vpnClientConfiguration:
-            - addressSpace:
-              aadIssuer:
-              aadAudience: "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-              aadTenant:
-              vpnClientProtocols: ["OpenVPN"]
-              vpnAuthTypes: ["AAD"]
-          vpnType: RouteBased
-    patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "vgw-%s-%s-%s"
-        toFieldPath: metadata.name
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['inboundEndpointIp']
-        toFieldPath: spec.forProvider.tags.inboundEndpointIp
-        policy:
-          fromFieldPath: Required
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.parameters.vnetGatewayConfig.addressSpace
-        toFieldPath: spec.forProvider.vpnClientConfiguration[0].addressSpace
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['gatewaysubnet']
-        toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
-        policy:
-          fromFieldPath: Required
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.resourceConfig.tenantId
-        toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadTenant
-        transforms:
-        - type: string
-          string:
-            type: Format
-            fmt: "https://login.microsoftonline.com/%s/"
-      - type: FromCompositeFieldPath
-        fromFieldPath: spec.resourceConfig.tenantId
-        toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadIssuer
-        transforms:
-        - type: string
-          string:
-            type: Format
-            fmt: "https://sts.windows.net/%s/"
-      - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.id
-        toFieldPath: status.outputs['VnetGwId']
-      - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.id
-        toFieldPath: status.outputs['VnetGw_url']
-        transforms:
-        - type: string
-          string:
-            type: Format
-            fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
+        - name: bastion
+          readinessChecks:	
+          - matchCondition:	
+              status: 'True'	
+              type: Ready	
+            type: MatchCondition
+          base:
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: BastionHost
+            metadata:
+              name:
+            spec:
+              resourceGroupName:
+              location:
+              publicIp:
+              vnetName:
+              providerConfigName:
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['HubResourceGroupName']
+              toFieldPath: spec.resourceGroupName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.resourceConfig.location
+              toFieldPath: spec.location
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['bastionPublicIpName']
+              toFieldPath: spec.publicIp
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['HubVirtualNetworkName']
+              toFieldPath: spec.vnetName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.resourceConfig.providerConfigName
+              toFieldPath: spec.providerConfigName
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "bastion-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: vnet-gateway
+          readinessChecks:
+          - matchCondition:
+              status: 'True'
+              type: Ready
+            type: MatchCondition
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: VirtualNetworkGateway
+            spec:
+              forProvider:
+                bgpSettings:
+                  - asn: 65515
+                    peerWeight: 0
+                    peeringAddresses:
+                      - ipConfigurationName: VnetGatewayConfig
+                tags:
+                  inboundEndpointIp:
+                ipConfiguration:
+                  - name: VnetGatewayConfig
+                    privateIpAddressAllocation: Dynamic
+                    publicIpAddressIdSelector:
+                      matchControllerRef: true
+                      matchLabels:
+                        used-with: vnet-gw
+                    subnetId:
+                location:
+                resourceGroupName:
+                sku: VpnGw1
+                type: Vpn
+                vpnClientConfiguration:
+                  - addressSpace:
+                    aadIssuer:
+                    aadAudience: "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
+                    aadTenant:
+                    vpnClientProtocols: ["OpenVPN"]
+                    vpnAuthTypes: ["AAD"]
+                vpnType: RouteBased
+          patches:
+            - type: PatchSet
+              patchSetName: common-parameters
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "vgw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['inboundEndpointIp']
+              toFieldPath: spec.forProvider.tags.inboundEndpointIp
+              policy:
+                fromFieldPath: Required
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.parameters.vnetGatewayConfig.addressSpace
+              toFieldPath: spec.forProvider.vpnClientConfiguration[0].addressSpace
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['HubResourceGroupName']
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['gatewaysubnet']
+              toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
+              policy:
+                fromFieldPath: Required
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.resourceConfig.tenantId
+              toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadTenant
+              transforms:
+              - type: string
+                string:
+                  type: Format
+                  fmt: "https://login.microsoftonline.com/%s/"
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.resourceConfig.tenantId
+              toFieldPath: spec.forProvider.vpnClientConfiguration[0].aadIssuer
+              transforms:
+              - type: string
+                string:
+                  type: Format
+                  fmt: "https://sts.windows.net/%s/"
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs['VnetGwId']
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs['VnetGw_url']
+              transforms:
+              - type: string
+                string:
+                  type: Format
+                  fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
 
 #  - name: local-network-gw
 #    readinessChecks:
@@ -455,94 +463,106 @@ spec:
 #        fromFieldPath: spec.parameters.lgwGatewayConfig.sharedKeySecretKeyName
 #        toFieldPath: spec.forProvider.sharedKeySecretRef.key
 
-  - name: public-ip-fw
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: PublicIP
-      metadata:
-        name: 
-        labels:
-          used-with: azure-fw
-      spec:
-        forProvider:
-          allocationMethod: Static
-          sku: Standard
-          resourceGroupName:
-    patches:
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "ip-fw-%s-%s-%s"
-        toFieldPath: metadata.name
+        - name: public-ip-fw
+          readinessChecks:	
+          - matchCondition:	
+              status: 'True'	
+              type: Ready	
+            type: MatchCondition
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PublicIP
+            metadata:
+              name: 
+              labels:
+                used-with: azure-fw
+            spec:
+              forProvider:
+                allocationMethod: Static
+                sku: Standard
+                resourceGroupName:
+          patches:
+            - type: PatchSet
+              patchSetName: common-parameters
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['HubResourceGroupName']
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "ip-fw-%s-%s-%s"
+              toFieldPath: metadata.name
 
-  - name: azure-fw
-    readinessChecks:	
-    - matchCondition:	
-        status: 'True'	
-        type: Ready	
-      type: MatchCondition
-    base:
-      apiVersion: network.azure.upbound.io/v1beta1
-      kind: Firewall
-      spec:
-        forProvider:
-          ipConfiguration:
-            - name: configuration
-              publicIpAddressIdSelector:
-                matchControllerRef: true
-                matchLabels: 
-                  used-with: azure-fw
-              subnetId:
-          resourceGroupName:
-          skuName: AZFW_VNet
-          skuTier: Standard
-    patches:
-      - type: CombineFromComposite
-        combine:
-          variables:
-            - fromFieldPath: metadata.name
-            - fromFieldPath: spec.resourceConfig.environment
-            - fromFieldPath: spec.resourceConfig.location
-          strategy: string
-          string:
-            fmt: "fw-%s-%s-%s"
-        toFieldPath: metadata.name
-      - type: PatchSet
-        patchSetName: common-parameters
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['HubResourceGroupName']
-        toFieldPath: spec.forProvider.resourceGroupName
-      - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['azurefirewallsubnet']
-        toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
-        policy:
-          fromFieldPath: Required
-      - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.ipConfiguration[0].privateIpAddress
-        toFieldPath: status.outputs['fwPrivateIpAddress']
-      - type: ToCompositeFieldPath
-        fromFieldPath: metadata.name
-        toFieldPath: status.outputs['firewallName']
-      - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.id
-        toFieldPath: status.outputs['Firewall_url']
-        transforms:
-        - type: string
-          string:
-            type: Format
-            fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
+        - name: azure-fw
+          readinessChecks:	
+          - matchCondition:	
+              status: 'True'	
+              type: Ready	
+            type: MatchCondition
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: Firewall
+            spec:
+              forProvider:
+                ipConfiguration:
+                  - name: configuration
+                    publicIpAddressIdSelector:
+                      matchControllerRef: true
+                      matchLabels: 
+                        used-with: azure-fw
+                    subnetId:
+                resourceGroupName:
+                skuName: AZFW_VNet
+                skuTier: Standard
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.resourceConfig.environment
+                  - fromFieldPath: spec.resourceConfig.location
+                strategy: string
+                string:
+                  fmt: "fw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: PatchSet
+              patchSetName: common-parameters
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['HubResourceGroupName']
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs['azurefirewallsubnet']
+              toFieldPath: spec.forProvider.ipConfiguration[0].subnetId
+              policy:
+                fromFieldPath: Required
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.ipConfiguration[0].privateIpAddress
+              toFieldPath: status.outputs['fwPrivateIpAddress']
+            - type: ToCompositeFieldPath
+              fromFieldPath: metadata.name
+              toFieldPath: status.outputs['firewallName']
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs['Firewall_url']
+              transforms:
+              - type: string
+                string:
+                  type: Format
+                  fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
+
+  - step: filter-composed-resources
+    functionRef:
+      name: function-cel-filter
+    input:
+      apiVersion: cel.fn.crossplane.io/v1beta1
+      kind: Filters
+      filters:
+      - name: public-ip-bastion
+        expression: observed.composite.resource.spec.createBoolean == true
+      - name: bastion
+        expression: observed.composite.resource.spec.createBoolean == true

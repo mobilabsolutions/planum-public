@@ -94,6 +94,9 @@ spec:
                     items:
                       type: string
                     type: array
+                  createBastion:
+                    type: boolean
+                    default: false
           status:
             type: object
             properties:
