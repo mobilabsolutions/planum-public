@@ -44,9 +44,7 @@ spec:
                     type: string
                   subnets:
                     type: array
-                    default:
-                    - name: "AzureBastionSubnet"
-                      addressPostfix: "64/29"
+                    default: []
                     items:
                       type: object
                       properties:
