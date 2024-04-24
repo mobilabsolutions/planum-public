@@ -218,7 +218,7 @@ spec:
         fromFieldPath: status.outputs['HubResourceGroupName']
         toFieldPath: spec.forProvider.resourceGroupName
       - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.id
+        fromFieldPath: status.atProvider.ipAddress
         toFieldPath: status.outputs['bastionPublicIp']
       - type: CombineFromComposite
         combine:
