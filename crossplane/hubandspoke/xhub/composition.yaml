@@ -259,6 +259,9 @@ spec:
         fromFieldPath: status.outputs['bastionPublicIp']
         toFieldPath: spec.publicIp
       - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['HubVirtualNetworkName']
+        toFieldPath: spec.vnetName
+      - type: FromCompositeFieldPath
         fromFieldPath: spec.resourceConfig.providerConfigName
         toFieldPath: spec.providerConfigName
       - type: CombineFromComposite
