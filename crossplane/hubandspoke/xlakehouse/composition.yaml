@@ -27,6 +27,13 @@ spec:
               type: FromCompositeFieldPath
               valueFromFieldPath: spec.parameters.xDnsName
 
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: name
+              type: Value
+              value: vm
+
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XLakehouse #has to be singular
@@ -88,6 +95,7 @@ spec:
               "germanywestcentral" "gwc"
               "switzerlandnorth" "sln"
             }}
+            {{ $objectId := (index $.context "apiextensions.crossplane.io/environment").objectId }}
             {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
             {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
             {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
@@ -106,7 +114,7 @@ spec:
             spec:
               forProvider:
                 addressPrefixes: 
-                - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
+                - {{ printf "%s.%s" $outputs.vnetAddressPrefix $subnets.addressPostfix }}
                 resourceGroupName: {{ $outputs.ResourceGroupName }}
                 virtualNetworkName: {{ $outputs.VirtualNetworkName }}
                 {{ if contains "dbw" $subnets.name }}
@@ -426,6 +434,24 @@ spec:
               providerConfigRef:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
+            apiVersion: keyvault.azure.upbound.io/v1beta1
+            kind: AccessPolicy
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: default-kv-policy
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: default-kv-policy
+            spec:
+              forProvider:
+                secretPermissions: ["Set", "Delete", "Get", List]
+                keyPermissions: []
+                keyVaultIdSelector:
+                  matchControllerRef: true
+                objectId: {{ $objectId }}
+                tenantId: {{ $.observed.composite.resource.spec.resourceConfig.tenantId }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
             {{- range $policy := $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
@@ -513,8 +539,113 @@ spec:
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             ---
-            {{ if ne $.observed.composite.resource.spec.parameters.keyvault.secretRef nil }}
-            {{ range $secret := $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys }}
+            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
+            {{ if ne $.observed.resources nil }}
+            {{- $shirVmPass := randAlphaNum 12 -}}
+            {{ $primaryAuth := (index $.observed.resources (printf "self-hosted-ir-%s" $prefix)).resource.status.atProvider.primaryAuthorizationKey | default "empty" }}
+            {{- $shirRegisterJson := printf "{\"fileUris\": \"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1\", \"commandToExecute\": \"curl -L -O https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/quickstarts/microsoft.compute/vms-with-selfhost-integration-runtime/gatewayInstall.ps1 && powershell.exe -ExecutionPolicy Unrestricted -File gatewayInstall.ps1 -gatewayKey %s\"}" $primaryAuth }}
+            {{- $secretArray := list "shirVmPassword" "shirRegistrationSecretKey" -}}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha1
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: secret-ir-password
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: secret-ir-password
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    namespace: crossplane-system
+                  data:
+                    {{ index $secretArray 0 }}: {{ $shirVmPass | b64enc }}
+                    {{ index $secretArray 1 }}: {{ $shirRegisterJson | b64enc }}
+              providerConfigRef:
+                name: kubernetes
+            ---
+            {{- if contains "-ir" $subnets.name }}
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: NetworkInterface
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: nic-vm-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: nic-vm-{{ $prefix }}
+            spec:
+              forProvider:
+                ipConfiguration:
+                  - name: internal
+                    privateIpAddressAllocation: Dynamic
+                    subnetIdSelector:
+                      matchLabels:
+                        name: {{ $subnets.name }}
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            apiVersion: compute.azure.upbound.io/v1beta1
+            kind: WindowsVirtualMachine
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: vm-{{ $prefix }}
+                gotemplating.fn.crossplane.io/ready: "True"
+              labels:
+                name: vm-{{ $prefix }}
+              name: vm-{{ $prefix }}
+            spec:
+              forProvider:
+                adminPasswordSecretRef:
+                  key: {{ index $secretArray 0 }}
+                  name: "secret-ir-password"
+                  namespace: "crossplane-system"
+                adminUsername: adminuser
+                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
+                resourceGroupName: {{ $outputs.ResourceGroupName }}
+                computerName: "sharedirvm"
+                networkInterfaceIdsSelector:
+                  matchControllerRef: true
+                osDisk:
+                - caching: ReadWrite
+                  storageAccountType: Standard_LRS
+                size: Standard_B2ms
+                identity:
+                - type: "SystemAssigned"
+                sourceImageReference:
+                - offer: WindowsServer
+                  publisher: MicrosoftWindowsServer
+                  sku: 2022-Datacenter
+                  version: latest
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            ---
+            {{ if ne $primaryAuth "empty" }}
+            apiVersion: compute.azure.upbound.io/v1beta1
+            kind: VirtualMachineExtension
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: "ext-adf-shir"
+                gotemplating.fn.crossplane.io/ready: "True"
+              name: "ext-adf-shir"
+            spec:
+              forProvider:
+                publisher: "Microsoft.Compute"
+                protectedSettingsSecretRef:
+                  key: {{ index $secretArray 1 }}
+                  name: "secret-ir-password"
+                  namespace: "crossplane-system"
+                type: "CustomScriptExtension"
+                typeHandlerVersion: "1.9"
+                virtualMachineId: {{ $.observed.composite.resource.status.outputs.virtualMachineId }}
+              providerConfigRef:
+                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
+            {{ end }}
+            {{- end }}
+            ---
+            {{ range $secret := $secretArray }}
             ---
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: Secret
@@ -530,12 +661,13 @@ spec:
                   matchControllerRef: true
                 valueSecretRef:
                   key: {{ $secret }}
-                  name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
-                  namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
+                  name: "secret-ir-password"
+                  namespace: "crossplane-system"
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
             {{ end }}
             {{ end }}
+            {{- end }}
             ---
             apiVersion: authorization.azure.upbound.io/v1beta1
             kind: RoleAssignment
@@ -704,83 +836,6 @@ spec:
                   name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
               {{- end }}
             {{ end }}
-            ---
-              {{- if contains "-ir" $subnets.name }}
-              apiVersion: network.azure.upbound.io/v1beta1
-              kind: NetworkInterface
-              metadata:
-                annotations:
-                  gotemplating.fn.crossplane.io/composition-resource-name: nic-vm-{{ $prefix }}
-                  gotemplating.fn.crossplane.io/ready: "True"
-                name: nic-vm-{{ $prefix }}
-              spec:
-                forProvider:
-                  ipConfiguration:
-                    - name: internal
-                      privateIpAddressAllocation: Dynamic
-                      subnetIdSelector:
-                        matchLabels:
-                          name: {{ $subnets.name }}
-                  location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                  resourceGroupName: {{ $outputs.ResourceGroupName }}
-                providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-              apiVersion: compute.azure.upbound.io/v1beta1
-              kind: WindowsVirtualMachine
-              metadata:
-                annotations:
-                  gotemplating.fn.crossplane.io/composition-resource-name: vm-{{ $prefix }}
-                  gotemplating.fn.crossplane.io/ready: "True"
-                labels:
-                  name: vm-{{ $prefix }}
-                name: vm-{{ $prefix }}
-              spec:
-                forProvider:
-                  adminPasswordSecretRef:
-                    key: {{ index $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys 0 }}
-                    name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
-                    namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
-                  adminUsername: adminuser
-                  location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                  resourceGroupName: {{ $outputs.ResourceGroupName }}
-                  computerName: "sharedirvm"
-                  networkInterfaceIdsSelector:
-                    matchControllerRef: true
-                  osDisk:
-                  - caching: ReadWrite
-                    storageAccountType: Standard_LRS
-                  size: Standard_B2ms
-                  identity:
-                  - type: "SystemAssigned"
-                  sourceImageReference:
-                  - offer: WindowsServer
-                    publisher: MicrosoftWindowsServer
-                    sku: 2022-Datacenter
-                    version: latest
-                providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-              apiVersion: compute.azure.upbound.io/v1beta1
-              kind: VirtualMachineExtension
-              metadata:
-                annotations:
-                  gotemplating.fn.crossplane.io/composition-resource-name: "ext-adf-shir"
-                  gotemplating.fn.crossplane.io/ready: "True"
-                name: "ext-adf-shir"
-              spec:
-                forProvider:
-                  publisher: "Microsoft.Compute"
-                  protectedSettingsSecretRef:
-                    key: {{ index $.observed.composite.resource.spec.parameters.keyvault.secretRef.keys 1 }}
-                    name: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.name }}
-                    namespace: {{ $.observed.composite.resource.spec.parameters.keyvault.secretRef.namespace }}
-                  type: "CustomScriptExtension"
-                  typeHandlerVersion: "1.9"
-                  virtualMachineId: {{ $.observed.composite.resource.status.outputs.virtualMachineId }}
-                providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              {{- end }}
             {{- end }}
 
     - step: auto-ready
