@@ -193,6 +193,85 @@ spec:
             fmt: "ip-%s-%s-%s"
         toFieldPath: metadata.name  
 
+  - name: public-ip-bastion
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
+    base:
+      apiVersion: network.azure.upbound.io/v1beta1
+      kind: PublicIP
+      metadata:
+        name: 
+        labels:
+          used-with: bastion
+      spec:
+        forProvider:
+          allocationMethod: Static
+          sku: Standard
+          resourceGroupName:
+    patches:
+      - type: PatchSet
+        patchSetName: common-parameters
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['HubResourceGroupName']
+        toFieldPath: spec.forProvider.resourceGroupName
+      - type: ToCompositeFieldPath
+        fromFieldPath: status.atProvider.id
+        toFieldPath: status.outputs['bastionPublicIp']
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: metadata.name
+            - fromFieldPath: spec.resourceConfig.environment
+            - fromFieldPath: spec.resourceConfig.location
+          strategy: string
+          string:
+            fmt: "ip-bastion-%s-%s-%s"
+        toFieldPath: metadata.name
+
+  - name: bastion
+    readinessChecks:	
+    - matchCondition:	
+        status: 'True'	
+        type: Ready	
+      type: MatchCondition
+    base:
+      apiVersion: planum.mblb.net/v1alpha1
+      kind: BastionHost
+      metadata:
+        name:
+      spec:
+        resourceGroupName:
+        location:
+        publicIp:
+        vnetName:
+        providerConfigName:
+    patches:
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['HubResourceGroupName']
+        toFieldPath: spec.resourceGroupName
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.resourceConfig.location
+        toFieldPath: spec.location
+      - type: FromCompositeFieldPath
+        fromFieldPath: status.outputs['bastionPublicIp']
+        toFieldPath: spec.publicIp
+      - type: FromCompositeFieldPath
+        fromFieldPath: spec.resourceConfig.providerConfigName
+        toFieldPath: spec.providerConfigName
+      - type: CombineFromComposite
+        combine:
+          variables:
+            - fromFieldPath: metadata.name
+            - fromFieldPath: spec.resourceConfig.environment
+            - fromFieldPath: spec.resourceConfig.location
+          strategy: string
+          string:
+            fmt: "ip-bastion-%s-%s-%s"
+        toFieldPath: metadata.name
+
   - name: vnet-gateway
     readinessChecks:
     - matchCondition:
