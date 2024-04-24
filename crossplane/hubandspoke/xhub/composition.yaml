@@ -555,14 +555,14 @@ spec:
                   type: Format
                   fmt: "https://portal.azure.com/#@mobilabsolutions.com/resource%s"
 
-  - step: filter-composed-resources
-    functionRef:
-      name: function-cel-filter
-    input:
-      apiVersion: cel.fn.crossplane.io/v1beta1
-      kind: Filters
-      filters:
-      - name: public-ip-bastion
-        expression: observed.composite.resource.spec.createBoolean == true
-      - name: bastion
-        expression: observed.composite.resource.spec.createBoolean == true
+    - step: filter-composed-resources
+      functionRef:
+        name: function-cel-filter
+      input:
+        apiVersion: cel.fn.crossplane.io/v1beta1
+        kind: Filters
+        filters:
+        - name: public-ip-bastion
+          expression: observed.composite.resource.spec.createBoolean == true
+        - name: bastion
+          expression: observed.composite.resource.spec.createBoolean == true
