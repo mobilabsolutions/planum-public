@@ -563,6 +563,6 @@ spec:
         kind: Filters
         filters:
         - name: public-ip-bastion
-          expression: observed.composite.resource.spec.createBoolean == true
+          expression: observed.composite.resource.spec.createBastion == true
         - name: bastion
-          expression: observed.composite.resource.spec.createBoolean == true
+          expression: observed.composite.resource.spec.createBastion == true
