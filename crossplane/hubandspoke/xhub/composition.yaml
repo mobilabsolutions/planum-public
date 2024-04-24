@@ -272,7 +272,7 @@ spec:
             - fromFieldPath: spec.resourceConfig.location
           strategy: string
           string:
-            fmt: "ip-bastion-%s-%s-%s"
+            fmt: "bastion-%s-%s-%s"
         toFieldPath: metadata.name
 
   - name: vnet-gateway
