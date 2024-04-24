@@ -45,19 +45,21 @@ spec:
                 tenantId: {{ $.observed.composite.resource.spec.resourceConfig.tenantId }}
               parameters:
                 vnetAddressSpace: 
-                - {{ printf "%s.0/24" $hubConfig.vnetAddressPrefix }}
+                - {{ printf "%s.0.0/23" $hubConfig.vnetAddressPrefix }}
                 {{ if ne $.observed.resources nil }}
                 routeTableId: {{ (index $.observed.resources (print "rt-hub-spokes")).resource.status.atProvider.id }}
                 {{ end }}
                 subnets: 
                 - name: "GatewaySubnet"
-                  addressSpace: {{ printf "%s.0/26" $hubConfig.vnetAddressPrefix }}
+                  addressSpace: {{ printf "%s.0.0/26" $hubConfig.vnetAddressPrefix }}
                 - name: "DnsSubnet"
-                  addressSpace: {{ printf "%s.64/26" $hubConfig.vnetAddressPrefix }}
+                  addressSpace: {{ printf "%s.0.64/26" $hubConfig.vnetAddressPrefix }}
                 - name: AzureFirewallManagementSubnet
-                  addressSpace: {{ printf "%s.128/26" $hubConfig.vnetAddressPrefix }}
+                  addressSpace: {{ printf "%s.0.128/26" $hubConfig.vnetAddressPrefix }}
                 - name: AzureFirewallSubnet
-                  addressSpace: {{ printf "%s.192/26" $hubConfig.vnetAddressPrefix }}
+                  addressSpace: {{ printf "%s.0.192/26" $hubConfig.vnetAddressPrefix }}
+                - name: AzureBastionSubnet
+                  addressSpace: {{ printf "%s.1.0/26" $hubConfig.vnetAddressPrefix }}
                 dnsZoneNames: 
                 - "privatelink.azuredatabricks.net"
                 - "privatelink.blob.core.windows.net"
@@ -68,6 +70,7 @@ spec:
                 - "privatelink.servicebus.windows.net"
                 vnetGatewayConfig: {{- toYaml $hubConfig.vnetGatewayConfig | nindent 6 }}
                 lgwGatewayConfig: {{- toYaml $hubConfig.lgwGatewayConfig | nindent 6 }}
+                createBastion: {{ $.observed.composite.resource.spec.parameters.hubConfig.createBastion }}
             ---
             apiVersion: planum.mblb.net/v1alpha1
             kind: XHubAndSpoke

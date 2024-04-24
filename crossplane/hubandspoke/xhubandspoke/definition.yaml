@@ -103,6 +103,9 @@ spec:
                         - "privatelink.file.core.windows.net"
                         - "privatelink.vaultcore.azure.net"
                         - "privatelink.servicebus.windows.net"
+                      createBastion:
+                        type: boolean
+                        default: false
 
                   spokeConfigs:
                     description: spokeConfigs defines configuration of the all the spokes
