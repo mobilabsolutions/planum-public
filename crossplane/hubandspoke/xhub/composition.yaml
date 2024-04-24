@@ -218,8 +218,8 @@ spec:
         fromFieldPath: status.outputs['HubResourceGroupName']
         toFieldPath: spec.forProvider.resourceGroupName
       - type: ToCompositeFieldPath
-        fromFieldPath: status.atProvider.ipAddress
-        toFieldPath: status.outputs['bastionPublicIp']
+        fromFieldPath: metadata.name
+        toFieldPath: status.outputs['bastionPublicIpName']
       - type: CombineFromComposite
         combine:
           variables:
@@ -256,7 +256,7 @@ spec:
         fromFieldPath: spec.resourceConfig.location
         toFieldPath: spec.location
       - type: FromCompositeFieldPath
-        fromFieldPath: status.outputs['bastionPublicIp']
+        fromFieldPath: status.outputs['bastionPublicIpName']
         toFieldPath: spec.publicIp
       - type: FromCompositeFieldPath
         fromFieldPath: status.outputs['HubVirtualNetworkName']
