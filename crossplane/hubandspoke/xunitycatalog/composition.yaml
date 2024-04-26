@@ -164,6 +164,9 @@ spec:
                 catalogNameRef:
                   name: {{ $catalog.name }}
                 name: {{ $schema.name }}
+                {{ if ne $schema.storageRoot nil }}
+                storageRoot: {{ $schema.storageRoot }}
+                {{ end }}
                 owner: {{ $catalog.owner }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}

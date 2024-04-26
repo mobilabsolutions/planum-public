@@ -116,6 +116,8 @@ spec:
                             properties:
                               name:
                                 type: string
+                              storageRoot:
+                                type: string
                               grants:
                                 type: array
                                 items:
