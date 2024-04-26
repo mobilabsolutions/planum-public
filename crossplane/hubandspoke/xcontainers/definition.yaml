@@ -1,0 +1,39 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xcontainers.planum.mblb.net
+spec:
+  group: planum.mblb.net
+  names:
+    kind: XContainer
+    plural: xcontainers
+
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              xLakehouse:
+                type: string
+              providerConfigName:
+                type: string
+              containers:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    accessType:
+                      type: string
+                      enum:
+                      - blob
+                      - container
+                      - private
+                      default: private

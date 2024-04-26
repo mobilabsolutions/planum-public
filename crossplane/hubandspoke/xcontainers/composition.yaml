@@ -1,0 +1,55 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xcontainers.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  environment:
+    environmentConfigs:
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: type
+              type: Value
+              value: xlakehouse
+            - key: name
+              type: FromCompositeFieldPath
+              valueFromFieldPath: spec.xLakehouse
+              
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XContainer #has to be singular
+
+  mode: Pipeline
+  pipeline:
+  - step: render-dmlz-objects
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
+          {{ range $container := $.observed.composite.resource.spec.containers }}
+          ---
+          apiVersion: storage.azure.upbound.io/v1beta1
+          kind: Container
+          metadata:
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: {{ $container.name }}
+              gotemplating.fn.crossplane.io/ready: "True"
+              crossplane.io/external-name: {{ $container.name }}
+            name: {{ $container.name }}
+          spec:
+            forProvider:
+              containerAccessType: {{ $container.accessType }}
+              storageAccountName: {{ $outputs.adlsName }}
+            providerConfigRef: {{ $.observed.composite.resource.spec.providerConfigName }}
+          {{ end }}
+
+  - step: auto-ready
+    functionRef:
+      name: function-auto-ready
