@@ -16,7 +16,14 @@ spec:
             - key: name
               type: FromCompositeFieldPath
               valueFromFieldPath: spec.xLakehouse
-              
+
+      - type: Selector
+        selector:
+          matchLabels:
+            - key: name
+              type: Value
+              value: vm
+
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XContainer #has to be singular
@@ -33,7 +40,23 @@ spec:
       inline:
         template: |
           {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
+          {{ $objectId := (index $.context "apiextensions.crossplane.io/environment").objectId }}
           {{ range $container := $.observed.composite.resource.spec.containers }}
+          ---
+          apiVersion: authorization.azure.upbound.io/v1beta1
+          kind: RoleAssignment
+          metadata:
+            annotations:
+              gotemplating.fn.crossplane.io/composition-resource-name: assignment-blob-contributor
+              gotemplating.fn.crossplane.io/ready: "True"
+            name: assignment-blob-contributor
+          spec:
+            forProvider:
+              principalId: {{ $objectId }}
+              roleDefinitionName: "Storage Blob Data Contributor"
+              scope: {{ $outputs.adlsId }}
+            providerConfigRef:
+              name: {{ $.observed.composite.resource.spec.providerConfigName }}
           ---
           apiVersion: storage.azure.upbound.io/v1beta1
           kind: Container
