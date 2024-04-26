@@ -47,7 +47,8 @@ spec:
             forProvider:
               containerAccessType: {{ $container.accessType }}
               storageAccountName: {{ $outputs.adlsName }}
-            providerConfigRef: {{ $.observed.composite.resource.spec.providerConfigName }}
+            providerConfigRef:
+              name: {{ $.observed.composite.resource.spec.providerConfigName }}
           {{ end }}
 
   - step: auto-ready
