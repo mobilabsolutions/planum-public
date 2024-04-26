@@ -1,2 +1,4 @@
 **/.idea/*
 **/xr.yaml
+**/xr.yaml_
+**/*.xpkg
