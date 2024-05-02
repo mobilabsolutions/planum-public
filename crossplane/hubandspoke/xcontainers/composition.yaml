@@ -49,7 +49,7 @@ spec:
             annotations:
               gotemplating.fn.crossplane.io/composition-resource-name: assignment-blob-contributor
               gotemplating.fn.crossplane.io/ready: "True"
-            name: assignment-blob-contributor
+            name: assignment-blob-contributor-{{ $.observed.composite.resource.metadata.name }}
           spec:
             forProvider:
               principalId: {{ $objectId }}
@@ -65,7 +65,7 @@ spec:
               gotemplating.fn.crossplane.io/composition-resource-name: {{ $container.name }}
               gotemplating.fn.crossplane.io/ready: "True"
               crossplane.io/external-name: {{ $container.name }}
-            name: {{ $container.name }}
+            name: {{ $container.name }}-{{ $.observed.composite.resource.metadata.name }}
           spec:
             forProvider:
               containerAccessType: {{ $container.accessType }}
