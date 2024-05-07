@@ -29,7 +29,7 @@ jobs:
         run: |
           az acr login -n ${{ vars.CONTAINER_REGISTRY }}
           XP_VERSION=v1.15.0
-          curl -sfLo crossplane-cli "https://releases.crossplane.io/stable/${XP_VERSION}/bin/linux_amd64/crossplane"
+          curl -sfLo crossplane-cli "https://releases.crossplane.io/stable/${XP_VERSION}/bin/linux_amd64/crank"
           chmod +x crossplane-cli
           ./crossplane-cli xpkg build --package-root="crossplane/hubandspoke/" --package-file=planum-project.xpkg 
           ./crossplane-cli xpkg push -f planum-project.xpkg ${{ vars.CONTAINER_REGISTRY }}/planum-project:${{ inputs.version }}
