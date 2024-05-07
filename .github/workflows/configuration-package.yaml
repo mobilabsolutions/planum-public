@@ -28,7 +28,10 @@ jobs:
       - name: Pushing packages to planum registry
         run: |
           az acr login -n ${{ vars.CONTAINER_REGISTRY }}
+          uname -s
+          uname -m
           XP_VERSION=v1.15.0
-          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh" | XP_VERSION=$XP_VERSION sh
-          ./crossplane xpkg build --package-root="crossplane/hubandspoke/" --package-file=planum-project.xpkg 
-          ./crossplane xpkg push -f planum-project.xpkg ${{ vars.CONTAINER_REGISTRY }}/planum-project:${{ inputs.version }}
+          curl -sfLo crossplane-cli "https://releases.crossplane.io/stable/${XP_VERSION}/bin/linux_arm64/crossplane"
+          chmod +x crossplane-cli
+          ./crossplane-cli xpkg build --package-root="crossplane/hubandspoke/" --package-file=planum-project.xpkg 
+          ./crossplane-cli xpkg push -f planum-project.xpkg ${{ vars.CONTAINER_REGISTRY }}/planum-project:${{ inputs.version }}
