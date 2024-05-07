@@ -29,6 +29,6 @@ jobs:
         run: |
           az acr login -n ${{ vars.CONTAINER_REGISTRY }}
           XP_VERSION=v1.15.0
-          RUN curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh" | XP_VERSION=$XP_VERSION sh
+          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh" | XP_VERSION=$XP_VERSION sh
           ./crossplane xpkg build --package-root="crossplane/hubandspoke/" --package-file=planum-project.xpkg 
           ./crossplane xpkg push -f planum-project.xpkg ${{ vars.CONTAINER_REGISTRY }}/planum-project:${{ inputs.version }}
