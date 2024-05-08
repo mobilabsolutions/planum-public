@@ -695,7 +695,7 @@ spec:
             spec:
               forProvider:
                 principalId: {{ $.observed.composite.resource.status.outputs.adfIdentityPrincipalId }}
-                roleDefinitionName: "Contributor"
+                roleDefinitionName: "Storage Blob Data Contributor"
                 scope: {{ $.observed.composite.resource.status.outputs.adlsId }}
               providerConfigRef:
                 name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
