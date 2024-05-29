@@ -28,8 +28,6 @@ spec:
     version: "v0.1.7"
   - provider: mobilab.azurecr.io/provider-github
     version: "v0.1.10"
-  - provider: xpkg.upbound.io/crossplane-contrib/provider-kubernetes
-    version: "v0.13.0"
   - function: xpkg.upbound.io/crossplane-contrib/function-go-templating 
     version: ">=v0.4.1"
   - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
