@@ -26,8 +26,6 @@ spec:
     version: ">=v0.2.1"
   - provider: mobilab.azurecr.io/provider-azuread
     version: "v0.1.7"
-  - provider: mobilab.azurecr.io/provider-github
-    version: "v0.1.10"
   - function: xpkg.upbound.io/crossplane-contrib/function-go-templating 
     version: ">=v0.4.1"
   - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
