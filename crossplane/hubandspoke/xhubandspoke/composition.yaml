@@ -206,6 +206,10 @@ spec:
                     name: {{ $spoke.name }}-to-vpn
                     nextHopType: VirtualAppliance
                     nextHopInIpAddress: {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
+                  - addressPrefix: "10.0.0.0/16"
+                    name: spokes
+                    nextHopType: VirtualAppliance
+                    nextHopInIpAddress: {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
             ---
             {{ if ne $.observed.resources nil }}
             apiVersion: network.azure.upbound.io/v1beta1
