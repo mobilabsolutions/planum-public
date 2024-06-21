@@ -19,70 +19,44 @@ spec:
           spec:
             type: object
             properties:
-              resourceConfig:
-                description: ResourceConfig defines general properties
+              providerConfigName:
+                type: string
+              location:
+                type: string
+              environment:
+                type: string
+              xNetworkName:
+                type: string
+              xDnsName:
+                type: string
+              keyvault:
                 type: object
                 properties:
-                  providerConfigName:
-                    type: string
-                  location:
-                    type: string
-                  environment:
-                    type: string
-                  tenantId:
-                    type: string 
-                required:
-                  - providerConfigName
-                  - location
-              parameters:
-                description: DMLZ Input parameters
-                type: object
-                properties:
-                  xNetworkName:
-                    type: string
-                  xDnsName:
-                    type: string
-                  subnets:
+                  accessPolicies:
                     type: array
-                    default:
-                    - name: "snet-cp-spoke-eus-ir"
-                      addressPostfix: "64/29"
-                    - name: "snet-cp-spoke-eus-pe"
-                      addressPostfix: "0/26"
-                    - name: "snet-cp-spoke-eus-dbw-public"
-                      addressPostfix: "128/26"
-                    - name: "snet-cp-spoke-eus-dbw-private"
-                      addressPostfix: "192/26"
                     items:
                       type: object
                       properties:
-                        name:
+                        objectId:
                           type: string
-                        addressPostfix:
-                          type: string
+                        certificatePermissions:
+                          items:
+                            type: string
+                          type: array
+                        keyPermissions:
+                          items:
+                            type: string
+                          type: array
+                        secretPermissions:
+                          items:
+                            type: string
+                          type: array
 
-                  keyvault:
-                    type: object
-                    properties:
-                      accessPolicies:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            objectId:
-                              type: string
-                            certificatePermissions:
-                              items:
-                                type: string
-                              type: array
-                            keyPermissions:
-                              items:
-                                type: string
-                              type: array
-                            secretPermissions:
-                              items:
-                                type: string
-                              type: array
+            required:
+              - providerConfigName
+              - location
+              - xNetworkName
+              - xDnsName
 
           status:
             type: object

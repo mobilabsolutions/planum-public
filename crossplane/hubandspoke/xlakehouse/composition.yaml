@@ -15,7 +15,7 @@ spec:
               value: xnetwork
             - key: name
               type: FromCompositeFieldPath
-              valueFromFieldPath: spec.parameters.xNetworkName
+              valueFromFieldPath: spec.xNetworkName
 
       - type: Selector
         selector:
@@ -25,7 +25,7 @@ spec:
               value: xdns
             - key: name
               type: FromCompositeFieldPath
-              valueFromFieldPath: spec.parameters.xDnsName
+              valueFromFieldPath: spec.xDnsName
 
       - type: Selector
         selector:
@@ -66,8 +66,8 @@ spec:
               combine:
                 variables:
                   - fromFieldPath: metadata.name
-                  - fromFieldPath: spec.resourceConfig.environment
-                  - fromFieldPath: spec.resourceConfig.location
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
                 strategy: string
                 string:
                   fmt: "ec-spoke-%s-%s-%s"
@@ -79,45 +79,51 @@ spec:
               fromFieldPath: status.outputs
               toFieldPath: data.outputs
 
-    - step: render-lakehouse-objects
-      functionRef:
-        name: function-go-templating
-      input:
-        apiVersion: gotemplating.fn.crossplane.io/v1beta1
-        kind: GoTemplate
-        source: Inline
-        inline:
-          template: |
-            {{- $locationMappings := dict 
-              "westeurope" "weu"
-              "northeurope" "neu"
-              "eastus" "eus"
-              "germanywestcentral" "gwc"
-              "switzerlandnorth" "sln"
-            }}
-            {{ $objectId := (index $.context "apiextensions.crossplane.io/environment").objectId }}
-            {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
-            {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
-            {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
-            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
-            ---
+        - name: snet-lakehouse-pe
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
             kind: Subnet
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: {{ $subnets.name }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: {{ $subnets.name }}
+              name: snet-lakehouse-pe
               labels:
-                name: {{ $subnets.name | lower }}
-              name: {{ $subnets.name | lower }}
+                planum.mblb.net/component: snet-lakehouse-pe
             spec:
               forProvider:
-                addressPrefixes: 
-                - {{ printf "%s.%s" $outputs.vnetAddressPrefix $subnets.addressPostfix }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
-                virtualNetworkName: {{ $outputs.VirtualNetworkName }}
-                {{ if contains "dbw" $subnets.name }}
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.0/26"
+
+        - name: snet-lakehouse-dbw-public
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: Subnet
+            metadata:
+              name: snet-lakehouse-dbw-public
+              labels:
+                planum.mblb.net/component: snet-lakehouse-dbw-public
+            spec:
+              forProvider:
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
                 delegation:
                 - name: "subnet-delegation"
                   serviceDelegation:
@@ -126,221 +132,113 @@ spec:
                     - "Microsoft.Network/virtualNetworks/subnets/join/action"
                     - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
                     - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
-                {{ end }}
-              providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.128/26"
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.id
+            toFieldPath: status.outputs.dbwPublicSubnetId
+
+        - name: snet-lakehouse-dbw-private
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
-            kind: SecurityGroup
+            kind: Subnet
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: nsg-dbw-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: nsg-dbw-{{ $prefix }}
-              name: nsg-dbw-{{ $prefix }}
+              name: snet-lakehouse-dbw-private
+              labels:
+                planum.mblb.net/component: snet-lakehouse-dbw-private
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
-                securityRule:
-                - access: "Allow"
-                  description: "Required for worker nodes communication within a cluster."
-                  destinationAddressPrefix: "VirtualNetwork"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "*"
-                  destinationPortRanges: []
-                  direction: "Inbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-inbound"
-                  priority: 100
-                  protocol: "*"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for workers communication with Databricks Webapp."
-                  destinationAddressPrefix: "AzureDatabricks"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "443"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp"
-                  priority: 100
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for workers communication with Azure SQL services."
-                  destinationAddressPrefix: "Sql"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "3306"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-sql"
-                  priority: 101
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for workers communication with Azure Storage services."
-                  destinationAddressPrefix: "Storage"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "443"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-storage"
-                  priority: 102
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for worker nodes communication within a cluster."
-                  destinationAddressPrefix: "VirtualNetwork"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "*"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-outbound"
-                  priority: 103
-                  protocol: "*"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for worker communication with Azure Eventhub services."
-                  destinationAddressPrefix: "EventHub"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "9093"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-eventhub"
-                  priority: 104
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            {{ if ne $.observed.resources nil }}
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
+                delegation:
+                - name: "subnet-delegation"
+                  serviceDelegation:
+                  - name: "Microsoft.Databricks/workspaces"
+                    actions: 
+                    - "Microsoft.Network/virtualNetworks/subnets/join/action"
+                    - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
+                    - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.192/26"
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.id
+            toFieldPath: status.outputs.dbwPrivateSubnetId
+              
+        - name: snet-lakehouse-ir
+          readinessChecks:
+          - type: None
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
-            kind: SubnetRouteTableAssociation
+            kind: Subnet
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: rt-association-{{ $subnets.name }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: rt-association-{{ $subnets.name }}
+              name: snet-lakehouse-ir
+              labels:
+                planum.mblb.net/component: snet-lakehouse-ir
             spec:
               forProvider:
-                routeTableId: {{ $outputs.routeTableId }}
-                subnetIdSelector:
-                  matchControllerRef: true
-                  matchLabels:
-                    name: {{ $subnets.name }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            {{ if contains "dbw-public" $subnets.name }}
-            apiVersion: network.azure.upbound.io/v1beta1
-            kind: SubnetNetworkSecurityGroupAssociation
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name:  nsg-association-public-{{ $subnets.name }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: nsg-association-public-{{ $subnets.name }}
-            spec:
-              forProvider:
-                networkSecurityGroupIdSelector:
-                  matchControllerRef: true
-                subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            {{ end }}
-            ---
-            {{ if contains "dbw-private" $subnets.name }}
-            apiVersion: network.azure.upbound.io/v1beta1
-            kind: SubnetNetworkSecurityGroupAssociation
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-private-{{ $subnets.name }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: nsg-association-private-{{ $subnets.name }}
-            spec:
-              forProvider:
-                networkSecurityGroupIdSelector:
-                  matchControllerRef: true
-                subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            {{ end }}
-            {{ end }}
-            ---
-            apiVersion: planum.mblb.net/v1alpha1
-            kind: XLakehouse
-            status:
-            {{ if eq $.observed.resources nil }}
-              outputs: {}
-            {{ else }}
-            status:
-              outputs:
-                {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                adlsId: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
-                adlsName: {{ printf "adls%s" $prefix | replace "-" "" }}
-                storageAccountName: {{ printf "adls%s" $prefix | replace "-" "" }}
-                databricksId: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.id }}
-                dbwUrl: {{ (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceUrl }}
-                dbwId: {{ default "databricks" (index $.observed.resources (printf "%s-%s" "dbw" $prefix)).resource.status.atProvider.workspaceId | toYaml }}
-                dfsEndpoint: {{ (index $.observed.resources (printf "adls%s" $prefix | replace "-" "")).resource.status.atProvider.primaryDfsEndpoint }}
-                keyvaultId: {{ (index $.observed.resources (printf "kv%s" $prefix | replace "-" "")).resource.status.atProvider.id }}
-                adfId: {{ (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.id }}
-                {{ $adfIdentities := (index $.observed.resources (printf "adf-%s" $prefix)).resource.status.atProvider.identity }}
-                adfIdentityPrincipalId: {{ index $adfIdentities 0 "principalId" }}
-                {{ $accessConnectorIdentities := (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.identity }}
-                accessConnectorIdentityPrincipalId: {{ index $accessConnectorIdentities 0 "principalId" }}
-                accessConnectorId: {{ (index $.observed.resources (printf "dbac-%s" $prefix)).resource.status.atProvider.id }}
-                {{ if contains "dbw-public" $subnets.name }}
-                publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
-                dbwPublicSubnetName: {{ $subnets.name }}
-                {{ end }}
-                {{ if contains "dbw-private" $subnets.name }}
-                privateNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
-                dbwPrivateSubnetName: {{ $subnets.name }}
-                {{ end }}
-                virtualMachineId: {{ (index $.observed.resources (printf "vm-%s" $prefix)).resource.status.atProvider.id }}
-            {{ end }}
-            {{- end }}
-            ---
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.64/29"
+
+        - name: storage-lakehouse
+          base:
             apiVersion: storage.azure.upbound.io/v1beta1
             kind: Account
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: {{ printf "adls%s" $prefix | replace "-" "" }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: {{ printf "adls%s" $prefix | replace "-" "" }}
+              name: storage-lakehouse
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 accountKind: StorageV2
                 accountReplicationType: LRS
                 publicNetworkAccessEnabled: false
@@ -354,93 +252,280 @@ spec:
                 accountTier: Standard
                 isHnsEnabled: true
               providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+                name: ""
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "adls%s%s%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: ToCompositeFieldPath
+              fromFieldPath: metadata.name
+              toFieldPath: status.outputs.adlsName
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.adlsId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.primaryDfsEndpoint
+              toFieldPath: status.outputs.dfsEndpoint
+
+        - name: datafactory-lakehouse
+          base:
             apiVersion: datafactory.azure.upbound.io/v1beta1
             kind: Factory
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: adf-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: adf-{{ $prefix }}
+              name: datafactory-lakehouse
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 publicNetworkEnabled: false
                 managedVirtualNetworkEnabled: true
                 identity:
                 - type: "SystemAssigned"
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "adf-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.adfId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.identity[0].principalId
+              toFieldPath: status.outputs.adfIdentityPrincipalId
+
+        - name: self-hosted-ir
+          base:
+            apiVersion: datafactory.azure.upbound.io/v1beta1
+            kind: IntegrationRuntimeSelfHosted
+            metadata:
+              name: self-hosted-ir
+            spec:
+              forProvider:
+                dataFactoryIdSelector:
+                  matchControllerRef: true
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "self-hosted-ir-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: dbw-lakehouse-nsg
+          base:
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XDbwNsg
+            metadata:
+              name: dbw-lakehouse-nsg
+            spec:
+              resourceGroupName: ""
+              dbwPublicSubnetId: ""
+              dbwPrivateSubnetId: ""
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.resourceGroupName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.location
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.environment
+              toFieldPath: spec.environment
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.dbwPublicSubnetId
+              toFieldPath: spec.dbwPublicSubnetId
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.dbwPrivateSubnetId
+              toFieldPath: spec.dbwPrivateSubnetId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.outputs.privateNsgAssociationId
+              toFieldPath: status.outputs.privateNsgAssociationId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.outputs.publicNsgAssociationId
+              toFieldPath: status.outputs.publicNsgAssociationId
+
+        - name: dbw-lakehouse
+          base:
             apiVersion: databricks.azure.upbound.io/v1beta1
             kind: Workspace
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: dbw-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: dbw-{{ $prefix }}
-              name: dbw-{{ $prefix }}
+              labels:
+                planum.mblb.net/component: dbw-lakehouse
+              name: dbw-lakehouse
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 sku: premium
                 publicNetworkAccessEnabled: false
                 networkSecurityGroupRulesRequired: "NoAzureDatabricksRules"
                 customParameters:
                   - noPublicIp: true
-                    publicSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPublicSubnetName }}
-                    publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.publicNsgAssociationId }}
-                    privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
-                    privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.privateNsgAssociationId }}
-                    virtualNetworkId: {{ $outputs.VirtualNetworkId }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+                    publicSubnetNameSelector: 
+                      matchLabels:
+                        planum.mblb.net/component: snet-lakehouse-dbw-public
+                    publicSubnetNetworkSecurityGroupAssociationId: ""
+                    privateSubnetNameSelector: 
+                      matchLabels:
+                        planum.mblb.net/component: snet-lakehouse-dbw-private
+                    privateSubnetNetworkSecurityGroupAssociationId: ""
+                    virtualNetworkId:
+                    vnetAddressPrefix:
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "dbw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.VirtualNetworkId
+              toFieldPath: spec.forProvider.customParameters[0].virtualNetworkId
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.vnetAddressPrefix
+              toFieldPath: spec.forProvider.customParameters[0].vnetAddressPrefix
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.publicNsgAssociationId
+              toFieldPath: spec.forProvider.customParameters[0].publicSubnetNetworkSecurityGroupAssociationId
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.privateNsgAssociationId
+              toFieldPath: spec.forProvider.customParameters[0].privateSubnetNetworkSecurityGroupAssociationId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.databricksId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.workspaceUrl
+              toFieldPath: status.outputs.dbwUrl
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: dbac-lakehouse
+          base:
             apiVersion: databricks.azure.upbound.io/v1beta1
             kind: AccessConnector
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: dbac-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: dbac-{{ $prefix }}
-              name: dbac-{{ $prefix }}
+              name: dbac-lakehouse
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 identity:
                 - type: SystemAssigned
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.identity[0].principalId
+              toFieldPath: status.outputs.accessConnectorIdentityPrincipalId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.accessConnectorId
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "dbac-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: vault-lakehouse
+          base:
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: Vault
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: {{ printf "kv%s" $prefix | replace "-" "" }} 
-                gotemplating.fn.crossplane.io/ready: "True"
-              labels:
-                name: {{ printf "kv%s" $prefix | replace "-" "" }} 
-              name: {{ printf "kv%s" $prefix | replace "-" "" }} 
+              name: vault-lakehouse
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 skuName: premium
                 publicNetworkAccessEnabled: false
-                tenantId: {{ $.observed.composite.resource.spec.resourceConfig.tenantId }}
-              providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: tenantId
+              toFieldPath: spec.forProvider.tenantId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.keyvaultId
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "kv-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: accesspolicy-keyvault-lakehouse
+          base:
             apiVersion: keyvault.azure.upbound.io/v1beta1
             kind: AccessPolicy
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: default-kv-policy
-                gotemplating.fn.crossplane.io/ready: "True"
               name: default-kv-policy
             spec:
               forProvider:
@@ -448,74 +533,85 @@ spec:
                 keyPermissions: []
                 keyVaultIdSelector:
                   matchControllerRef: true
-                objectId: {{ $objectId }}
-                tenantId: {{ $.observed.composite.resource.spec.resourceConfig.tenantId }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            {{- range $policy := $.observed.composite.resource.spec.parameters.keyvault.accessPolicies }}
-            ---
-            apiVersion: keyvault.azure.upbound.io/v1beta1
-            kind: AccessPolicy
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: policy-{{ $policy.objectId }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: policy-{{ $policy.objectId }}
-            spec:
-              forProvider:
-                secretPermissions: {{ $policy.secretPermissions | toYaml | nindent 6 }}
-                keyPermissions: {{ $policy.keyPermissions | toYaml | nindent 6 }}
-                keyVaultIdSelector:
-                  matchControllerRef: true
-                objectId: {{ $policy.objectId }}
-                tenantId: {{ $.observed.composite.resource.spec.resourceConfig.tenantId }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            {{- end }}
-            ---
+                objectId: 
+                tenantId: 
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: tenantId
+              toFieldPath: spec.forProvider.tenantId
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: objectId
+              toFieldPath: spec.forProvider.objectId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+
+        - name: adf-to-kv
+          base:
             apiVersion: datafactory.azure.upbound.io/v1beta1
             kind: LinkedServiceKeyVault
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: adf-to-kv-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: adf-to-kv-{{ $prefix }}
+              name: adf-to-kv
             spec:
               forProvider:
                 dataFactoryIdSelector:
                   matchControllerRef: true
                 keyVaultIdSelector:
                   matchControllerRef: true
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "adf-to-kv-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: adf-to-adls2
+          base:
             apiVersion: datafactory.azure.upbound.io/v1beta1
             kind: LinkedServiceDataLakeStorageGen2
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: adf-to-adls2-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: adf-to-adls2-{{ $prefix }}
+              name: adf-to-adls2
             spec:
               forProvider:
                 dataFactoryIdSelector:
                   matchControllerRef: true
-                url: {{ $.observed.composite.resource.status.outputs.dfsEndpoint }}
+                url: ""
                 useManagedIdentity: true
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.dfsEndpoint
+              toFieldPath: spec.forProvider.url
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "adf-to-adls2-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: adf-to-dbw
+          base:
             apiVersion: datafactory.azure.upbound.io/v1beta1
             kind: LinkedServiceAzureDatabricks
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: adf-to-dbw-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: adf-to-dbw-{{ $prefix }}
+              name: adf-to-dbw
             spec:
               forProvider:
-                adbDomain: {{ printf "https://%s" $.observed.composite.resource.status.outputs.dbwUrl }}
+                adbDomain:
                 dataFactoryIdSelector:
                   matchControllerRef: true
                 msiWorkSpaceResourceIdSelector:
@@ -523,192 +619,492 @@ spec:
                 newClusterConfig:
                 - clusterVersion: "10.4.x-scala2.12"
                   nodeType: "Standard_D4a_v4"
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            apiVersion: datafactory.azure.upbound.io/v1beta1
-            kind: IntegrationRuntimeSelfHosted
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: self-hosted-ir-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: self-hosted-ir-{{ $prefix }}
-            spec:
-              forProvider:
-                dataFactoryIdSelector:
-                  matchControllerRef: true
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "adf-to-dbw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: status.outputs.dbwUrl
+                strategy: string
+                string:
+                  fmt: "https://%s"
+              toFieldPath: spec.forProvider.adbDomain
+
+        - name: assignment-dbac-to-adls
+          base:
             apiVersion: authorization.azure.upbound.io/v1beta1
             kind: RoleAssignment
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: assignment-dbac-to-adls-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: assignment-dbac-to-adls-{{ $prefix }}
+              name: assignment-dbac-to-adls
             spec:
               forProvider:
-                principalId: {{ $.observed.composite.resource.status.outputs.accessConnectorIdentityPrincipalId }}
+                principalId:
                 roleDefinitionName: "Storage Blob Data Contributor"
-                scope: {{ $.observed.composite.resource.status.outputs.adlsId }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+                scope:
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.accessConnectorIdentityPrincipalId
+              toFieldPath: spec.forProvider.principalId
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adlsId
+              toFieldPath: spec.forProvider.scope
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "assignment-dbac-to-adls-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: assignment-adf-to-adls
+          base:
             apiVersion: authorization.azure.upbound.io/v1beta1
             kind: RoleAssignment
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: assignment-adf-to-adls-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: assignment-adf-to-adls-{{ $prefix }}
+              name: assignment-adf-to-adls
             spec:
               forProvider:
-                principalId: {{ $.observed.composite.resource.status.outputs.adfIdentityPrincipalId }}
+                principalId: 
                 roleDefinitionName: "Storage Blob Data Contributor"
-                scope: {{ $.observed.composite.resource.status.outputs.adlsId }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+                scope: 
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adfIdentityPrincipalId
+              toFieldPath: spec.forProvider.principalId
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adlsId
+              toFieldPath: spec.forProvider.scope
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "assignment-adf-to-adls-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: assignment-adf-to-dbw
+          base:
             apiVersion: authorization.azure.upbound.io/v1beta1
             kind: RoleAssignment
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: assignment-adf-to-dbw-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-              name: assignment-adf-to-dbw-{{ $prefix }}
+              name: assignment-adf-to-dbw
             spec:
               forProvider:
-                principalId: {{ $.observed.composite.resource.status.outputs.adfIdentityPrincipalId }}
+                principalId: 
                 roleDefinitionName: "Contributor"
-                scope: {{ $.observed.composite.resource.status.outputs.databricksId }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
-            {{ $dns := $.observed.composite.resource.spec.parameters.dns }}
-            {{ if contains "-pe" $subnets.name }}
-            ---
+                scope: 
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adfIdentityPrincipalId
+              toFieldPath: spec.forProvider.principalId
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.databricksId
+              toFieldPath: spec.forProvider.scope
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "assignment-adf-to-dbw-%s-%s-%s"
+              toFieldPath: metadata.name
+
+        - name: pe-kv-lakehouse
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PrivateEndpoint
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: pe-kv-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: pe-kv-{{ $prefix }}
-              name: pe-kv-{{ $prefix }}
+              name: pe-kv-lakehouse
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 privateDnsZoneGroup:
-                  - name: pdzg-kv
+                  - name: pdzg-kv-lakehouse
                     privateDnsZoneIds:
-                    - {{ index $outputs "privatelink.vaultcore.azure.net" }}
+                    - ""
                 privateServiceConnection:
                   - isManualConnection: false
-                    name: psc-kv
-                    privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.keyvaultId }}
+                    name: psc-kv-lakehouse
+                    privateConnectionResourceId: ""
                     subresourceNames: ["vault"]
                 subnetIdSelector:
                   matchLabels:
-                    name: {{ $subnets.name }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+                    planum.mblb.net/component: snet-lakehouse-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-kv-lakehouse-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.vaultcore.azure.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.keyvaultId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: pe-dbw-lakehouse
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PrivateEndpoint
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: pe-adf-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: pe-adf-{{ $prefix }}
-              name: pe-adf-{{ $prefix }}
+              labels:
+                planum.mblb.net/component: pe-dbw-lakehouse
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 privateDnsZoneGroup:
-                  - name: pdzg-adf
+                  - name: pdzg-dbw-lakehouse
                     privateDnsZoneIds:
-                    - {{ index $outputs "privatelink.datafactory.azure.net" }}
+                    - ""
                 privateServiceConnection:
                   - isManualConnection: false
-                    name: psc-adf
-                    privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.adfId }}
-                    subresourceNames: ["dataFactory"]
-                subnetIdSelector:
-                  matchLabels:
-                    name: {{ $subnets.name }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            apiVersion: network.azure.upbound.io/v1beta1
-            kind: PrivateEndpoint
-            metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: pe-dbw-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: pe-dbw-{{ $prefix }}
-              name: pe-dbw-{{ $prefix }}
-            spec:
-              forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
-                privateDnsZoneGroup:
-                  - name: pdzg-dbw-{{ $prefix }}
-                    privateDnsZoneIds:
-                    - {{ index $outputs "privatelink.azuredatabricks.net" }}
-                privateServiceConnection:
-                  - isManualConnection: false
-                    name: psc-dbw-{{ $prefix }}
-                    privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.databricksId }}
+                    name: psc-dbw-lakehouse
+                    privateConnectionResourceId: ""
                     subresourceNames: ["databricks_ui_api"]
                 subnetIdSelector:
                   matchLabels:
-                    name: {{ $subnets.name }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-              {{- $pe := list
-                (dict "privateDnsZoneId" "privatelink.blob.core.windows.net" "subresourceNames" "blob")
-                (dict "privateDnsZoneId" "privatelink.dfs.core.windows.net" "subresourceNames" "dfs")
-                (dict "privateDnsZoneId" "privatelink.file.core.windows.net" "subresourceNames" "file")
-              }}
+                    planum.mblb.net/component: snet-lakehouse-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-dbw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.azuredatabricks.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.databricksId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
 
-              {{- range $pe }}
-            ---
-              apiVersion: network.azure.upbound.io/v1beta1
-              kind: PrivateEndpoint
-              metadata:
-                annotations:
-                  gotemplating.fn.crossplane.io/composition-resource-name: pe-adls-{{ .subresourceNames }}-{{ $prefix }}
-                  gotemplating.fn.crossplane.io/ready: "True"
-                  crossplane.io/external-name: pe-adls-{{ .subresourceNames }}-{{ $prefix }}
-                name: pe-adls-{{ .subresourceNames }}-{{ $prefix }}
-              spec:
-                forProvider:
-                  location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                  resourceGroupName: {{ $outputs.ResourceGroupName }}
-                  privateDnsZoneGroup:
-                    - name: pdzg-adls-{{ .subresourceNames }}
-                      privateDnsZoneIds:
-                      - {{ index $outputs .privateDnsZoneId }}
-                  privateServiceConnection:
-                    - isManualConnection: false
-                      name: psc-adls-{{ .subresourceNames }}
-                      privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.adlsId }}
-                      subresourceNames:
-                      - {{ .subresourceNames }}
-                  subnetIdSelector:
-                    matchLabels:
-                      name: {{ $subnets.name }}
-                providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              {{- end }}
-            {{ end }}
-            {{- end }}
+        - name: pe-adf-lakehouse
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateEndpoint
+            metadata:
+              labels:
+                planum.mblb.net/component: pe-adf-lakehouse
+            spec:
+              forProvider:
+                privateDnsZoneGroup:
+                  - name: pdzg-adf-lakehouse
+                    privateDnsZoneIds:
+                    - ""
+                privateServiceConnection:
+                  - isManualConnection: false
+                    name: psc-adf-lakehouse
+                    privateConnectionResourceId: ""
+                    subresourceNames: ["dataFactory"]
+                subnetIdSelector:
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-adf-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.datafactory.azure.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adfId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
 
-    - step: auto-ready
-      functionRef:
-        name: function-auto-ready
+        - name: pe-adls-blob-lakehouse
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateEndpoint
+            metadata:
+              labels:
+                planum.mblb.net/component: pe-adls-blob-lakehouse
+            spec:
+              forProvider:
+                privateDnsZoneGroup:
+                  - name: pdzg-adls-blob-lakehouse
+                    privateDnsZoneIds:
+                    - ""
+                privateServiceConnection:
+                  - isManualConnection: false
+                    name: psc-adls-blob-lakehouse
+                    privateConnectionResourceId: ""
+                    subresourceNames: ["blob"]
+                subnetIdSelector:
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-adls-blob-lakehouse-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.blob.core.windows.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adlsId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: pe-adls-dfs-lakehouse
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateEndpoint
+            metadata:
+              labels:
+                planum.mblb.net/component: pe-adls-dfs-lakehouse
+            spec:
+              forProvider:
+                privateDnsZoneGroup:
+                  - name: pdzg-adls-dfs-lakehouse
+                    privateDnsZoneIds:
+                    - ""
+                privateServiceConnection:
+                  - isManualConnection: false
+                    name: psc-adls-dfs-lakehouse
+                    privateConnectionResourceId: ""
+                    subresourceNames: ["dfs"]
+                subnetIdSelector:
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-adls-dfs-lakehouse-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.dfs.core.windows.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adlsId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: pe-adls-file-lakehouse
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: PrivateEndpoint
+            metadata:
+              labels:
+                planum.mblb.net/component: pe-dls-file-lakehouse
+            spec:
+              forProvider:
+                privateDnsZoneGroup:
+                  - name: pdzg-adls-file-lakehouse
+                    privateDnsZoneIds:
+                    - ""
+                privateServiceConnection:
+                  - isManualConnection: false
+                    name: psc-adls-file-lakehouse
+                    privateConnectionResourceId: ""
+                    subresourceNames: ["file"]
+                subnetIdSelector:
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-adls-file-lakehouse-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.dfs.core.windows.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.adlsId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: rt-association-snet-lakehouse-pe
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-lakehouse-pe
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-pe
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+
+        - name: rt-association-snet-lakehouse-dbw-public
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-lakehouse-dbw-public
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-dbw-public
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+
+        - name: rt-association-snet-lakehouse-dbw-private
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-lakehouse-dbw-private
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-dbw-private
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+
+        - name: rt-association-snet-lakehouse-ir
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-lakehouse-ir
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-lakehouse-ir
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
