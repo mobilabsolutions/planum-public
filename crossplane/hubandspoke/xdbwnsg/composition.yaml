@@ -1,0 +1,219 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xdbwnsg.planum.mblb.net #has to be plural
+  labels:
+    planum.mblb.net/managed-by: "true"
+spec:
+  compositeTypeRef:
+    apiVersion: planum.mblb.net/v1alpha1
+    kind: XDbwNsg #has to be singular
+
+  mode: Pipeline
+  pipeline:
+    - step: render-objects
+      functionRef:
+        name: upbound-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+
+        resources:
+        - name: dbw-nsg
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SecurityGroup
+            metadata:
+              labels:
+                planum.mblb.net/component: dbw-nsg
+              name: dbw-nsg
+            spec:
+              forProvider:
+                resourceGroupName:
+                securityRule:
+                - access: "Allow"
+                  description: "Required for worker nodes communication within a cluster."
+                  destinationAddressPrefix: "VirtualNetwork"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "*"
+                  destinationPortRanges: []
+                  direction: "Inbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-inbound"
+                  priority: 100
+                  protocol: "*"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for workers communication with Databricks Webapp."
+                  destinationAddressPrefix: "AzureDatabricks"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "443"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp"
+                  priority: 100
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for workers communication with Azure SQL services."
+                  destinationAddressPrefix: "Sql"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "3306"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-sql"
+                  priority: 101
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for workers communication with Azure Storage services."
+                  destinationAddressPrefix: "Storage"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "443"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-storage"
+                  priority: 102
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for worker nodes communication within a cluster."
+                  destinationAddressPrefix: "VirtualNetwork"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "*"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-outbound"
+                  priority: 103
+                  protocol: "*"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+                - access: "Allow"
+                  description: "Required for worker communication with Azure Eventhub services."
+                  destinationAddressPrefix: "EventHub"
+                  destinationAddressPrefixes: []
+                  destinationApplicationSecurityGroupIds: []
+                  destinationPortRange: "9093"
+                  destinationPortRanges: []
+                  direction: "Outbound"
+                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-eventhub"
+                  priority: 104
+                  protocol: "Tcp"
+                  sourceAddressPrefix: "VirtualNetwork"
+                  sourceAddressPrefixes: []
+                  sourceApplicationSecurityGroupIds: []
+                  sourcePortRange: "*"
+                  sourcePortRanges: []
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "nsg-dbw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.resourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: nsg-subnet-association-dbw-public
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetNetworkSecurityGroupAssociation
+            metadata:
+              labels:
+                planum.mblb.net/component: nsg-association-dbw-public
+            spec:
+              forProvider:
+                networkSecurityGroupIdSelector:
+                  matchLabels:
+                    planum.mblb.net/component: dbw-nsg
+                subnetId: ""
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "nsg-association-dbw-public-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.dbwPublicSubnetId
+              toFieldPath: spec.forProvider.subnetId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.publicNsgAssociationId
+
+        - name: nsg-subnet-association-dbw-private
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetNetworkSecurityGroupAssociation
+            metadata:
+              labels:
+                crossplane.mblb.net/component: nsg-association-dbw-private
+            spec:
+              forProvider:
+                networkSecurityGroupIdSelector:
+                  matchLabels:
+                    planum.mblb.net/component: dbw-nsg
+                subnetIdSelector:
+                  matchLabels:
+                    planum.mblb.net/component: snet-dbw-private
+          patches:
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "nsg-association-dbw-private-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.dbwPrivateSubnetId
+              toFieldPath: spec.forProvider.subnetId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.privateNsgAssociationId

@@ -1,12 +1,12 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xdmlzs.planum.mblb.net
+  name: xdbwnsg.planum.mblb.net
 spec:
   group: planum.mblb.net
   names:
-    kind: XDmlz
-    plural: xdmlzs
+    kind: XDbwNsg
+    plural: xdbwnsg
 
   versions:
   - name: v1alpha1
@@ -25,15 +25,15 @@ spec:
                 type: string
               environment:
                 type: string
-              xNetworkName:
+              resourceGroupName:
                 type: string
-              xDnsName:
+              dbwPublicSubnetId:
+                type: string
+              dbwPrivateSubnetId:
                 type: string
             required:
               - providerConfigName
               - location
-              - xNetworkName
-              - xDnsName
               - environment
 
           status:

@@ -15,7 +15,8 @@ spec:
               value: xnetwork
             - key: name
               type: FromCompositeFieldPath
-              valueFromFieldPath: spec.parameters.xNetworkName
+              valueFromFieldPath: spec.xNetworkName
+
       - type: Selector
         selector:
           matchLabels:
@@ -24,8 +25,8 @@ spec:
               value: xdns
             - key: name
               type: FromCompositeFieldPath
-              valueFromFieldPath: spec.parameters.xDnsName
-              
+              valueFromFieldPath: spec.xDnsName
+
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XDmlz #has to be singular
@@ -34,42 +35,57 @@ spec:
   pipeline:
     - step: render-dmlz-objects
       functionRef:
-        name: function-go-templating
+        name: upbound-function-patch-and-transform
       input:
-        apiVersion: gotemplating.fn.crossplane.io/v1beta1
-        kind: GoTemplate
-        source: Inline
-        inline:
-          template: |
-            {{- $locationMappings := dict 
-              "westeurope" "weu"
-              "northeurope" "neu"
-              "eastus" "eus"
-              "germanywestcentral" "gwc"
-              "switzerlandnorth" "sln"
-            }}
-            {{ $outputs := (index $.context "apiextensions.crossplane.io/environment").outputs }}
-            {{ $locationAbbreviation := index $locationMappings $.observed.composite.resource.spec.resourceConfig.location }}
-            {{ $prefix := printf "%s-%s-%s" $.observed.composite.resource.metadata.name $.observed.composite.resource.spec.resourceConfig.environment $locationAbbreviation  }}
-            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
-            ---
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+
+        resources:
+        - name: snet-dmlz-pe
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
             kind: Subnet
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: {{ $subnets.name }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: {{ $subnets.name }}
+              name: snet-dmlz-pe
               labels:
-                name: {{ $subnets.name | lower }}
-              name: {{ $subnets.name | lower }}
+                planum.mblb.net/component: snet-dmlz-pe
             spec:
               forProvider:
-                addressPrefixes: 
-                - {{ printf "%s.%s" $.observed.composite.resource.spec.parameters.virtualNetworkPrefix $subnets.addressPostfix }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
-                virtualNetworkName: {{ $outputs.VirtualNetworkName }}
-                {{ if contains "dbw" $subnets.name }}
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.96/27"
+
+        - name: snet-dmlz-dbw-public
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: Subnet
+            metadata:
+              name: snet-dmlz-dbw-public
+              labels:
+                planum.mblb.net/component: snet-dmlz-dbw-public
+            spec:
+              forProvider:
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
                 delegation:
                 - name: "subnet-delegation"
                   serviceDelegation:
@@ -78,284 +94,380 @@ spec:
                     - "Microsoft.Network/virtualNetworks/subnets/join/action"
                     - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
                     - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
-                {{ end }}
-              providerConfigRef:
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.128/26"
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.id
+            toFieldPath: status.outputs.dbwPublicSubnetId
+
+        - name: snet-dmlz-dbw-private
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
-            kind: SecurityGroup
+            kind: Subnet
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: nsg-dbw-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: nsg-dbw-{{ $prefix }}
-              name: nsg-dbw-{{ $prefix }}
+              name: snet-dmlz-dbw-private
+              labels:
+                planum.mblb.net/component: snet-dmlz-dbw-private
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
-                securityRule:
-                - access: "Allow"
-                  description: "Required for worker nodes communication within a cluster."
-                  destinationAddressPrefix: "VirtualNetwork"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "*"
-                  destinationPortRanges: []
-                  direction: "Inbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-inbound"
-                  priority: 100
-                  protocol: "*"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for workers communication with Databricks Webapp."
-                  destinationAddressPrefix: "AzureDatabricks"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "443"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp"
-                  priority: 100
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for workers communication with Azure SQL services."
-                  destinationAddressPrefix: "Sql"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "3306"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-sql"
-                  priority: 101
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for workers communication with Azure Storage services."
-                  destinationAddressPrefix: "Storage"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "443"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-storage"
-                  priority: 102
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for worker nodes communication within a cluster."
-                  destinationAddressPrefix: "VirtualNetwork"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "*"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-outbound"
-                  priority: 103
-                  protocol: "*"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-                - access: "Allow"
-                  description: "Required for worker communication with Azure Eventhub services."
-                  destinationAddressPrefix: "EventHub"
-                  destinationAddressPrefixes: []
-                  destinationApplicationSecurityGroupIds: []
-                  destinationPortRange: "9093"
-                  destinationPortRanges: []
-                  direction: "Outbound"
-                  name: "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-eventhub"
-                  priority: 104
-                  protocol: "Tcp"
-                  sourceAddressPrefix: "VirtualNetwork"
-                  sourceAddressPrefixes: []
-                  sourceApplicationSecurityGroupIds: []
-                  sourcePortRange: "*"
-                  sourcePortRanges: []
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-              {{ if ne $.observed.resources nil }}
-                {{ if contains "dbw-public" $subnets.name }}
-                apiVersion: network.azure.upbound.io/v1beta1
-                kind: SubnetNetworkSecurityGroupAssociation
-                metadata:
-                  annotations:
-                    gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-public-{{ $subnets.name }}
-                    gotemplating.fn.crossplane.io/ready: "True"
-                  name: nsg-association-public-{{ $subnets.name }}
-                spec:
-                  forProvider:
-                    networkSecurityGroupIdSelector:
-                      matchControllerRef: true
-                    subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                  providerConfigRef:
-                    name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-                {{ end }}
-            ---
-                {{ if contains "dbw-private" $subnets.name }}
-                apiVersion: network.azure.upbound.io/v1beta1
-                kind: SubnetNetworkSecurityGroupAssociation
-                metadata:
-                  annotations:
-                    gotemplating.fn.crossplane.io/composition-resource-name: nsg-association-private-{{ $subnets.name }}
-                    gotemplating.fn.crossplane.io/ready: "True"
-                  name: nsg-association-private-{{ $subnets.name }}
-                spec:
-                  forProvider:
-                    networkSecurityGroupIdSelector:
-                      matchControllerRef: true
-                    subnetId: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                  providerConfigRef:
-                    name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-                {{ end }}
-              {{ end }}
-            ---
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
+                delegation:
+                - name: "subnet-delegation"
+                  serviceDelegation:
+                  - name: "Microsoft.Databricks/workspaces"
+                    actions: 
+                    - "Microsoft.Network/virtualNetworks/subnets/join/action"
+                    - "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
+                    - "Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action"
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.192/26"
+          - type: ToCompositeFieldPath
+            fromFieldPath: status.atProvider.id
+            toFieldPath: status.outputs.dbwPrivateSubnetId
+              
+        - name: snet-dmlz-agent
+          readinessChecks:
+          - type: None
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: Subnet
+            metadata:
+              name: snet-dmlz-agent
+              labels:
+                planum.mblb.net/component: snet-dmlz-agent
+            spec:
+              forProvider:
+                addressPrefixes:
+                virtualNetworkName:
+                resourceGroupName:
+          patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: spec.providerConfigName
+            toFieldPath: spec.providerConfigRef.name
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.ResourceGroupName
+            toFieldPath: spec.forProvider.resourceGroupName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.VirtualNetworkName
+            toFieldPath: spec.forProvider.virtualNetworkName
+          - type: FromEnvironmentFieldPath
+            fromFieldPath: outputs.vnetAddressPrefix
+            toFieldPath: spec.forProvider.addressPrefixes[0]
+            transforms:
+            - type: string
+              string:
+                type: Format
+                fmt: "%s.80/29"
+
+        - name: dbw-dmlz-nsg
+          base:
+            apiVersion: planum.mblb.net/v1alpha1
+            kind: XDbwNsg
+            metadata:
+              name: dbw-dmlz-nsg
+            spec:
+              resourceGroupName: ""
+              dbwPublicSubnetId: ""
+              dbwPrivateSubnetId: ""
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.resourceGroupName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigName
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.location
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.environment
+              toFieldPath: spec.environment
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.dbwPublicSubnetId
+              toFieldPath: spec.dbwPublicSubnetId
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.dbwPrivateSubnetId
+              toFieldPath: spec.dbwPrivateSubnetId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.outputs
+              toFieldPath: status.outputs
+
+        - name: dbw-dmlz
+          base:
             apiVersion: databricks.azure.upbound.io/v1beta1
             kind: Workspace
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: dbw-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: dbw-{{ $prefix }}
-              name: dbw-{{ $prefix }}
+              labels:
+                planum.mblb.net/component: dbw-dmlz
+              name: dbw-dmlz
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 sku: premium
                 publicNetworkAccessEnabled: false
                 networkSecurityGroupRulesRequired: "NoAzureDatabricksRules"
                 customParameters:
                   - noPublicIp: true
-                    publicSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPublicSubnetName }}
-                    publicSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.publicNsgAssociationId }}
-                    privateSubnetName: {{ $.observed.composite.resource.status.outputs.dbwPrivateSubnetName }}
-                    privateSubnetNetworkSecurityGroupAssociationId: {{ $.observed.composite.resource.status.outputs.privateNsgAssociationId }}
-                    virtualNetworkId: {{ $outputs.VirtualNetworkId }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
-            {{ if contains "-pe" $subnets.name }}
+                    publicSubnetNameSelector: 
+                      matchLabels:
+                        planum.mblb.net/component: snet-dmlz-dbw-public
+                    publicSubnetNetworkSecurityGroupAssociationId: ""
+                    privateSubnetNameSelector: 
+                      matchLabels:
+                        planum.mblb.net/component: snet-dmlz-dbw-private
+                    privateSubnetNetworkSecurityGroupAssociationId: ""
+                    virtualNetworkId:
+                    vnetAddressPrefix:
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "dbw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.VirtualNetworkId
+              toFieldPath: spec.forProvider.customParameters[0].virtualNetworkId
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.vnetAddressPrefix
+              toFieldPath: spec.forProvider.customParameters[0].vnetAddressPrefix
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.publicNsgAssociationId
+              toFieldPath: spec.forProvider.customParameters[0].publicSubnetNetworkSecurityGroupAssociationId
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.privateNsgAssociationId
+              toFieldPath: spec.forProvider.customParameters[0].privateSubnetNetworkSecurityGroupAssociationId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath: status.outputs.databricksId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.workspaceUrl
+              toFieldPath: status.outputs.dbwUrl
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+              
+        - name: pe-dbw-dmlz
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PrivateEndpoint
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: pe-{{ $prefix }}
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: pe-{{ $prefix }}
-              name: pe-{{ $prefix }}
+              labels:
+                planum.mblb.net/component: pe-dbw-dmlz
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 privateDnsZoneGroup:
-                  - name: pdzg-dbw
+                  - name: pdzg-dbw-dmlz
                     privateDnsZoneIds:
-                    - {{ index $outputs "privatelink.azuredatabricks.net" }}
+                    - ""
                 privateServiceConnection:
                   - isManualConnection: false
-                    name: psc-dbw
-                    privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.databricksId }}
+                    name: psc-dbw-dmlz
+                    privateConnectionResourceId: ""
                     subresourceNames: ["databricks_ui_api"]
+                resourceGroupName: ""
                 subnetIdSelector:
                   matchLabels:
-                    name: {{ $subnets.name }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            ---
+                    planum.mblb.net/component: snet-dmlz-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-dbw-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.azuredatabricks.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.databricksId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: pe-dbw-dmlz-browser-auth
+          base:
             apiVersion: network.azure.upbound.io/v1beta1
             kind: PrivateEndpoint
             metadata:
-              annotations:
-                gotemplating.fn.crossplane.io/composition-resource-name: pe-{{ $prefix }}-browser-auth
-                gotemplating.fn.crossplane.io/ready: "True"
-                crossplane.io/external-name: pe-{{ $prefix }}-browser-auth
-              name: pe-{{ $prefix }}-browser-auth
+              labels:
+                planum.mblb.net/component: pe-dbw-dmlz-browser-auth
             spec:
               forProvider:
-                location: {{ $.observed.composite.resource.spec.resourceConfig.location }}
-                resourceGroupName: {{ $outputs.ResourceGroupName }}
                 privateDnsZoneGroup:
-                  - name: pdzg-dbw-browser-auth
+                  - name: pdzg-dbw-dmlz-browser-auth
                     privateDnsZoneIds:
-                    - {{ index $outputs "privatelink.azuredatabricks.net" }}
+                    - ""
                 privateServiceConnection:
                   - isManualConnection: false
-                    name: psc-dbw-browser-auth
-                    privateConnectionResourceId: {{ $.observed.composite.resource.status.outputs.databricksId }}
+                    name: psc-dbw-dmlz-browser-auth
+                    privateConnectionResourceId: ""
                     subresourceNames: ["browser_authentication"]
+                resourceGroupName: ""
                 subnetIdSelector:
                   matchLabels:
-                    name: {{ $subnets.name }}
-              providerConfigRef:
-                name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-            {{ end }}
-            ---
-            apiVersion: planum.mblb.net/v1alpha1
-            kind: XDmlz
-            status:
-            {{ if eq $.observed.resources nil }}
-              outputs: {}
-            {{ else }}
-            status:
-              outputs:
-                {{ $dbwId := printf "%s-%s" "dbw" $prefix }}
-                databricksId: {{ (index $.observed.resources $dbwId).resource.status.atProvider.id }}
-                dbwUrl: {{ (index $.observed.resources $dbwId).resource.status.atProvider.workspaceUrl }}
-                {{ $subnets.name | lower }}: {{ (index $.observed.resources $subnets.name).resource.status.atProvider.id }}
-                {{ if contains "dbw-public" $subnets.name }}
-                publicNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-public-%s" $subnets.name)).resource.status.atProvider.id }}
-                dbwPublicSubnetName: {{ $subnets.name }}
-                {{ end }}
-                {{ if contains "dbw-private" $subnets.name }}
-                privateNsgAssociationId: {{ (index $.observed.resources (printf "nsg-association-private-%s" $subnets.name)).resource.status.atProvider.id }}
-                dbwPrivateSubnetName: {{ $subnets.name }}
-                {{ end }}
-            {{ end }}
-            {{- end }}
-            ---
-            {{- range $subnets := .observed.composite.resource.spec.parameters.subnets }}
-              {{- if ne $.observed.resources nil }}
-            ---
-              apiVersion: network.azure.upbound.io/v1beta1
-              kind: SubnetRouteTableAssociation
-              metadata:
-                annotations:
-                  gotemplating.fn.crossplane.io/composition-resource-name: rt-association-{{ $subnets.name }}
-                  gotemplating.fn.crossplane.io/ready: "True"
-                name: rt-association-{{ $subnets.name }}
-              spec:
-                forProvider:
-                  routeTableId: {{ $outputs.routeTableId }}
-                  subnetIdSelector:
-                    matchControllerRef: true
-                    matchLabels:
-                      name: {{ $subnets.name }}
-                providerConfigRef: 
-                  name: {{ $.observed.composite.resource.spec.resourceConfig.providerConfigName }}
-              {{- end }}
-            {{- end }}
-        
-    - step: auto-ready
-      functionRef:
-        name: function-auto-ready
+                    planum.mblb.net/component: snet-dmlz-pe
+          patches:
+            - type: CombineFromComposite
+              combine:
+                variables:
+                  - fromFieldPath: metadata.name
+                  - fromFieldPath: spec.environment
+                  - fromFieldPath: spec.location
+                strategy: string
+                string:
+                  fmt: "pe-dbw-browser-auth-%s-%s-%s"
+              toFieldPath: metadata.name
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.ResourceGroupName
+              toFieldPath: spec.forProvider.resourceGroupName
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs['privatelink.azuredatabricks.net']
+              toFieldPath: spec.forProvider.privateDnsZoneGroup[0].privateDnsZoneIds[0]
+            - type: FromCompositeFieldPath
+              fromFieldPath: status.outputs.databricksId
+              toFieldPath: spec.forProvider.privateServiceConnection[0].privateConnectionResourceId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.location
+              toFieldPath: spec.forProvider.location
+
+        - name: rt-association-snet-dmlz-pe
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-dmlz-pe
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-dmlz-pe
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+
+        - name: rt-association-snet-dmlz-dbw-public
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-dmlz-dbw-public
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-dmlz-dbw-public
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+
+        - name: rt-association-snet-dmlz-dbw-private
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-dmlz-dbw-private
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-dmlz-dbw-private
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
+
+        - name: rt-association-snet-dmlz-agent
+          base:
+            apiVersion: network.azure.upbound.io/v1beta1
+            kind: SubnetRouteTableAssociation
+            metadata:
+              name: rt-association-snet-dmlz-agent
+            spec:
+              forProvider:
+                routeTableId: 
+                subnetIdSelector:
+                  matchControllerRef: true
+                  matchLabels:
+                    planum.mblb.net/component: snet-dmlz-agent
+          patches:
+            - type: FromEnvironmentFieldPath
+              fromFieldPath: outputs.routeTableId
+              toFieldPath: spec.forProvider.routeTableId
+            - type: FromCompositeFieldPath
+              fromFieldPath: spec.providerConfigName
+              toFieldPath: spec.providerConfigRef.name
