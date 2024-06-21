@@ -223,8 +223,12 @@ spec:
               fromFieldPath: status.outputs.dbwPrivateSubnetId
               toFieldPath: spec.dbwPrivateSubnetId
             - type: ToCompositeFieldPath
-              fromFieldPath: status.outputs
-              toFieldPath: status.outputs
+              fromFieldPath: status.outputs.privateNsgAssociationId
+              toFieldPath: status.outputs.privateNsgAssociationId
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.outputs.publicNsgAssociationId
+              toFieldPath: status.outputs.publicNsgAssociationId
+
 
         - name: dbw-dmlz
           base:
