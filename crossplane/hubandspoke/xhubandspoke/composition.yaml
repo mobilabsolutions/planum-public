@@ -210,6 +210,10 @@ spec:
                     name: spokes
                     nextHopType: VirtualAppliance
                     nextHopInIpAddress: {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
+                  - addressPrefix: "0.0.0.0/0"
+                    name: all
+                    nextHopType: VirtualAppliance
+                    nextHopInIpAddress: {{ $.observed.composite.resource.status.outputs.fwPrivateIpAddress }}
             ---
             {{ if ne $.observed.resources nil }}
             apiVersion: network.azure.upbound.io/v1beta1
