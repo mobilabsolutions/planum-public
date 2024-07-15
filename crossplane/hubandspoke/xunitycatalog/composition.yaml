@@ -50,7 +50,7 @@ spec:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: metastore-assignment-dbw
                 gotemplating.fn.crossplane.io/ready: "True"
-              name: metastore-assignment-dbw
+              name: metastore-assignment-dbw-{{ $prefix }}
             spec:
               forProvider:
                 metastoreId: {{ $.observed.composite.resource.spec.parameters.metastoreId }}
