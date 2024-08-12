@@ -19,8 +19,14 @@ spec:
             location: "westeurope"
             resourceGroupName: "rg-planum"
           providerConfigRef:
-            name: "612bb09a-4f0b-42b6-ab74-cf32aa217610"
+            name: default
       patches:
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: vmResourceGroup
+          toFieldPath: spec.forProvider.resourceGroupName
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: location
+          toFieldPath: spec.forProvider.location
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
           toFieldPath: spec.forProvider.name
