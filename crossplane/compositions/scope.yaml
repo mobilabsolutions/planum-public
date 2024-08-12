@@ -8,6 +8,7 @@ spec:
       - type: Reference
         ref:
           name: vm
+
   resources:
     - name: UserAssignedIdentity
       base:
@@ -16,16 +17,16 @@ spec:
         spec:
           forProvider:
             name: X
-            location: "westeurope"
-            resourceGroupName: "rg-planum"
+            location: ""
+            resourceGroupName: ""
           providerConfigRef:
-            name: default
+            name: X
       patches:
         - type: FromEnvironmentFieldPath
           fromFieldPath: vmResourceGroup
           toFieldPath: spec.forProvider.resourceGroupName
-        - type: FromEnvironmentFieldPath
-          fromFieldPath: location
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.location
           toFieldPath: spec.forProvider.location
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
@@ -47,6 +48,10 @@ spec:
         - type: ToCompositeFieldPath
           fromFieldPath: status.atProvider.id
           toFieldPath: status.outputs['identityId']
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.subscriptionId
+          toFieldPath: spec.providerConfigRef.name
+
     - name: role-assignment-contributor
       base:
         apiVersion: authorization.azure.upbound.io/v1beta1
@@ -81,6 +86,7 @@ spec:
             string:
               fmt: "role-contributor-%s"
           toFieldPath: metadata.name
+
     - name: role-assignment-uaa
       base:
         apiVersion: authorization.azure.upbound.io/v1beta1
@@ -115,6 +121,7 @@ spec:
             string:
               fmt: "role-uaa-%s"
           toFieldPath: metadata.name
+
     - name: role-assignment-dns
       base:
         apiVersion: authorization.azure.upbound.io/v1beta1
@@ -123,9 +130,9 @@ spec:
           forProvider:
             principalId: X
             roleDefinitionName: Private DNS Zone Contributor
-            scope: "/subscriptions/e63d5ad3-c25d-468e-a386-55349257c0f8"
+            scope: ""
           providerConfigRef:
-            name: "e63d5ad3-c25d-468e-a386-55349257c0f8"
+            name: ""
       patches:
         - type: FromCompositeFieldPath
           fromFieldPath: status.outputs['principalId']
@@ -138,6 +145,18 @@ spec:
             string:
               fmt: "role-dns-%s"
           toFieldPath: metadata.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.subscriptionId
+            strategy: string
+            string:
+              fmt: "/subscriptions/%s"
+          toFieldPath: spec.forProvider.scope
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.subscriptionId
+          toFieldPath: spec.providerConfigRef.name
+
     - name: provider-config
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -153,7 +172,7 @@ spec:
                 credentials:
                   source: UserAssignedManagedIdentity
                 subscriptionID: X
-                tenantID: "f2658745-f87e-4fb9-8ff6-6b616a8cec41"
+                tenantID: X
                 clientID: X
           providerConfigRef:
             name: kubernetes
@@ -164,6 +183,9 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: status.outputs['clientId']
           toFieldPath: spec.forProvider.manifest.spec.clientID
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: tenantId
+          toFieldPath: spec.forProvider.manifest.spec.tenantID
         - type: CombineFromComposite
           combine:
             variables:
@@ -172,6 +194,7 @@ spec:
             string:
               fmt: "provider-config-scope-%s"
           toFieldPath: spec.forProvider.manifest.metadata.name
+
     - name: github-repo
       base:
         apiVersion: planum.mblb.net/v1alpha1
@@ -182,6 +205,7 @@ spec:
         - type: FromCompositeFieldPath
           fromFieldPath: spec.repo
           toFieldPath: spec.name
+
     - name: vmid
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -221,6 +245,7 @@ spec:
             string:
               fmt: "vm-id-%s"
           toFieldPath: spec.forProvider.manifest.metadata.name
+
     - name: argocd-application
       base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -272,6 +297,7 @@ spec:
             string:
               fmt: "argocd-app-%s"
           toFieldPath: metadata.name
+
   compositeTypeRef:
     apiVersion: planum.mblb.net/v1alpha1
     kind: XScope

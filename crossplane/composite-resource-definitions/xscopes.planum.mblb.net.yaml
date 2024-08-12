@@ -16,6 +16,9 @@ spec:
             spec:
               type: object
               properties:
+                location:
+                  type: string
+                  default: "westeurope"
                 subscriptionId:
                   type: string
                 repo:
