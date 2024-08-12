@@ -49,7 +49,7 @@ spec:
           fromFieldPath: status.atProvider.id
           toFieldPath: status.outputs['identityId']
         - type: FromCompositeFieldPath
-          fromFieldPath: spec.subscriptionId
+          fromFieldPath: spec.providerConfigName
           toFieldPath: spec.providerConfigRef.name
 
     - name: role-assignment-contributor
@@ -68,7 +68,7 @@ spec:
           fromFieldPath: status.outputs['principalId']
           toFieldPath: spec.forProvider.principalId
         - type: FromCompositeFieldPath
-          fromFieldPath: spec.subscriptionId
+          fromFieldPath: spec.providerConfigName
           toFieldPath: spec.providerConfigRef.name
         - type: CombineFromComposite
           combine:
@@ -103,7 +103,7 @@ spec:
           fromFieldPath: status.outputs['principalId']
           toFieldPath: spec.forProvider.principalId
         - type: FromCompositeFieldPath
-          fromFieldPath: spec.subscriptionId
+          fromFieldPath: spec.providerConfigName
           toFieldPath: spec.providerConfigRef.name
         - type: CombineFromComposite
           combine:
@@ -154,7 +154,7 @@ spec:
               fmt: "/subscriptions/%s"
           toFieldPath: spec.forProvider.scope
         - type: FromCompositeFieldPath
-          fromFieldPath: spec.subscriptionId
+          fromFieldPath: spec.providerConfigName
           toFieldPath: spec.providerConfigRef.name
 
     - name: provider-config

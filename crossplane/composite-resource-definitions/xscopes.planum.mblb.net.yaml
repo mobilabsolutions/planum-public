@@ -23,9 +23,12 @@ spec:
                   type: string
                 repo:
                   type: string
+                providerConfigName:
+                  type: string
               required:
                 - subscriptionId
                 - repo
+                - providerConfigName
             status:
               type: object
               properties:
