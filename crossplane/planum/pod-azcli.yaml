@@ -1,3 +1,25 @@
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: azcli
+#   namespace: planum
+# spec:
+#   containers:
+#     - image: mcr.microsoft.com/azure-cli
+#       command:
+#         - "bash"
+#         - "/etc/config/run.sh"
+#       volumeMounts:
+#         - name: config-volume
+#           mountPath: /etc/config
+#       imagePullPolicy: IfNotPresent
+#       name: azcli
+#   restartPolicy: Always
+#   volumes:
+#     - name: config-volume
+#       configMap:
+#         name: azcli
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -9,6 +31,14 @@ spec:
       command:
         - "bash"
         - "/etc/config/run.sh"
+      livenessProbe:
+        exec:
+          command:
+          - bash
+          - -c
+          - "exit 1"
+        failureThreshold: 1
+        periodSeconds: 30
       volumeMounts:
         - name: config-volume
           mountPath: /etc/config
